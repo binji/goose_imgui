@@ -1,0 +1,22 @@
+ease out cubic at 0.5: 0.875; in-out quad at 0.25: 0.125; out back at 0.6: 1.099
+first frame:
+  C: y 60.0 drawn at 100.0 alpha 0.0
+  C: y 60.0 drawn at 90.0 alpha 0.25
+  C: y 60.0 drawn at 70.0 alpha 0.75
+  C: y 60.0 drawn at 60.0 alpha 1.0
+t 0.1: tween 20.0 spring 51.299
+t 0.2: tween 40.0 spring 93.847
+t 0.3: tween 60.0 spring 103.691
+retargeted: tween 48.0 spring 50.869
+settled: tween 0.0 spring 0.0
+spring after 0.25 s at 60 and 144 Hz: 0.976 0.976
+toast in: 0.875 true
+toast in: 1.0 true
+toast out: 0.125 true
+toast out: 0.0 false
+swapped:
+  A: y 30.0 drawn at 10.0 alpha 1.0
+  B: y 0.0 drawn at 20.0 alpha 1.0
+  A: y 30.0 drawn at 20.0 alpha 1.0
+  A: y 30.0 drawn at 30.0 alpha 1.0
+  B: y 0.0 drawn at 0.0 alpha 1.0

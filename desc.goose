@@ -294,6 +294,7 @@ fn slide_in(dx: f64, dy: f64, m: Motion) -> Enter {
     Enter { alpha: 0.0, shift: float2 { dx as f32, dy as f32 }, motion: m, .. }
 }
 fn pop_in(from: f64, m: Motion) -> Enter { Enter { alpha: 0.0, zoom: from as f32, motion: m, .. } }
+fn delay(var e: Enter, seconds: f64) -> Enter { e.motion.wait = seconds as f32; e }
 
 // --- input setters --------------------------------------------------------------------
 

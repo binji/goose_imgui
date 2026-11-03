@@ -122,7 +122,7 @@ fn advance(a: AnimState&, target: float4, m: Motion, dt: f64) {
         // Only the time since the delay ended counts.
         var left = a.rest + min(running, dt as f32);
         let h: f32 = SPRING_STEP;
-        while left >= h {
+        while left >= h - 1.0e-5 {
             let acc = (a.to - a.value) * m.stiffness - a.vel * m.damping;
             a.vel += acc * h;
             a.value += a.vel * h;
