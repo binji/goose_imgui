@@ -145,6 +145,8 @@ fn main() {
     nav(imgui::NavInput { right: true, .. });
     print("volume by nav: ", round(volume * 10.0) / 10.0);
     show_focus();
+    // The thumb shows the slider's focus: its ring is drawn.
+    for n in imgui::nodes { if n.d.vis.class.index == imgui::SLIDER_THUMB.index { print("thumb ringed: ", n.ring); } }
     nav(imgui::NavInput { down: true, .. });
     show_focus();
     nav(imgui::NavInput { left: true, .. });
@@ -168,4 +170,13 @@ fn main() {
     print("cancelled: ", imgui::cancelled());
     nav(imgui::NavInput { cancel: true, .. });
     print("cancelled: ", imgui::cancelled());
+
+    // Shortcuts: Ctrl+Q pressed, as a chord in the input.
+    var inp = imgui::Input { viewport: float2 { 640.0, 480.0 }, .. };
+    inp.chords.push(imgui::Chord { 'q', imgui::MOD_CTRL });
+    imgui::frame(inp, 1.0 / 60.0) {
+        print("Ctrl+Q ", imgui::shortcut("Ctrl+Q"), ", Ctrl+Shift+Q ", imgui::shortcut("Ctrl+Shift+Q"),
+              ", Ctrl+W ", imgui::shortcut("Ctrl+W"));
+        ui();
+    };
 }

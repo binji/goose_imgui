@@ -5,6 +5,9 @@ view open: 1
 closed: 0
 submenu: 2
 chose: level1; open: 0
+on Recent: true; open 1
+right: open 2; focus in the submenu: true
+left: open 1; back on Recent: true
 grid: true
 tab 1
 tab 2

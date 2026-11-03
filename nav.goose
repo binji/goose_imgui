@@ -157,6 +157,11 @@ fn begin_nav() {
         down = false;
     }
     if nav.accept { accept_id = f.id; }
+    // In a submenu, left goes back to the menu it opened from.
+    if left && top >= 2 && popups[top - 1].kind == POPUP_MENU && popups[top - 2].kind == POPUP_MENU {
+        close_top_popup();
+        return;
+    }
     var dx = 0;
     var dy = 0;
     if left { dx = -1; } else if right { dx = 1; } else if up { dy = -1; } else if down { dy = 1; }

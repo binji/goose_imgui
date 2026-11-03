@@ -54,8 +54,17 @@ struct Input {
     nav: NavInput = NavInput { .. },
     text: u8[..256] = [],           // typed (and pasted) this frame, UTF-8
     keys: EditKey[..32] = [],
+    chords: Chord[..16] = [],       // keys pressed with Ctrl, Alt or Cmd: for shortcut()
     viewport: float2 = float2 { 0.0, 0.0 },     // the UI's size; 0: keep the last
+    from_gfx: bool = false,         // made by input_from_gfx: the frame gives gfx back text input and the clipboard
 }
+
+// A key pressed with modifiers: its keycode (a lowercase letter or digit
+// for most) and the MOD_ bits.
+let MOD_SHIFT = 1;
+let MOD_CTRL = 2;               // Ctrl, or Cmd on a Mac
+let MOD_ALT = 4;
+struct Chord { key: i32 = 0, mods: u8 = 0 }
 
 // What a widget's state is this frame.
 struct Interaction {
@@ -320,7 +329,7 @@ fn push_key(inp: Input&, key: i64, shift: bool, word: bool) {
 // reading one passes what it holds to nav_from_pad.)
 fn input_from_gfx() -> Input {
     scan_codes();
-    var inp = Input { .. };
+    var inp = Input { from_gfx: true, .. };
     let scale = max(gfx2d::current_scale() * ui_scale, 0.0001) as f32;
     inp.pointer.pos = if gfx::mouse_in_window() || gfx::mouse_down(gfx::MOUSE_LEFT) {
         gfx::mouse_pos() / scale
@@ -346,6 +355,13 @@ fn input_from_gfx() -> Input {
             let shift = e.mods & gfx::MOD_SHIFT != 0;
             let cmd = e.mods & (gfx::MOD_CTRL | gfx::MOD_GUI) != 0;
             let word = e.mods & (gfx::MOD_CTRL | gfx::MOD_ALT) != 0;
+            if (cmd || e.mods & gfx::MOD_ALT != 0) && !e.repeat && inp.chords.len < inp.chords.cap {
+                var m: u8 = 0;
+                if shift { m |= MOD_SHIFT; }
+                if cmd { m |= MOD_CTRL; }
+                if e.mods & gfx::MOD_ALT != 0 { m |= MOD_ALT; }
+                inp.chords.push(Chord { e.keycode, m });
+            }
             if sc == sc_up { inp.nav.up = true; }
             else if sc == sc_down { inp.nav.down = true; }
             else if sc == sc_left { inp.nav.left = true; push_key(inp, KEY_LEFT, shift, word); }
@@ -372,6 +388,32 @@ fn input_from_gfx() -> Input {
     }
     inp.pointer.wheel = wheel;
     inp
+}
+
+// --- shortcuts -------------------------------------------------------------------------
+
+// Whether a shortcut such as "Ctrl+Q", "Ctrl+Shift+S" or "Alt+1" was
+// pressed this frame (Ctrl is Cmd on a Mac). The key is a letter or a
+// digit. A menu_item's shortcut text is only shown; this is what acts on it.
+fn shortcut(s: const u8[:]) -> bool {
+    var want: u8 = 0;
+    var key: i32 = 0;
+    var at = 0;
+    while at <= s.len {
+        var end = at;
+        while end < s.len && s[end] != '+' { end++; }
+        let part = s[at..end];
+        if part == "Ctrl" || part == "Cmd" { want |= MOD_CTRL; }
+        else if part == "Shift" { want |= MOD_SHIFT; }
+        else if part == "Alt" { want |= MOD_ALT; }
+        else if part.len == 1 {
+            let c = part[0];
+            key = if c >= 'A' && c <= 'Z' { (c + 32) as i32 } else { c as i32 };
+        }
+        at = end + 1;
+    }
+    for ch in input.chords { if ch.key == key && ch.mods == want { return true; } }
+    false
 }
 
 // --- gamepads ----------------------------------------------------------------------------

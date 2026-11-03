@@ -72,7 +72,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 |---|---|
 | `frame() { … }` | a frame: gfx's input and frame time; recorded by the block, laid out, and drawn (when inside a gfx2d frame) |
 | `frame(dt) { … }` | the same, `dt` seconds after the last: a fixed step for recording |
-| `frame(input, dt) { … }` | with an `Input` the program made (tests, replays, gamepads) |
+| `frame(input, dt) { … }` | with an `Input` the program made (tests, replays, gamepads), or one from `input_from_gfx` it changed; for the latter the frame still turns gfx's text input on while a field has the keyboard, and hands copied text to the clipboard |
 | `begin_frame(input, dt)`, `end_frame()`, `draw()` | the parts: `draw` inside a gfx2d frame, after `end_frame` |
 | `input_from_gfx() -> Input` | gfx's mouse and keyboard, and the ordered events for typed text and the clipboard |
 | `nav_from_pad(input, PadState)` | a gamepad's held buttons and stick, as navigation, with repeat (gfx v1 has no gamepads; a program reading one passes what it holds) |
@@ -80,6 +80,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `set_scale(s)` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE` |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over the UI, or holds a press) or the keyboard (a text field has focus) this frame |
 | `cancelled()` | Escape or B pressed with no popup open to close: for the game's own "back" |
+| `shortcut("Ctrl+Q")` | a key pressed with modifiers this frame: Ctrl (Cmd on a Mac), Shift, Alt, and a letter or digit. A `menu_item`'s shortcut text is only shown; this acts on it |
 | `time()`, `dt()` | imgui's clock |
 | `rect_of(id)`, `state_of(id)`, `dump()` | where a widget was laid out; its kept state; the tree, for tests |
 
@@ -89,6 +90,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
   `cancel`, `tab_left`, `tab_right`, each pressed this frame;
 - `text`: typed this frame;
 - `keys`: editing keys (`KEY_LEFT` … `KEY_PASTE`, with `shift` and `word`);
+- `chords`: keys pressed with Ctrl, Alt or Cmd, for `shortcut`;
 - `viewport`.
 
 ## Boxes and layout
@@ -284,6 +286,11 @@ widget: the pointer on any of them hovers, presses and drags the widget.
   - Tab and Shift+Tab go in recorded order.
   - Enter, Space or A accepts.
   - Escape or B closes the top popup, or is the program's `cancelled()`.
+- **Menus.** In a submenu, Left closes it and goes back to its item;
+  Right on a submenu's item opens it.
+- **Keys and a game's own bindings.** A game that maps keys itself (Q and E
+  for tabs, say) should leave them alone while `wants_keyboard()`, when a
+  text field is taking them.
 - **Popups.** An open popup or modal keeps the focus in it, takes it as
   soon as it opens (while focus shows), and gives it back to its opener
   when it closes.
@@ -343,7 +350,8 @@ The tests are in three groups:
     limits.
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
-  ring.
+  ring, the UI scale (`draw`); typing through gfx's injected input
+  (`typing`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless
   test with no GPU is reported skipped.
 

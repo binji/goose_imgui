@@ -245,6 +245,9 @@ fn menu<F>(label: const u8[:]) -> bool {
     var opening = false;
     if it.activated {
         if open { close_popup(pid); open = false; } else { opening = true; }
+    } else if nested && it.focused && input.nav.right && !open {
+        // Right on a submenu's item opens it (and the focus goes into it).
+        opening = true;
     } else if it.hovered && !open {
         // Hovered: a submenu opens; a bar's menu opens if another of the bar's is.
         if nested || (ctx.bar != 0 && bar_menu_open(ctx.bar)) { opening = true; }

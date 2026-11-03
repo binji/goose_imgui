@@ -121,6 +121,20 @@ fn main() {
     print("submenu: ", open_popups());
     click_at(at(find("level1.map")));
     print("chose: ", log, " open: ", open_popups());
+    // By the keyboard: File opened, down to Recent; right opens the
+    // submenu, left closes it and leaves the focus on Recent.
+    click_at(float2 { 600.0, 400.0 });
+    imgui::focus(find("File"), true);
+    step();
+    nav(imgui::NavInput { accept: true, .. });
+    nav(imgui::NavInput { down: true, .. });
+    print("on Recent: ", imgui::is_focused(find("Recent")), "; open ", open_popups());
+    nav(imgui::NavInput { right: true, .. });
+    step();
+    print("right: open ", open_popups(), "; focus in the submenu: ", imgui::is_focused(find("level1.map")));
+    nav(imgui::NavInput { left: true, .. });
+    print("left: open ", open_popups(), "; back on Recent: ", imgui::is_focused(find("Recent")));
+    nav(imgui::NavInput { cancel: true, .. });
     click_at(at(find("View")));
     click_at(at(find("Grid")));
     print("grid: ", grid_on);

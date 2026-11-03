@@ -42,10 +42,14 @@ fn main() {
     run("imgui: settings", 900, 620, false) {
         let bg = backdrop();
         var inp = imgui::input_from_gfx();
-        inp.nav.tab_left = inp.nav.tab_left || gfx::key_pressed("Q");
-        inp.nav.tab_right = inp.nav.tab_right || gfx::key_pressed("E");
+        // Q and E switch tabs, but not while a text field has the keyboard.
+        if !imgui::wants_keyboard() {
+            inp.nav.tab_left = inp.nav.tab_left || gfx::key_pressed("Q");
+            inp.nav.tab_right = inp.nav.tab_right || gfx::key_pressed("E");
+        }
         gfx2d::frame(bg) {
             imgui::frame(inp, frame_dt()) {
+                if imgui::shortcut("Ctrl+Q") { gfx::quit(); }
                 imgui::box(imgui::column().grow()) {
                     imgui::menu_bar("menu") {
                         imgui::menu("Game") {

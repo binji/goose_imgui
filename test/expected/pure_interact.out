@@ -15,6 +15,7 @@ focused: Play
 focused: the volume slider
 volume by nav: 0.5
 focused: the volume slider
+thumb ringed: true
 focused: Hard
 focused: Easy
 level 0
@@ -24,3 +25,4 @@ focused: Play
 clicks 2
 cancelled: false
 cancelled: true
+Ctrl+Q true, Ctrl+Shift+Q false, Ctrl+W false

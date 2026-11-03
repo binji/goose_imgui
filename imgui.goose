@@ -90,6 +90,7 @@ fn frame<F>(inp: Input, dt: f64) {
     F();
     end_frame();
     if gfx2d::state.drawing { draw(); }
+    if inp.from_gfx { sync_gfx(); }
 }
 // With gfx's input; and the clipboard and text input given back to gfx.
 fn frame<F>() { frame(gfx::delta_time()) { F(); }; }
@@ -171,7 +172,8 @@ fn finish_frame() {
             if p.d.vis.clips { gfx2d::intersect(p.clip, gfx2d::transformed_bounds(pm, box_of(p))) } else { p.clip }
         };
         n.owner = if n.d.bits & HIT != 0 { i } else if n.parent >= 0 { nodes[n.parent].owner } else { -1 };
-        n.ring = focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0;
+        // Its own focus, or its widget's, for a part that shares it (a slider's thumb).
+        n.ring = (focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0) || n.d.vis.state.focus > 0.01;
         let screen = gfx2d::transformed_bounds(n.m, box_of(n));
         n.screen = screen;
         if keeps {

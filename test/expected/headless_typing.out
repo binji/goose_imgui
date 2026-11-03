@@ -1,0 +1,3 @@
+focused: true; wants keyboard: true; text input on: true
+typed: "Honk"
+unfocused; text input on: false
