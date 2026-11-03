@@ -25,7 +25,9 @@ fn dt() -> f64 { delta }
 // --- misuse ---------------------------------------------------------------------------
 
 var misuse_count = 0;
-var last_misuse: u8[>..] = [];
+// A limited array, not a growable one: clearing it can then never strand
+// a view of text a program is iterating over while it calls a widget.
+var last_misuse: u8[..256] = [];
 
 // A mistake in how imgui is called: printed now, and fatal at the end of
 // the frame, as gfx and gfx2d do it.
@@ -33,7 +35,7 @@ fn misuse(what: const u8[:]) {
     write_stderr(str("imgui: ", what, "\n"));
     misuse_count++;
     last_misuse.clear();
-    last_misuse.append(what);
+    for c in what { if last_misuse.len < last_misuse.cap { last_misuse.push(c); } }
 }
 fn check() {
     if misuse_count > 0 { abort(str("imgui: ", last_misuse)); }

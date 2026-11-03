@@ -119,7 +119,14 @@ fn begin_nav() {
     }
     // A focus outside what may be focused now (a popup opened over it) moves
     // into it on the first navigation.
-    if cur >= 0 && !candidate(focusables[cur], floor, top, trap) { cur = -1; }
+    if cur >= 0 && !candidate(focusables[cur], floor, top, trap) {
+        cur = -1;
+        // Showing focus: it moves into the popup at once.
+        if focus_visible {
+            let first = first_candidate(floor, top);
+            if first != 0 { focused = first; }
+        }
+    }
     if nav.cancel {
         if top > 0 { close_top_popup(); } else { cancel_pressed = true; }
     }

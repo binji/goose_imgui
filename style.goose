@@ -113,24 +113,23 @@ let DROPDOWN = StyleClass { 35 };
 let CHOICE = StyleClass { 36 };         // the row of a checkbox, toggle or radio and its label
 let CLASS_COUNT = 37;
 
-var classes: StyleSet[>..] = [];
+// The registry: the light theme to start with. Built by a global's
+// initializer, not on first use, so that no widget can reach the shrink a
+// new theme is (which the checker would hold against a program iterating
+// over text while calling one).
+var classes: StyleSet[>..] = theme_classes(Palette { .. });
 var nine_slices: NineSlice[>..] = [];
 
-fn ensure_theme() { if classes.len == 0 { theme_light(); } }
-
 fn class_style(c: StyleClass) -> StyleSet {
-    ensure_theme();
     if c.index >= classes.len { return StyleSet { .. }; }
     classes[c.index]
 }
 fn set_class(c: StyleClass, s: StyleSet) {
-    ensure_theme();
     if c.index >= classes.len { misuse("set_class: no such class"); return; }
     classes[c.index] = s;
 }
 // A class of the program's own.
 fn add_class(s: StyleSet) -> StyleClass {
-    ensure_theme();
     classes.push(s);
     StyleClass { (classes.len - 1) as u16 }
 }
@@ -291,9 +290,17 @@ struct Palette {
 fn radii(r: f32) -> float4 { float4 { r, r, r, r } }
 fn pad4(x: f32, y: f32) -> float4 { float4 { x, y, x, y } }
 
-// Every built-in class, from a palette.
+// Every built-in class, from a palette; the classes a program added kept
+// after them.
 fn theme(p: Palette) {
-    classes.clear();
+    var extra: StyleSet[>..] = [];
+    for k in CLASS_COUNT..classes.len { extra.push(classes[k]); }
+    classes = theme_classes(p);
+    for e in extra { classes.push(e); }
+}
+
+fn theme_classes(p: Palette) -> StyleSet[>..] {
+    var classes: StyleSet[>..] = [];
     for i in CLASS_COUNT { classes.push(StyleSet { .. }); }
     let move = tween(p.transition);
     let r = radii(p.radius);
@@ -450,6 +457,7 @@ fn theme(p: Palette) {
     dd.active.gap = 12.0;
     dd.focused.gap = 12.0;
     classes[DROPDOWN.index] = dd;
+    classes
 }
 
 fn theme_light() { theme(Palette { .. }); }
@@ -462,3 +470,98 @@ fn dark_palette() -> Palette {
               shadow: gfx2d::rgba(0x000000, 0.5), .. }
 }
 fn theme_dark() { theme(dark_palette()); }
+
+// A game's look, to show how far a theme goes: deep blue panels with a
+// gold edge, buttons of gradients that glow when hovered and sink when
+// pressed, bigger type, springier motion.
+fn game_palette() -> Palette {
+    Palette { surface: gfx2d::rgb(0x182238), raised: gfx2d::rgb(0x24335A), hover: gfx2d::rgb(0x2E4170),
+              pressed: gfx2d::rgb(0x1A2643), line: gfx2d::rgb(0xB8913F), ink: gfx2d::rgb(0xF3E9D2),
+              muted: gfx2d::rgb(0xA99F8A), accent: gfx2d::rgb(0xE8B64C), accent_hover: gfx2d::rgb(0xF6CC6E),
+              accent_ink: gfx2d::rgb(0x1B1406), backdrop: gfx2d::rgba(0x05070D, 0.7),
+              shadow: gfx2d::rgba(0x000000, 0.55), radius: 10.0, text_size: 19.0, title_size: 34.0,
+              padding: float2 { 22.0, 11.0 }, control: 24.0, transition: 0.14, .. }
+}
+
+fn theme_game() {
+    let p = game_palette();
+    theme(p);
+    let gold = p.accent;
+    let glow = gfx2d::with_alpha(gold, 0.45);
+
+    var panel = classes[PANEL.index];
+    panel.normal.bg = gfx2d::rgb(0x1F2C4A);
+    panel.normal.bg2 = gfx2d::rgb(0x121A2D);
+    panel.normal.gradient = GRADIENT_VERTICAL;
+    panel.normal.border = gfx2d::with_alpha(gold, 0.8);
+    panel.normal.border_width = 2.0;
+    panel.normal.radius = radii(16.0);
+    panel.normal.padding = radii(28.0);
+    panel.normal.gap = 14.0;
+    panel.normal.shadow = Shadow { color: gfx2d::rgba(0x000000, 0.6), offset: float2 { 0.0, 12.0 }, blur: 30.0 };
+    classes[PANEL.index] = style_set(panel.normal);
+
+    var b = classes[BUTTON.index];
+    var n = b.normal;
+    n.bg = gfx2d::rgb(0x34508C);
+    n.bg2 = gfx2d::rgb(0x1E2D52);
+    n.gradient = GRADIENT_VERTICAL;
+    n.border = gfx2d::with_alpha(gold, 0.55);
+    n.border_width = 1.5;
+    n.radius = radii(12.0);
+    n.shadow = Shadow { color: gfx2d::rgba(0x000000, 0.45), offset: float2 { 0.0, 4.0 }, blur: 8.0 };
+    b = style_set(n, spring(500, 28));
+    b.hover.bg = gfx2d::rgb(0x4767B0);
+    b.hover.bg2 = gfx2d::rgb(0x283C6C);
+    b.hover.border = gold;
+    b.hover.shadow = Shadow { color: glow, offset: float2 { 0.0, 0.0 }, blur: 18.0, spread: 1.0 };
+    b.hover.zoom = 1.04;
+    b.active.bg = gfx2d::rgb(0x22355F);
+    b.active.bg2 = gfx2d::rgb(0x1A2848);
+    b.active.offset = float2 { 0.0, 2.0 };
+    b.active.zoom = 0.98;
+    b.active.shadow = Shadow { color: gfx2d::rgba(0x000000, 0.3), offset: float2 { 0.0, 1.0 }, blur: 3.0 };
+    b.focused = b.hover;
+    b.focused.zoom = 1.04;
+    b.focused.ring = gfx2d::TRANSPARENT;
+    b.disabled.alpha = 0.4;
+    classes[BUTTON.index] = b;
+
+    var title = classes[TITLE.index];
+    title.normal.ink = gold;
+    classes[TITLE.index] = style_set(title.normal);
+
+    var thumb = classes[SLIDER_THUMB.index];
+    thumb.normal.bg = gold;
+    thumb.normal.border = gfx2d::rgb(0xFFF1C9);
+    thumb.hover = thumb.normal;
+    thumb.hover.zoom = 1.15;
+    thumb.hover.shadow = Shadow { color: glow, blur: 10.0, .. };
+    thumb.active = thumb.hover;
+    thumb.active.zoom = 1.25;
+    thumb.focused = thumb.hover;
+    thumb.focused.ring = gfx2d::TRANSPARENT;
+    classes[SLIDER_THUMB.index] = thumb;
+
+    var choice = classes[CHOICE.index];
+    choice.hover.bg = gfx2d::with_alpha(gold, 0.08);
+    choice.focused.bg = gfx2d::with_alpha(gold, 0.12);
+    choice.focused.ring = gfx2d::with_alpha(gold, 0.7);
+    choice.normal.padding = pad4(8.0, 4.0);
+    choice.hover.padding = choice.normal.padding;
+    choice.focused.padding = choice.normal.padding;
+    choice.active.padding = choice.normal.padding;
+    choice.checked.padding = choice.normal.padding;
+    choice.disabled.padding = choice.normal.padding;
+    classes[CHOICE.index] = choice;
+
+    var tab = classes[TAB.index];
+    tab.checked.bg = gfx2d::rgb(0x1F2C4A);
+    tab.checked.border = gfx2d::with_alpha(gold, 0.8);
+    tab.checked.ink = gold;
+    classes[TAB.index] = tab;
+    var tp = classes[TAB_PANEL.index];
+    tp.normal.bg = gfx2d::rgb(0x1F2C4A);
+    tp.normal.border = gfx2d::with_alpha(gold, 0.8);
+    classes[TAB_PANEL.index] = style_set(tp.normal, tp.transition);
+}

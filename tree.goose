@@ -276,7 +276,7 @@ fn text(s: const u8[:], c: StyleClass) { text(s, column().skin(c)); }
 //   imgui::textf(imgui::column()) { out => format(out, "Score ", score); };
 fn textf<F>(d: Desc) {
     let start = text_arena.len;
-    F(text_arena);
+    F(&text_arena);
     let len = text_arena.len - start;
     let i = add_node(NODE_TEXT, 0, d);
     if i < 0 { return; }

@@ -23,7 +23,7 @@ fn main() {
         if dark { imgui::theme_dark(); }
         let bg = if dark { gfx2d::rgb(0x111318) } else { gfx2d::rgb(0xE9ECEF) };
         gfx2d::frame(bg) {
-            imgui::frame() {
+            imgui::frame(frame_dt()) {
                 imgui::box("settings", imgui::column().skin(imgui::PANEL).width(420).gap(14)
                                          .place(imgui::CENTER, imgui::CENTER)) {
                     imgui::text("Settings", imgui::TITLE);

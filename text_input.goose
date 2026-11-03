@@ -19,7 +19,13 @@ import gfx2d;
 
 struct TextEdit { changed: bool = false, submitted: bool = false, active: bool = false }
 
-var copied: u8[>..] = [];       // copied or cut this frame, for the clipboard
+// Copied or cut this frame, for the clipboard: limited, as last_misuse is.
+var copied: u8[..4096] = [];
+
+fn copy_out(s: const u8[:]) {
+    copied.clear();
+    for c in s { if copied.len < copied.cap { copied.push(c); } }
+}
 
 fn utf8_prev(s: const u8[:], i: i64) -> i64 {
     var k = i - 1;
@@ -133,11 +139,10 @@ fn text_input(label: const u8[:], buf, d: Desc = row(), max_len: i64 = 256, plac
                     e.changed = true;
                 },
                 KEY_SELECT_ALL => { anchor = 0; caret = buf.len; },
-                KEY_COPY => { if sel { copied.clear(); copied.append(buf[s0..s1]); } },
+                KEY_COPY => { if sel { copy_out(buf[s0..s1]); } },
                 KEY_CUT => {
                     if sel {
-                        copied.clear();
-                        copied.append(buf[s0..s1]);
+                        copy_out(buf[s0..s1]);
                         erase_text(buf, s0, s1);
                         caret = s0;
                         anchor = caret;

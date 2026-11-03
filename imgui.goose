@@ -50,7 +50,6 @@ import text_input;
 // Starts a frame with this input, `dt` seconds after the last.
 fn begin_frame(inp: Input, dt: f64) {
     if in_frame { misuse("begin_frame: already in a frame"); }
-    ensure_theme();
     frame_index++;
     delta = clamp(dt, 0.0, 0.25);
     clock += delta;
@@ -93,8 +92,10 @@ fn frame<F>(inp: Input, dt: f64) {
     if gfx2d::state.drawing { draw(); }
 }
 // With gfx's input; and the clipboard and text input given back to gfx.
-fn frame<F>() {
-    begin_frame();
+fn frame<F>() { frame(gfx::delta_time()) { F(); }; }
+// The same, `dt` seconds after the last (a fixed step, for recording).
+fn frame<F>(dt: f64) {
+    begin_frame(input_from_gfx(), dt);
     F();
     end_frame();
     if gfx2d::state.drawing { draw(); }
