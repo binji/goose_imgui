@@ -24,7 +24,10 @@ menus, settings, inventories, HUDs and dialogs. It is drawn through
   used with Enter or A and backed out of with Escape or B. Focus is kept
   inside modals and menus.
 
-**Status:** in development. [docs/design.md](docs/design.md) is the plan.
+**Status:** the first set of widgets, layout, themes and motion are done.
+[docs/imgui.md](docs/imgui.md) is the reference,
+[docs/design.md](docs/design.md) the plan and its reasoning, and
+[docs/future_work.md](docs/future_work.md) what is next.
 
 ## Using it
 
@@ -68,8 +71,9 @@ fn main() {
 | `draw.goose` | drawing the frame through gfx2d |
 | `widgets.goose`, `scroll.goose`, `popup.goose`, `text_input.goose` | the widgets |
 | `context.goose`, `id.goose` | the state kept between frames; IDs |
-| `docs/` | `design.md`, the plan and its reasoning |
-| `examples/` | programs using the package, each a root file |
+| `docs/` | `imgui.md`, the reference; `design.md`, the plan and its reasoning; `future_work.md`, what is next |
+| `bench/` | `bench.goose`, and the latest `results.md` |
+| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`: programs using the package, each a root file |
 | `test/run_tests.py` | runs `test/pure/` (no GPU) and `test/headless/` (drawn and read back), comparing with `test/expected/` |
 
 All the modules are in `namespace imgui`.

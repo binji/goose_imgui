@@ -259,10 +259,12 @@ steps, so they move the same at any frame rate.
 - the text typed this frame;
 - edit keys.
 
-`input_from_gfx()` builds an `Input` from gfx's mouse, keyboard and first
-gamepad (the d-pad and left stick, with key repeat) and from the ordered
-event list for text. Tests build their own, because gfx can't inject wheel
-or gamepad input.
+`input_from_gfx()` builds an `Input` from gfx's mouse and keyboard, and
+from the ordered event list for text. gfx's v1 has no gamepad calls (they
+are on a later branch), so a program that reads a pad passes what it
+holds to `nav_from_pad`. That turns held directions into presses that
+repeat. Tests build their own `Input`, because gfx can't inject wheel or
+gamepad input.
 
 `wants_pointer()` and `wants_keyboard()` tell the game whether the UI took
 the input this frame.
@@ -287,6 +289,27 @@ the input this frame.
 - **Scrolling and popups:** focus moved by navigation scrolls its scroll
   panes to keep it in view. A closing popup gives focus back to the widget
   that opened it.
+
+## What building it taught
+
+- **The root is a stack.** Top-level boxes are each placed by
+  `place(h, v)`: a HUD's corners, a centered menu. A program wanting one
+  flow of boxes puts them in a column.
+- **Hit testing follows draw order.** The hit list is written root by
+  root, not in record order. Otherwise a popup recorded inside the menu bar
+  would sit under the main tree recorded after it.
+- **The borrow checker shaped the buffers.** A program's loop over string
+  literals (`for name in ["Easy", "Hard"] { radio(name, …); }`) may not
+  call a function that can shrink a growable `u8` global, nor an array
+  whose elements have `u8` fields. So:
+  - the misuse and clipboard buffers are limited arrays;
+  - the default theme is built by a global's initializer, not on first use;
+  - only `theme()` replaces the registry.
+- **Fixed-size buffers are copied** into untyped parameters, so
+  `text_input` takes its buffer as `A&`.
+- **Culling.** Drawing dominated the benchmark until subtrees outside
+  their clip were skipped. Each node's bounds are found in one reverse
+  pass after layout.
 
 ## Widgets (first set)
 
@@ -333,6 +356,8 @@ tag yet, and a requirement line naming a source would clash with a program
 that declares gfx2d by path.
 
 ## Phases
+
+All of these are done. [imgui.md](imgui.md) is the reference.
 
 0. Skeleton, this document, and the language spikes. These confirmed:
    - recursion through gfx2d's clip and layer blocks;
