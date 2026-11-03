@@ -187,7 +187,28 @@ fn finish_frame() {
             put_state(n.id, st);
         }
     }
+    list_bounds();
     list_hits();
+}
+
+// Each node's bounds: what its box, shadow and ring cover on the screen,
+// and its subtree's; last node first, so children come before parents.
+fn list_bounds() {
+    var i = nodes.len as i32 - 1;
+    while i >= 0 {
+        let n .= nodes[i];
+        let s .= n.style;
+        let reach = max(s.shadow.blur * 3.0 + max(abs(s.shadow.offset.x), abs(s.shadow.offset.y)) + s.shadow.spread,
+                        s.ring_offset + s.ring_width) + 2.0;
+        var b = gfx2d::inflate(n.screen, reach * n.m.a);
+        var c = n.first;
+        while c >= 0 {
+            b = gfx2d::union(b, nodes[c].bounds);
+            c = nodes[c].next;
+        }
+        n.bounds = b;
+        i--;
+    }
 }
 
 // The hit list and the focus list, in the order things are drawn: root by

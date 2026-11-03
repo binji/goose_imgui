@@ -36,9 +36,15 @@ fn motion_affine(n: Node&) -> gfx2d::Affine {
     gfx2d::Affine { z, 0.0, 0.0, z, c.x + n.shift.x - z * c.x, c.y + n.shift.y - z * c.y }
 }
 
+fn overlaps(a: gfx2d::Rect, b: gfx2d::Rect) -> bool {
+    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+}
+
 recursive fn draw_tree(i: i32, alpha: f32) {
     let a = alpha * nodes[i].alpha;
     if a <= 0.002 { return; }
+    // Scrolled or clipped out of sight: none of it drawn.
+    if !overlaps(nodes[i].bounds, nodes[i].clip) { return; }
     if moved(nodes[i]) {
         gfx2d::transform(motion_affine(nodes[i])) { draw_body(i, a); };
     } else {
