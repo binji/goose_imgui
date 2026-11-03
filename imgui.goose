@@ -170,6 +170,7 @@ fn finish_frame() {
             let p .= nodes[n.parent];
             if p.d.vis.clips { gfx2d::intersect(p.clip, gfx2d::transformed_bounds(pm, box_of(p))) } else { p.clip }
         };
+        n.owner = if n.d.bits & HIT != 0 { i } else if n.parent >= 0 { nodes[n.parent].owner } else { -1 };
         n.ring = focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0;
         let screen = gfx2d::transformed_bounds(n.m, box_of(n));
         n.screen = screen;
@@ -220,8 +221,17 @@ fn list_hits() {
             let n .= nodes[i];
             if n.root != k { continue; }
             let blocks = n.d.bits & BLOCKS != 0 || (n.kind == NODE_BOX && (n.style.bg.a > 0.0 || n.style.slice != 0));
-            if n.d.bits & (HIT | SCROLLS_X | SCROLLS_Y) != 0 || blocks {
+            if n.d.bits & (HIT | SCROLLS_X | SCROLLS_Y) != 0 {
                 hits.push(Hit { n.id, n.screen, n.clip, n.d.bits, level });
+            } else if blocks {
+                // A part of a widget (a toggle's track, a slider's thumb, a
+                // drawn icon) is hit as the widget it is in.
+                if n.owner >= 0 {
+                    let o .= nodes[n.owner];
+                    hits.push(Hit { o.id, n.screen, n.clip, o.d.bits, level });
+                } else {
+                    hits.push(Hit { n.id, n.screen, n.clip, n.d.bits, level });
+                }
             }
             if n.d.bits & FOCUSABLE != 0 {
                 focusables.push(Focusable { n.id, n.screen, n.scope, level, n.d.bits });

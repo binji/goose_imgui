@@ -116,6 +116,12 @@ fn main() {
     print("nine-slice: corner ", near(3, 3, 0xFF0000, 8), ", edge ", near(60, 4, 0xFF0000, 8),
           ", middle ", near(60, 30, 0x00FF00, 8), ", past the corner's 10 ", near(15, 30, 0x00FF00, 8));
 
+    // The UI's scale: a 20-pixel box drawn 40 at 2.
+    imgui::set_scale(2);
+    render(none) { imgui::panel(imgui::column().size(20, 20).bg(gfx2d::rgb(0x00A0A0))); };
+    imgui::set_scale(1);
+    print("scale 2: ", near(35, 35, 0x00A0A0), ", past it ", near(45, 45, 0xFFFFFF));
+
     // The focus ring: none after the pointer; around the button after
     // navigation focuses it.
     fn buttons() {

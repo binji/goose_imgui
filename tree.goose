@@ -66,6 +66,7 @@ struct Node {
     bounds: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },    // what it and its subtree draw on, on the screen
     ring: bool = false,                 // its focus ring shows
     scope: u64 = 0,                     // its nav scope
+    owner: i32 = -1,                    // the nearest node at or above it that takes the pointer
 }
 
 // A popup's root: where it goes is its anchor.

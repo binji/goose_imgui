@@ -5,5 +5,6 @@ isolated overlap: true
 clipped: inside true, outside true, below true
 offset: true child moved too true; scaled: true, past its box: true
 nine-slice: corner true, edge true, middle true, past the corner's 10 true
+scale 2: true, past it true
 no ring: true
 ring after navigation: true

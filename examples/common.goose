@@ -1,6 +1,7 @@
 // What the examples share: the command line (--frames N runs N frames and
 // quits, --screenshot FILE saves the last one, --theme light|dark|game
-// picks a theme, --keys A,B presses keys during the run) and the loop
+// picks a theme, --scale 2 draws the UI twice as big (or set IMGUI_SCALE),
+// --keys A,B presses keys during the run) and the loop
 // around a frame.
 import std;
 import os;
@@ -28,6 +29,10 @@ fn parse_args() {
             i++;
         } else if argv[i] == "--keys" && i + 1 < argv.len {
             keys.append(argv[i + 1]);
+            i++;
+        } else if argv[i] == "--scale" && i + 1 < argv.len {
+            let s, ok = parse_flt(argv[i + 1]);
+            if ok { imgui::set_scale(s); }
             i++;
         } else if argv[i] == "--theme" && i + 1 < argv.len {
             theme_name.append(argv[i + 1]);

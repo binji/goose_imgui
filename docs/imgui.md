@@ -35,7 +35,10 @@ fn main() {
 
 **Conventions**
 * **Units:** pixels with y down, under gfx2d's base scale
-  (`gfx2d::set_scale`). `input_from_gfx` divides the mouse by that scale.
+  (`gfx2d::set_scale`) and imgui's own (`imgui::set_scale`, or the
+  `IMGUI_SCALE` environment variable). `input_from_gfx` divides the mouse
+  by both. On a high-density screen, set the scale to the display's (gfx
+  can't tell imgui what it is yet).
 * **Scalar parameters are `f64`**, as in gfx2d, so integers and floats of
   either width all pass. Layout, styles and motion keep `f32`.
 * **Namespace:** everything is `imgui::name`.
@@ -61,7 +64,7 @@ The examples each show one part:
 - `settings`: a menu bar, tabs, dropdowns, a text field and a modal.
 
 Each takes `-- --frames N --screenshot file.png --theme light|dark|game
---keys Down,Return`. With `--frames`, every frame is 1/60 s.
+--scale 2 --keys Down,Return`. With `--frames`, every frame is 1/60 s.
 
 ## The frame
 
@@ -73,7 +76,8 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `begin_frame(input, dt)`, `end_frame()`, `draw()` | the parts: `draw` inside a gfx2d frame, after `end_frame` |
 | `input_from_gfx() -> Input` | gfx's mouse and keyboard, and the ordered events for typed text and the clipboard |
 | `nav_from_pad(input, PadState)` | a gamepad's held buttons and stick, as navigation, with repeat (gfx v1 has no gamepads; a program reading one passes what it holds) |
-| `set_viewport(rect)` | the UI's area; by default the screen, under gfx2d's scale |
+| `set_viewport(rect)` | the UI's area; by default the screen, under the scales |
+| `set_scale(s)` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE` |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over the UI, or holds a press) or the keyboard (a text field has focus) this frame |
 | `cancelled()` | Escape or B pressed with no popup open to close: for the game's own "back" |
 | `time()`, `dt()` | imgui's clock |
@@ -252,6 +256,10 @@ fn slot(k: i64, item: Item, chosen: bool) -> bool {
 |---|---|
 | `clickable(d)`, `.hit()`, `.focusable()` | take the pointer, take the focus |
 | `.blocks()`, `.nav_skip()`, `.disabled(on)`, `.keep()` | stop the pointer; leave out of navigation; disable; keep state without a label |
+
+The parts inside a widget that have looks of their own (a toggle's
+track, a slider's thumb, the gem in an inventory slot) are hit as the
+widget: the pointer on any of them hovers, presses and drags the widget.
 | `with_bits(CAPTURE_X)` | left and right go to the widget while it is focused (`it.nav.x`) |
 | `interact(id, d) -> Interaction` | the interaction a widget recorded with `id` and `d` will have, asked before recording it so its look can follow |
 | `look_of(it)`, `checked_look(on)` | the look state of an interaction, or of on/off |

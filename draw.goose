@@ -18,7 +18,11 @@ fn draw() {
         misuse("draw: not inside a gfx2d frame");
         return;
     }
-    for r in roots { draw_tree(r.node, 1.0); }
+    if ui_scale != 1.0 {
+        gfx2d::scale(ui_scale) { for r in roots { draw_tree(r.node, 1.0); } };
+    } else {
+        for r in roots { draw_tree(r.node, 1.0); }
+    }
 }
 
 // Where node n's own box is drawn, in its layout's space: its rect, at the

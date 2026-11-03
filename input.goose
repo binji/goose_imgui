@@ -316,12 +316,12 @@ fn push_key(inp: Input&, key: i64, shift: bool, word: bool) {
 }
 
 // This frame's input from gfx: the mouse and the keyboard, in the UI's
-// units under gfx2d's base scale. (gfx's v1 has no gamepads; a program
+// units: under gfx2d's base scale and imgui's own (set_scale). (gfx's v1 has no gamepads; a program
 // reading one passes what it holds to nav_from_pad.)
 fn input_from_gfx() -> Input {
     scan_codes();
     var inp = Input { .. };
-    let scale = max(gfx2d::current_scale(), 0.0001) as f32;
+    let scale = max(gfx2d::current_scale() * ui_scale, 0.0001) as f32;
     inp.pointer.pos = if gfx::mouse_in_window() || gfx::mouse_down(gfx::MOUSE_LEFT) {
         gfx::mouse_pos() / scale
     } else {

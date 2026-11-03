@@ -6,18 +6,20 @@ released: clicks 1
 dragged off: clicks 1
 sound true
 vibration false
+vibration, by its track: true
 volume at the left: 0.0
 volume dragged: 0.7
+volume dragged by the thumb: 0.3
 level 1
 focused: Play
 focused: the volume slider
-volume by nav: 0.9
+volume by nav: 0.5
 focused: the volume slider
 focused: Hard
 focused: Easy
 level 0
 focused: Sound
-sound false, vibration false
+sound false, vibration true
 focused: Play
 clicks 2
 cancelled: false

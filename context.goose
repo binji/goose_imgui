@@ -19,6 +19,20 @@ var clock: f64 = 0.0;           // seconds since the first frame
 var in_frame = false;
 var viewport = gfx2d::Rect { 0.0, 0.0, 800.0, 600.0 };
 
+// The UI's own scale, over gfx2d's base scale: 2 draws everything twice
+// as big, for a high-density screen or a TV across the room. It starts at
+// the IMGUI_SCALE environment variable's value, if there is one.
+var ui_scale: f64 = scale_from_env();
+
+fn scale_from_env() -> f64 {
+    var v: u8[>..] = [];
+    if !env("IMGUI_SCALE", v) { return 1.0; }
+    let s, ok = parse_flt(v);
+    if ok && s > 0.0 { s } else { 1.0 }
+}
+fn set_scale(s: f64) { if s > 0.0 { ui_scale = s; } }
+fn ui_scale_of() -> f64 { ui_scale }
+
 fn time() -> f64 { clock }
 fn dt() -> f64 { delta }
 

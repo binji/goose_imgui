@@ -47,6 +47,11 @@ fn center(label: const u8[:]) -> float2 {
     let r = imgui::rect_of(imgui::id(label));
     float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 }
 }
+// Where the first node of a class was drawn.
+fn class_node(c: u16) -> gfx2d::Rect {
+    for n in imgui::nodes { if n.d.vis.class.index == c { return n.screen; } }
+    gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 }
+}
 fn focused(label: const u8[:]) -> bool { imgui::is_focused(imgui::id(label)) }
 fn show_focus() {
     for l in ["Play", "Sound", "Vibration", "Easy", "Hard"] {
@@ -89,6 +94,14 @@ fn main() {
     release();
     print("vibration ", vibrate);
 
+    // A part of a widget with a look of its own hits as the widget: the
+    // toggle's track, not only its label.
+    let track = class_node(imgui::TOGGLE.index);
+    pos = float2 { track.x + track.w * 0.5, track.y + track.h * 0.5 };
+    press();
+    release();
+    print("vibration, by its track: ", vibrate);
+
     // The slider: pressed at its left end, dragged to 70%, snapped to 0.1.
     let tr = imgui::rect_of(imgui::sub_id(imgui::id("Volume"), "track"));
     pos = float2 { tr.x + 2.0, tr.y + tr.h * 0.5 };
@@ -98,6 +111,15 @@ fn main() {
     step();
     release();
     print("volume dragged: ", round(volume * 10.0) / 10.0);
+
+    // Dragged by its thumb: pressed on it (at 70%), moved to 30%.
+    let thumb = class_node(imgui::SLIDER_THUMB.index);
+    pos = float2 { thumb.x + thumb.w * 0.5, thumb.y + thumb.h * 0.5 };
+    press();
+    pos = float2 { tr.x + tr.w * 0.3, tr.y + tr.h * 0.5 };
+    step();
+    release();
+    print("volume dragged by the thumb: ", round(volume * 10.0) / 10.0);
 
     // Radios.
     pos = center("Hard");
