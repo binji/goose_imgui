@@ -62,6 +62,7 @@ struct Node {
     alpha: f32 = 1.0,
     m: gfx2d::Affine = gfx2d::Affine { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 },   // to the screen
     clip: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },  // the screen clip it is drawn in
+    screen: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },    // its box on the screen
     ring: bool = false,                 // its focus ring shows
     scope: u64 = 0,                     // its nav scope
 }

@@ -148,7 +148,7 @@ var popup_motion = tween(0.12, EASE_OUT_CUBIC);
 
 // The root of popup `i`, its block recorded while it is open, or closing
 // (input off, fading out).
-fn popup_root<F>(i: Id, kind: i64, d: Desc, c: StyleClass) {
+fn popup_root<F>(i: Id, kind: i64, d: Desc, c: StyleClass, anchor_node: i32 = -1) {
     let lv = popup_level(i.v);
     let ci = closing_index(i.v);
     guard lv > 0 || ci >= 0;
@@ -159,6 +159,7 @@ fn popup_root<F>(i: Id, kind: i64, d: Desc, c: StyleClass) {
     } else {
         a = closing[ci].anchor;
     }
+    if anchor_node >= 0 { a.node = anchor_node; }
     let t, alive = presence(sub_id(i, "presence"), lv > 0, popup_motion);
     if !alive {
         if ci >= 0 { remove_closing(i.v); }
@@ -209,3 +210,159 @@ fn modal<F>(label: const u8[:], open: bool&, d: Desc) {
     popup_root(i, POPUP_MODAL, d, MODAL) { F(); };
 }
 fn modal<F>(label: const u8[:], open: bool&) { modal(label, open, column()) { F(); }; }
+
+// --- menus ------------------------------------------------------------------------------
+
+struct MenuCtx { bar: u64, in_popup: bool }
+var menu_stack: MenuCtx[>..<] = [];
+
+// A row of menus along the top of a window or screen.
+fn menu_bar<F>(label: const u8[:], d: Desc = row()) {
+    let i = id(label);
+    menu_stack.push(MenuCtx { i.v, false });
+    defer menu_stack.pop();
+    box(i, d.skin(MENU_BAR).grow_w().align(CENTER)) {
+        nav_scope("menu bar", NAV_WRAP) { F(); };
+    };
+}
+
+// Whether one of the bar's menus is open: hovering another then opens it.
+fn bar_menu_open(bar: u64) -> bool {
+    for p in popups { if p.kind == POPUP_MENU && state_of(p.id).owner == bar { return true; } }
+    false
+}
+
+// A menu: a header in a menu bar (or an item in another menu, for a
+// submenu), and its items in a popup while it is open. True while open.
+fn menu<F>(label: const u8[:]) -> bool {
+    let i = id(label);
+    let pid = sub_id(i, "menu");
+    let ctx = if menu_stack.len > 0 { menu_stack[menu_stack.len - 1] } else { MenuCtx { 0, false } };
+    let nested = current_level() > 0;
+    var open = popup_level(pid.v) > 0;
+    let hd = if nested { clickable(row().skin(MENU_ITEM).grow_w().align(CENTER)) } else { clickable(row().skin(MENU_HEADER).align(CENTER)) };
+    let it = interact(i, hd.look(checked_look(open)));
+    var opening = false;
+    if it.activated {
+        if open { close_popup(pid); open = false; } else { opening = true; }
+    } else if it.hovered && !open {
+        // Hovered: a submenu opens; a bar's menu opens if another of the bar's is.
+        if nested || (ctx.bar != 0 && bar_menu_open(ctx.bar)) { opening = true; }
+    }
+    if opening {
+        let a = Anchor { kind: if nested { ANCHOR_RIGHT } else { ANCHOR_BELOW }, rect: it.rect, .. };
+        open_popup_at(pid, POPUP_MENU, a);
+        var ps = state_of(pid.v);
+        ps.owner = ctx.bar;
+        ps.seen = frame_index;
+        put_state(pid.v, ps);
+        open = true;
+    }
+    let header = nodes.len as i32;
+    box(i, hd.look(checked_look(open))) {
+        text(label_text(label), column().grow_w());
+        if nested { icon(ICON_CHEVRON_RIGHT); }
+    };
+    menu_stack.push(MenuCtx { ctx.bar, true });
+    popup_root(pid, POPUP_MENU, column().min_w(160), MENU, header) { F(); };
+    menu_stack.pop();
+    open
+}
+
+// An item in a menu: true the frame it is chosen, which closes the menus.
+fn menu_item(label: const u8[:], shortcut: const u8[:] = "") -> bool {
+    let i = id(label);
+    let it = box(i, clickable(row().skin(MENU_ITEM).grow_w().align(CENTER))) {
+        text(label_text(label), column().grow_w());
+        if shortcut.len > 0 { text(shortcut, column().skin(MUTED)); }
+    };
+    // Hovering an item closes a sibling's submenu.
+    let lv = current_level();
+    if it.hovered && lv > 0 && popups.len > lv {
+        close_popups_above(lv);
+    }
+    if it.activated { close_all_popups(); }
+    it.activated
+}
+// An item with a check mark, toggling `v`.
+fn menu_check(label: const u8[:], v: bool&) -> bool {
+    let i = id(label);
+    let it = box(i, clickable(row().skin(MENU_ITEM).grow_w().align(CENTER).gap(8))) {
+        icon(ICON_CHECK, column().opacity(if v { 1.0 } else { 0.0 }));
+        text(label_text(label), column().grow_w());
+    };
+    if it.activated { v = !v; close_all_popups(); }
+    it.activated
+}
+
+// --- dropdowns ----------------------------------------------------------------------------
+
+// One of `items`, shown in a button; the list in a popup under it.
+fn dropdown(label: const u8[:], items: const u8[:][:], selected: i64&) -> bool {
+    dropdown(label, items, selected, row())
+}
+fn dropdown(label: const u8[:], items: const u8[:][:], selected: i64&, d: Desc) -> bool {
+    let i = id(label);
+    let pid = sub_id(i, "list");
+    var open = popup_level(pid.v) > 0;
+    let hd = clickable(d.skin(DROPDOWN).align(CENTER));
+    let it = interact(i, hd.look(checked_look(open)));
+    if it.activated {
+        if open {
+            close_popup(pid);
+            open = false;
+        } else {
+            open_popup_at(pid, POPUP_MENU, Anchor { kind: ANCHOR_BELOW, rect: it.rect, .. });
+            open = true;
+            // The chosen item takes the focus, for the arrows to move from.
+            if selected >= 0 && selected < items.len {
+                id_scope(pid) { focused = id(selected).v; };
+            }
+        }
+    }
+    let shown = if selected >= 0 && selected < items.len { items[selected] } else { "" };
+    let header = nodes.len as i32;
+    let width = state_of(i.v).rect.w;
+    box(i, hd.look(checked_look(open))) {
+        text(label_text(shown), column().grow_w());
+        icon(ICON_CHEVRON_DOWN, column().opacity(0.7));
+    };
+    let before = selected;
+    popup_root(pid, POPUP_MENU, column().min_w(width), MENU, header) {
+        id_scope(pid) {
+            for item, k in items {
+                let ok = box(k, clickable(row().skin(MENU_ITEM).grow_w().align(CENTER))
+                                    .look(checked_look(k == selected))) {
+                    text(label_text(item));
+                };
+                if ok.activated {
+                    selected = k;
+                    close_popup(pid);
+                }
+            }
+        };
+    };
+    selected != before
+}
+
+// --- tooltips ---------------------------------------------------------------------------------
+
+let TOOLTIP_DELAY = 0.5;
+
+// A tooltip for the widget `it` is the interaction of: shown under it after
+// the pointer has rested on it a moment (or the focus, by navigation).
+fn tooltip<F>(it: Interaction) {
+    let tid = Id { hash_combine(it.id, 0x7001) };
+    var st = state_of(tid.v);
+    let on = it.hovered || (it.focused && focus_visible);
+    st.value = if on { st.value + delta as f32 } else { 0.0 };
+    st.seen = frame_index;
+    put_state(tid.v, st);
+    let t, alive = presence(tid, on && st.value >= TOOLTIP_DELAY, tween(0.1));
+    guard alive;
+    open_root(ROOT_TOOLTIP, tid.v, Anchor { kind: ANCHOR_BELOW, rect: it.rect, .. }, column());
+    roots[roots.len - 1].level = -1;
+    box(column().skin(TOOLTIP).opacity(t).max_w(320)) { F(); };
+    close_root();
+}
+fn tooltip(it: Interaction, s: const u8[:]) { tooltip(it) { text(s, column().wrap()); }; }

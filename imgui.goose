@@ -171,14 +171,7 @@ fn finish_frame() {
         };
         n.ring = focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0;
         let screen = gfx2d::transformed_bounds(n.m, box_of(n));
-        let level = roots[n.root].level;
-        let blocks = n.d.bits & BLOCKS != 0 || (n.kind == NODE_BOX && (n.style.bg.a > 0.0 || n.style.slice != 0));
-        if n.d.bits & (HIT | SCROLLS_X | SCROLLS_Y) != 0 || blocks {
-            hits.push(Hit { n.id, screen, n.clip, n.d.bits, level });
-        }
-        if n.d.bits & FOCUSABLE != 0 {
-            focusables.push(Focusable { n.id, screen, n.scope, level, n.d.bits });
-        }
+        n.screen = screen;
         if keeps {
             st.rect = n.rect;
             st.screen = screen;
@@ -191,6 +184,26 @@ fn finish_frame() {
             st.seen = frame_index;
             st.laid = true;
             put_state(n.id, st);
+        }
+    }
+    list_hits();
+}
+
+// The hit list and the focus list, in the order things are drawn: root by
+// root, each in the order it was recorded.
+fn list_hits() {
+    for r, k in roots {
+        let level = r.level;
+        for i: i32 in r.node..nodes.len as i32 {
+            let n .= nodes[i];
+            if n.root != k { continue; }
+            let blocks = n.d.bits & BLOCKS != 0 || (n.kind == NODE_BOX && (n.style.bg.a > 0.0 || n.style.slice != 0));
+            if n.d.bits & (HIT | SCROLLS_X | SCROLLS_Y) != 0 || blocks {
+                hits.push(Hit { n.id, n.screen, n.clip, n.d.bits, level });
+            }
+            if n.d.bits & FOCUSABLE != 0 {
+                focusables.push(Focusable { n.id, n.screen, n.scope, level, n.d.bits });
+            }
         }
     }
 }

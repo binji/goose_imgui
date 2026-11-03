@@ -216,3 +216,67 @@ fn separator() {
         panel(column().skin(SEPARATOR).height(1).self_align(STRETCH));
     }
 }
+
+// --- tabs ------------------------------------------------------------------------------------
+
+struct TabsCtx { id: u64, bar: i32, body: i32, count: i64, selected: i64 }
+var tabs_stack: TabsCtx[>..<] = [];
+
+// A row of tabs and the selected one's content: the block records each
+// tab(…) in order. A click, or accept, on a tab selects it; so do the
+// shoulder buttons (tab_left, tab_right), if `shoulders`.
+fn tabs<F>(label: const u8[:], selected: i64&, d: Desc = column(), shoulders: bool = true) {
+    let i = id(label);
+    var st = state_of(i.v);
+    var sel = selected;
+    // One of its tabs clicked this frame: known before any is recorded.
+    for k in [clicked_id, accept_id] {
+        if k != 0 {
+            let ts = state_of(k);
+            if ts.owner == i.v && ts.index >= 0 { sel = ts.index; }
+        }
+    }
+    let count = st.index as i64;
+    if shoulders && count > 0 {
+        if input.nav.tab_left { sel = (sel + count - 1) % count; }
+        if input.nav.tab_right { sel = (sel + 1) % count; }
+    }
+    let at = nodes.len as i32;
+    box(i, d.gap(0)) {
+        let bar = nodes.len as i32;
+        panel(row().skin(TAB_BAR));
+        let body = nodes.len as i32;
+        panel(column().skin(TAB_PANEL).grow());
+        tabs_stack.push(TabsCtx { i.v, bar, body, 0, sel });
+        F();
+        let ctx = tabs_stack.pop();
+        st.index = ctx.count as i32;
+    };
+    st.seen = frame_index;
+    put_state(i.v, st);
+    selected = sel;
+}
+
+// A tab: its header in the bar; the block, its content, while selected.
+fn tab<F>(label: const u8[:]) {
+    guard tabs_stack.len > 0 else { misuse("tab: not inside tabs"); return; }
+    let k = tabs_stack.len - 1;
+    let ctx = tabs_stack[k];
+    let index = ctx.count;
+    tabs_stack[k].count = index + 1;
+    let i = id(label);
+    let on = index == ctx.selected;
+    push_parent(ctx.bar, false);
+    box(i, clickable(row().skin(TAB).center()).look(checked_look(on))) { text(label_text(label)); };
+    close_node();
+    var hs = state_of(i.v);
+    hs.owner = ctx.id;
+    hs.index = index as i32;
+    put_state(i.v, hs);
+    if on {
+        push_parent(ctx.body, false);
+        let m = class_transition(TAB_PANEL);
+        box(sub_id(i, "content"), column().grow().enter(fade_in(m))) { F(); };
+        close_node();
+    }
+}

@@ -1,0 +1,26 @@
+file open: 1
+  popup texts: New|Ctrl+N|Recent|Quit|
+view open: 1
+  popup texts: New|Ctrl+N|Recent|Quit|Grid|
+closed: 0
+submenu: 2
+chose: level1; open: 0
+grid: true
+tab 1
+tab 2
+tab 0
+dropdown open: 1
+  popup texts: Low|Medium|High|
+quality 2 open: 0
+focused the dropdown, open: 1
+quality 1 open: 0
+open: 1
+cancelled, open: 0; focus back: true
+  popup texts: Low|Medium|High|
+  popup texts: Help text|
+  popup texts: 
+modal open: 1 confirm true
+under the modal: clicks 0; open: 1
+cancelled: confirm false open: 0
+yes: level1;reset; confirm false
+after: clicks 1
