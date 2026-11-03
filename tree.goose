@@ -152,8 +152,9 @@ fn add_node(kind: i64, id: u64, var d: Desc) -> i32 {
     var st = apply_overrides(resolve_style(d.vis.class, d.vis.state), d.vis, d.lay);
     d.lay.padding = st.padding;
     if d.lay.spacing == float2_0 && st.gap > 0.0 { d.lay.spacing = float2 { st.gap, st.gap }; }
-    d.dim.w.lo = max(d.dim.w.lo, st.min_size.x);
-    d.dim.h.lo = max(d.dim.h.lo, st.min_size.y);
+    // A style's minimum size, unless the Desc gives one in pixels.
+    if d.dim.w.kind != SIZE_PX { d.dim.w.lo = max(d.dim.w.lo, st.min_size.x); }
+    if d.dim.h.kind != SIZE_PX { d.dim.h.lo = max(d.dim.h.lo, st.min_size.y); }
     let up = inherited[inherited.len - 1];
     if st.ink.a <= 0.0 { st.ink = up.ink; }
     if st.font.id == 0 { st.font = up.font; }

@@ -51,7 +51,7 @@ fn word_next(s: const u8[:], i: i64) -> i64 {
 }
 
 // buf[a..b] removed.
-fn erase_text(buf, a: i64, b: i64) {
+fn erase_text<A>(buf: A&, a: i64, b: i64) {
     let n = b - a;
     if n <= 0 { return; }
     for k in a..buf.len - n { buf[k] = buf[k + n]; }
@@ -59,7 +59,7 @@ fn erase_text(buf, a: i64, b: i64) {
 }
 // `s` put in buf at `at`, as much as max_len leaves room for (whole
 // characters); how much went in.
-fn insert_text(buf, at: i64, s: const u8[:], max_len: i64) -> i64 {
+fn insert_text<A>(buf: A&, at: i64, s: const u8[:], max_len: i64) -> i64 {
     var n = min(s.len, max_len - buf.len);
     if n <= 0 { return 0; }
     while n < s.len && n > 0 && (s[n] & 0xC0) == 0x80 { n--; }
@@ -74,7 +74,7 @@ fn insert_text(buf, at: i64, s: const u8[:], max_len: i64) -> i64 {
     n
 }
 
-fn text_input(label: const u8[:], buf, d: Desc = row(), max_len: i64 = 256, placeholder: const u8[:] = "") -> TextEdit {
+fn text_input<A>(label: const u8[:], buf: A&, d: Desc = row(), max_len: i64 = 256, placeholder: const u8[:] = "") -> TextEdit {
     let i = id(label);
     let rd = clickable(d.skin(INPUT).with_bits(CAPTURE_X).align(CENTER)).clip();
     let it = interact(i, rd);

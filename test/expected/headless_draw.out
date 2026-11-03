@@ -1,0 +1,8 @@
+fill: true; border: true; corner outside: true
+gradient: top red true, bottom blue true, middle between true
+opacity 0.5: true; nested, over its parent: true
+isolated overlap: true
+clipped: inside true, outside true, below true
+offset: true child moved too true; scaled: true, past its box: true
+no ring: true
+ring after navigation: true

@@ -1,0 +1,9 @@
+content 500.0 view 100.0
+wheel down two lines, a frame later: true
+settled: 96.0
+past the end: 400.0
+wheel outside the pane: 400.0
+back at the top: 0.0
+focused row 5, scrolled to: 58.0
+back up to row 0: 0.0
+thumb dragged 25 of a 100 view of 500: 125.0
