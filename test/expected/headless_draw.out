@@ -4,5 +4,6 @@ opacity 0.5: true; nested, over its parent: true
 isolated overlap: true
 clipped: inside true, outside true, below true
 offset: true child moved too true; scaled: true, past its box: true
+nine-slice: corner true, edge true, middle true, past the corner's 10 true
 no ring: true
 ring after navigation: true

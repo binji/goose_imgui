@@ -1,16 +1,21 @@
 // What the examples share: the command line (--frames N runs N frames and
-// quits, --screenshot FILE saves the last one, --dark uses the dark theme)
-// and the loop around a frame.
+// quits, --screenshot FILE saves the last one, --theme light|dark|game
+// picks a theme, --keys A,B presses keys during the run) and the loop
+// around a frame.
 import std;
 import os;
 import gfx;
 
 var frames_wanted = -1;
 var screenshot_path: u8[>..] = [];
-var dark = false;
+var theme_name: u8[>..] = [];
 var keys: u8[>..] = [];         // --keys Down,Return: pressed one by one from frame 40, 12 apart
 
+var parsed = false;
+
 fn parse_args() {
+    if parsed { return; }
+    parsed = true;
     let argv = args();
     var i = 1;
     while i < argv.len {
@@ -24,8 +29,9 @@ fn parse_args() {
         } else if argv[i] == "--keys" && i + 1 < argv.len {
             keys.append(argv[i + 1]);
             i++;
-        } else if argv[i] == "--dark" {
-            dark = true;
+        } else if argv[i] == "--theme" && i + 1 < argv.len {
+            theme_name.append(argv[i + 1]);
+            i++;
         }
         i++;
     }

@@ -104,6 +104,18 @@ fn main() {
     print("offset: ", near(130, 130, 0x202020), " child moved too ", near(105, 105, 0xF0F000),
           "; scaled: ", near(W - 20, H - 20, 0x2020A0), ", past its box: ", near(W - 55, H - 55, 0x2020A0));
 
+    // A nine-slice: a 30-pixel texture, red within 10 of its edge and green
+    // inside, stretched over 120 by 60: its corners and edges keep their
+    // 10 pixels, its middle stretches.
+    let tex = gfx::render_target(30, 30, gfx::RGBA8);
+    gfx2d::draw_into(tex, gfx2d::rgb(0xFF0000)) { gfx2d::rect(10, 10, 10, 10, gfx2d::rgb(0x00FF00)); };
+    let slice = imgui::add_nine_slice(tex, gfx2d::rect_of(0, 0, 30, 30), float4 { 10.0, 10.0, 10.0, 10.0 },
+                                      gfx2d::FILTER_NEAREST);
+    let framed = imgui::add_class(imgui::style_set(imgui::Style { slice: slice, .. }));
+    render(none) { imgui::panel(imgui::column().size(120, 60).skin(framed)); };
+    print("nine-slice: corner ", near(3, 3, 0xFF0000, 8), ", edge ", near(60, 4, 0xFF0000, 8),
+          ", middle ", near(60, 30, 0x00FF00, 8), ", past the corner's 10 ", near(15, 30, 0x00FF00, 8));
+
     // The focus ring: none after the pointer; around the button after
     // navigation focuses it.
     fn buttons() {

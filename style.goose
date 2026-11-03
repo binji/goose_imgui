@@ -555,6 +555,21 @@ fn theme_game() {
     choice.disabled.padding = choice.normal.padding;
     classes[CHOICE.index] = choice;
 
+    // Tracks: faint light over the dark panel, not a darker blue lost in it.
+    let groove = gfx2d::rgba(0xF3E9D2, 0.14);
+    for c in [SLIDER_TRACK, PROGRESS_TRACK] {
+        var t = classes[c.index];
+        t.normal.bg = groove;
+        classes[c.index] = style_set(t.normal);
+    }
+    var tog = classes[TOGGLE.index];
+    tog.normal.bg = groove;
+    tog.hover.bg = gfx2d::rgba(0xF3E9D2, 0.22);
+    tog.active.bg = tog.hover.bg;
+    tog.focused.bg = groove;
+    tog.disabled.bg = groove;
+    classes[TOGGLE.index] = tog;
+
     var tab = classes[TAB.index];
     tab.checked.bg = gfx2d::rgb(0x1F2C4A);
     tab.checked.border = gfx2d::with_alpha(gold, 0.8);

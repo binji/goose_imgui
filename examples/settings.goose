@@ -2,7 +2,7 @@
 // here, switch them), dropdowns, toggles, sliders, a name field, and a
 // modal to confirm a reset.
 //
-//   goose examples/settings.goose [-- --dark] [-- --frames 60 --screenshot settings.png]
+//   goose examples/settings.goose [-- --theme dark|game] [-- --frames 60 --screenshot settings.png]
 import std;
 import vec;
 import gfx;
@@ -27,11 +27,20 @@ var color = 0;
 var reset_open = false;
 var show_fps = false;
 
+// The theme --theme names, and a background to go with it.
+fn backdrop() -> gfx2d::Color {
+    if theme_name == "dark" { return gfx2d::rgb(0x111318); }
+    if theme_name == "game" { return gfx2d::rgb(0x0B1020); }
+    gfx2d::rgb(0xDDE2E8)
+}
+
 fn main() {
     name.append("Wanderer");
+    parse_args();
+    if theme_name == "dark" { imgui::theme_dark(); }
+    if theme_name == "game" { imgui::theme_game(); }
     run("imgui: settings", 900, 620, false) {
-        if dark { imgui::theme_dark(); }
-        let bg = if dark { gfx2d::rgb(0x111318) } else { gfx2d::rgb(0xDDE2E8) };
+        let bg = backdrop();
         var inp = imgui::input_from_gfx();
         inp.nav.tab_left = inp.nav.tab_left || gfx::key_pressed("Q");
         inp.nav.tab_right = inp.nav.tab_right || gfx::key_pressed("E");
