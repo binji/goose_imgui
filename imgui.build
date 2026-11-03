@@ -1,0 +1,6 @@
+// The imgui package is all Goose: no C of its own. It draws through gfx2d
+// and reads input from gfx, whose functions run on the main thread only, so
+// imgui's do too. Examples, tests and benchmarks are programs of their own,
+// not the package's.
+main_thread_only = true;
+exclude = ["examples", "test", "bench"];

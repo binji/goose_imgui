@@ -1,0 +1,24 @@
+play: 10.0 10.0 60.0 35.0
+over nothing, wants pointer: false
+over play, wants pointer: true
+pressed: clicks 0
+released: clicks 1
+dragged off: clicks 1
+sound true
+vibration false
+volume at the left: 0.0
+volume dragged: 0.7
+level 1
+focused: Play
+focused: the volume slider
+volume by nav: 0.9
+focused: the volume slider
+focused: Hard
+focused: Easy
+level 0
+focused: Sound
+sound false, vibration false
+focused: Play
+clicks 2
+cancelled: false
+cancelled: true
