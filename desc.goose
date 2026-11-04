@@ -90,6 +90,7 @@ let OV_PADDING = 128;
 let OV_LETTER_SPACING = 256;
 let OV_TEXT_OUTLINE = 512;
 let OV_TEXT_SHADOW = 1024;
+let OV_REVEAL = 2048;
 
 struct LookDesc {
     class: StyleClass = StyleClass { 0 },   // NONE: no style but the overrides
@@ -195,7 +196,7 @@ fn with_fx(var d: Desc, fx: TextLook, flag: i64) -> Desc {
 
 fn same_fx(a: TextLook, b: TextLook) -> bool {
     a.letter_spacing == b.letter_spacing && a.outline == b.outline && a.outline_color == b.outline_color &&
-    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset
+    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset && a.reveal == b.reveal
 }
 
 // A Desc's exit is kept in tables the same way: few nodes have one.
@@ -378,6 +379,15 @@ fn text_shadow(d: Desc, c: gfx2d::Color, dx: f64 = 1.0, dy: f64 = 1.0) -> Desc {
     with_fx(d, fx, OV_TEXT_SHADOW)
 }
 fn no_text_shadow(d: Desc) -> Desc { text_shadow(d, gfx2d::BLACK, 0.0, 0.0) }
+// Only the text's first `chars` characters drawn (a newline, a space or a
+// rich text's image each one), each where it is with all of them, so
+// that typing it out doesn't move its lines: dialogue revealed as it is
+// said. Not inherited; text_chars and rich_chars count a whole text.
+fn reveal(d: Desc, chars: f64) -> Desc {
+    var fx = desc_fx(d.vis);
+    fx.reveal = max(chars, 0.0) as f32;
+    with_fx(d, fx, OV_REVEAL)
+}
 fn opacity(var d: Desc, o: f64) -> Desc { d.vis.opacity = o as f32; d }
 fn clip(var d: Desc) -> Desc { d.vis.clips = true; d }
 fn isolate(var d: Desc) -> Desc { d.vis.isolated = true; d }

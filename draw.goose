@@ -210,13 +210,33 @@ fn draw_text(i: i32, a: f32) {
     let sh = l.shadow_offset;
     if l.shadow.a > 0.0 && sh != float2_0 {
         let c = faded(l.shadow, a);
-        if ow > 0.0 { gfx2d::text(x + sh.x, y + sh.y, s, os, c); }
-        gfx2d::text(x + sh.x, y + sh.y, s, style, c);
+        if ow > 0.0 { text_part(x + sh.x, y + sh.y, s, os, c, l.reveal); }
+        text_part(x + sh.x, y + sh.y, s, style, c, l.reveal);
     }
     if ow > 0.0 && l.outline_color.a > 0.0 {
-        gfx2d::text(x, y, s, os, faded(l.outline_color, a));
+        text_part(x, y, s, os, faded(l.outline_color, a), l.reveal);
     }
-    gfx2d::text(x, y, s, style, faded(n.style.ink, a));
+    text_part(x, y, s, style, faded(n.style.ink, a), l.reveal);
+}
+
+// s drawn as gfx2d::text draws it, but only its first `chars` characters
+// (all, if < 0), each where it is with all of them: row by row, from
+// where each row of the whole starts.
+fn text_part(x: f64, y: f64, s: const u8[:], style: gfx2d::TextStyle, c: gfx2d::Color, chars: f32) {
+    if chars < 0.0 { gfx2d::text(x, y, s, style, c); return; }
+    var left = chars as i64;
+    let lh = gfx2d::font_line_height(gfx2d::style_font(style), style.size) * style.line_spacing;
+    var row_style = style;
+    row_style.wrap_width = 0.0;
+    row_style.align = gfx2d::ALIGN_LEFT;
+    var r = 0;
+    for row in gfx2d::break_lines(s, style) {
+        if left <= 0 { break; }
+        let end = chars_end(s, row.start, row.end, left);
+        gfx2d::text(gfx2d::line_left(x, row.width, style), y + r * lh, s[row.start..end], row_style, c);
+        left -= text_chars(s[row.start..row.next]);
+        r++;
+    }
 }
 
 // The outline drawn around text of a size, outside its glyphs: no more

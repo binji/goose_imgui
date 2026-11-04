@@ -113,15 +113,17 @@ var node_looks: TextLook[>..<] = [];
 
 // The look a node with style s and Desc look v has under a parent's `up`.
 fn resolve_look(s: Style, v: LookDesc, up: i32) -> i32 {
-    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW);
-    if s.text_look == 0 && fx_ov == 0 { return up; }
+    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW | OV_REVEAL);
+    if s.text_look == 0 && fx_ov == 0 && node_looks[up as i64].reveal < 0.0 { return up; }
     var l = node_looks[up as i64];
+    l.reveal = -1.0;
     if s.text_look != 0 { l = over_look(text_look_of(s.text_look), l); }
     if fx_ov != 0 {
         let d = desc_fx(v);
         if v.ov & OV_LETTER_SPACING != 0 { l.letter_spacing = d.letter_spacing; }
         if v.ov & OV_TEXT_OUTLINE != 0 { l.outline = d.outline; l.outline_color = d.outline_color; }
         if v.ov & OV_TEXT_SHADOW != 0 { l.shadow = d.shadow; l.shadow_offset = d.shadow_offset; }
+        if v.ov & OV_REVEAL != 0 { l.reveal = d.reveal; }
     }
     node_looks.push(l);
     (node_looks.len - 1) as i32
@@ -327,6 +329,26 @@ fn textf<F>(d: Desc) {
     n.text_off = start as i32;
     n.text_len = len as i32;
     n.natural = gfx2d::measure_text(text_arena[start..start + len], text_style_of(n));
+}
+
+// The characters in s: its UTF-8 sequences, as reveal() counts them.
+fn text_chars(s: const u8[:]) -> i64 {
+    var c = 0;
+    for b in s { if b & 0xC0 != 0x80 { c++; } }
+    c
+}
+// Where in s[from..to] its first `chars` characters end.
+fn chars_end(s: const u8[:], from: i64, to: i64, chars: i64) -> i64 {
+    var left = chars;
+    var k = from;
+    while k < to {
+        if s[k] & 0xC0 != 0x80 {
+            if left == 0 { return k; }
+            left--;
+        }
+        k++;
+    }
+    to
 }
 
 fn node_text(i: i32) -> const u8[:] {

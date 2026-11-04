@@ -64,7 +64,9 @@ The examples each show one part:
 - `settings`: a menu bar, tabs, dropdowns, a text field, a scrolling
   list of key bindings, and a modal;
 - `stats`: a run's summary on canvases: a line chart with values on hover,
-  bars that grow in, a gauge, a minimap, each filling a grid card.
+  bars that grow in, a gauge, a minimap, each filling a grid card;
+- `dialogue`: a speaker's portrait and name, and rich text typed out a
+  character at a time.
 
 Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 --scale 2 --keys Down,Return`. With `--frames`, every frame is 1/60 s.
@@ -162,6 +164,8 @@ How children share space:
 | `letter_spacing(px)` | pixels after each character, inherited the same way |
 | `text_outline(w, c)`, `no_text_outline()` | an outline `w` pixels wide around the glyphs (up to a sixteenth of the text's size), inherited; for text over a busy scene. Faded, `isolate()` keeps it from showing through the glyphs |
 | `text_shadow(c, dx, dy)`, `no_text_shadow()` | a copy of the text and its outline, moved, under it; inherited |
+| `reveal(chars)` | only the text's first `chars` characters drawn (of `text` or `rich`; a space, a newline or an image each one), each where it is with all of them, so typing it out doesn't move its lines: `reveal((time() - began) * 40)`. Not inherited |
+| `text_chars(s)`, `rich_chars(s)` | the characters `reveal` counts in the whole of a text, or of a rich text (its markup left out): when the typing is done |
 
 A Desc with text effects set during a frame is good for that frame only.
 One made outside any frame, and kept, is good for any frame.
@@ -445,7 +449,8 @@ The tests are in three groups:
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
   ring, the UI scale, exits drawn after their node has gone, rich text's
-  spans, image and underline (`draw`); typing through gfx's injected input
+  spans, image and underline, text revealed in part where it is in the
+  whole (`draw`); typing through gfx's injected input
   (`typing`); canvases: placement, size, clipping, opacity, culling, the
   pointer (`canvas`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless

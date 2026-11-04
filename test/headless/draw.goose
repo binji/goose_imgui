@@ -4,7 +4,8 @@
 // scale; the focus ring, which shows only after navigation; a text's
 // outline and shadow; a radial meter; a box turned and skewed; what has
 // left drawn on, with its canvas, as its exit plays; rich text's spans, its
-// image and its underline.
+// image and its underline; text revealed in part, each character where it
+// is in the whole.
 import std;
 import vec;
 import math;
@@ -237,4 +238,41 @@ fn main() {
     // The square is 32 tall at size 32; the underline runs the span's width.
     print("rich: red span ", reds > 100, ", image ", greens > 32 * 28, " ", greens <= 32 * 32 + 64,
           ", blue span ", blues > 100, ", underlined ", blue_row > 40);
+
+    // Revealed: "MMM MMM" in a narrow box wraps to two centered lines. Five
+    // characters show the first line and the second's first M, where it is
+    // when all are shown; the rest of the second line not yet drawn.
+    fn typed(rich: bool, chars: f64) {
+        let d = imgui::column().text_size(32).ink(gfx2d::BLACK).wrap().width(110).justify(imgui::CENTER)
+                               .place(imgui::START, imgui::START).offset(10, 10);
+        let r = if chars < 0.0 { d } else { d.reveal(chars) };
+        if rich { imgui::rich("[red]MMM[/] MMM", r); } else { imgui::text("MMM MMM", r); }
+    }
+    for rich in [false, true] {
+        render(none) { typed(rich, -1.0); };
+        let full = dark_span(60);
+        let full_top = dark_span(25);
+        render(none) { typed(rich, 5.0); };
+        let part = dark_span(60);
+        let top = dark_span(25);
+        render(none) { typed(rich, 0.0); };
+        let none_drawn = dark_span(25).x < 0;
+        print(if rich { "rich" } else { "text" }, " revealed: first line whole ", top == full_top,
+              ", second line's first M where it was ", part.x == full.x && part.y < full.y - 20,
+              ", none at 0 ", none_drawn, ", all of it ", imgui::text_chars("MMM MMM"), " ",
+              imgui::rich_chars("[red]MMM[/] MMM [img=sq][[x"));
+    }
+}
+
+// The first and last columns with anything not white in row y (-1: none).
+fn dark_span(y: i64) -> int2 {
+    var first = -1;
+    var last = -1;
+    for x in W {
+        if !close_to(x, y, 0xFFFFFF, 60) {
+            if first < 0 { first = x; }
+            last = x;
+        }
+    }
+    int2 { first as i32, last as i32 }
 }

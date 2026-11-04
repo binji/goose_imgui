@@ -20,9 +20,6 @@ item here, by its title, at each workaround.
       tooltip says what it means. Each span's rectangles on its lines would
       be kept for hit testing, and `rich` would return which span is under
       the pointer: `[kw=burn]Burn[/]`.
-    - Revealed a character at a time, for dialogue: `.reveal(n)` lays out
-      all of the text and draws its first `n` characters, so the lines
-      don't move as it types.
     - A soft text shadow. `text_shadow` is a hard copy; the glyphs'
       distance field could be drawn wider and faded to blur it.
     - Multi-line editing.

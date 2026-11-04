@@ -286,14 +286,22 @@ fn draw_rich(i: i32, a: f32) {
     let w = b.w - pad_sum(n, 0);
     let wrap = if n.d.lay.wrap && w + 0.5 < n.natural.x { w } else { 0.0 };
     let own = look_of(n);
+    // With reveal: the characters before each piece, the pieces between
+    // lines (newlines, spaces where they broke) counted too.
+    let limit: i64 = if own.reveal < 0.0 { 1 << 62 } else { own.reveal as i64 };
     for pass in 3 {
         var y = b.y + n.d.lay.padding.y;
+        var counted = n.text_off;
+        var before: i64 = 0;
         each_rich_line(i, wrap) { from, to, lw, ascent, below =>
             var x = x0;
             if n.d.lay.justify == CENTER { x += (w - lw) * 0.5; } else if n.d.lay.justify == END { x += w - lw; }
             let base = y + ascent;
             for k in from..to {
+                while counted < k { before += piece_chars(pieces[counted]); counted++; }
                 let p = pieces[k];
+                let shown = clamp(limit - before, 0, piece_chars(p));
+                if shown == 0 { break; }
                 let ink = faded(if p.ink.a > 0.0 { p.ink } else { n.style.ink }, a);
                 if p.kind == PIECE_IMAGE {
                     if pass == 2 {
@@ -308,7 +316,8 @@ fn draw_rich(i: i32, a: f32) {
                     let l = piece_look(p.look, own);
                     var style = gfx2d::TextStyle { font: p.font, size: p.size, letter_spacing: l.letter_spacing,
                                                    baseline: gfx2d::BASELINE_ALPHABETIC, .. };
-                    let s = text_arena[p.off..p.off + p.len];
+                    let whole = shown == piece_chars(p);
+                    let s = text_arena[p.off..chars_end(text_arena, p.off, p.off + p.len, shown)];
                     let ow = outline_width(l, p.size);
                     var os = style;
                     os.outline = ow * 2.0;
@@ -325,7 +334,8 @@ fn draw_rich(i: i32, a: f32) {
                         if p.kind == PIECE_WORD { gfx2d::text(x, base, s, style, ink); }
                         if p.underline {
                             let t = max(p.size / 14.0, 1.0);
-                            gfx2d::rect(x, base + p.size * 0.12, p.w, t, ink);
+                            let uw = if whole { p.w } else { gfx2d::measure_text(s, style).x as f32 };
+                            gfx2d::rect(x, base + p.size * 0.12, uw, t, ink);
                         }
                     }
                 }
@@ -334,6 +344,33 @@ fn draw_rich(i: i32, a: f32) {
             y += ascent + below;
         };
     }
+}
+
+// The characters a piece is, as reveal() counts them.
+fn piece_chars(p: Piece) -> i64 {
+    if p.kind == PIECE_IMAGE || p.kind == PIECE_BREAK { 1 } else { text_chars(text_arena[p.off..p.off + p.len]) }
+}
+
+// The characters rich text shows, its markup left out: what reveal()
+// counts to show all of it.
+fn rich_chars(s: const u8[:]) -> i64 {
+    var c = 0;
+    var at = 0;
+    while at < s.len {
+        if s[at] == '[' && at + 1 < s.len && s[at + 1] == '[' { c++; at += 2; continue; }
+        if s[at] == '[' {
+            var close = at + 1;
+            while close < s.len && s[close] != ']' { close++; }
+            if close < s.len {
+                if close - at > 5 && s[at + 1..at + 5] == "img=" { c++; }
+                at = close + 1;
+                continue;
+            }
+        }
+        if s[at] & 0xC0 != 0x80 { c++; }
+        at++;
+    }
+    c
 }
 
 // How far its outlines and shadows reach past its box.

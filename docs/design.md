@@ -386,6 +386,13 @@ spills past the box.
   only, a run of pieces with no space between them staying whole. A line
   is as tall as its tallest piece, with every piece on one baseline, so an
   unstyled rich text measures exactly as `text` does.
+- `reveal(n)` draws a text's first `n` characters where they are in the
+  whole. A prefix drawn on its own would wrap and align differently (a
+  word half typed fits on the line before), so plain text draws each row
+  of the whole, up to the count, from where the whole row starts; rich
+  text counts its pieces, newlines and broken spaces included, so both
+  count a string alike. The count is kept with the text effects, out of
+  the Desc, and not inherited.
 - Drawn in three passes over its lines, all shadows, then all outlines,
   then glyphs, images and underlines, so that one piece's shadow doesn't
   fall over the glyphs before it.
