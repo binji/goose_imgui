@@ -134,6 +134,7 @@ fn keeps_state(n: Node&) -> bool {
 fn finish_frame() {
     scroll_focused_into_view();
     hits.clear();
+    turned_hits.clear();
     focusables.clear();
     let everywhere = gfx2d::Rect { -1.0e9, -1.0e9, 2.0e9, 2.0e9 };
     for i: i32 in 0..nodes.len as i32 {
@@ -230,6 +231,21 @@ fn list_bounds() {
     }
 }
 
+// Where node i is hit, as widget `id`: its box on the screen; if it is
+// drawn turned or skewed, its own box, which the pointer is taken back into.
+fn hit_of(i: i32, id: u64, bits: u32, level: i32) -> Hit {
+    let n .= nodes[i];
+    var h = Hit { id: id, rect: n.screen, clip: n.clip, bits: bits, level: level, .. };
+    if n.m.b != 0.0 || n.m.c != 0.0 {
+        let inv, ok = gfx2d::invert(n.m);
+        if ok {
+            h.turned = turned_hits.len as i32;
+            turned_hits.push(TurnedHit { inv, box_of(n) });
+        }
+    }
+    h
+}
+
 // The hit list and the focus list, in the order things are drawn: root by
 // root, each in the order it was recorded.
 fn list_hits() {
@@ -244,15 +260,14 @@ fn list_hits() {
                         (!n.pass || (n.owner >= 0 && nodes[n.owner].pass));
             let blocks = n.d.bits & BLOCKS != 0 || solid;
             if n.d.bits & (HIT | SCROLLS_X | SCROLLS_Y) != 0 {
-                hits.push(Hit { n.id, n.screen, n.clip, n.d.bits, level });
+                hits.push(hit_of(i, n.id, n.d.bits, level));
             } else if blocks {
                 // A part of a widget (a toggle's track, a slider's thumb, a
                 // drawn icon) is hit as the widget it is in.
                 if n.owner >= 0 {
-                    let o .= nodes[n.owner];
-                    hits.push(Hit { o.id, n.screen, n.clip, o.d.bits, level });
+                    hits.push(hit_of(i, nodes[n.owner].id, nodes[n.owner].d.bits, level));
                 } else {
-                    hits.push(Hit { n.id, n.screen, n.clip, n.d.bits, level });
+                    hits.push(hit_of(i, n.id, n.d.bits, level));
                 }
             }
             if n.d.bits & FOCUSABLE != 0 {

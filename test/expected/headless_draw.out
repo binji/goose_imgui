@@ -11,3 +11,4 @@ ring after navigation: true
 text outline: none plain true, drawn true
 text shadow: none plain true, inherited true; turned off true
 radial meter: swept true, not yet true, past a quarter true
+turned: upright true, not across true; skewed: top right true, top left true, bottom left true

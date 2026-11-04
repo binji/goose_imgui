@@ -2,7 +2,7 @@
 // gradient; opacity, multiplied in and through a layer; clipping by a box
 // that clips (a scroll pane's content past its edge); a motion offset and
 // scale; the focus ring, which shows only after navigation; a text's
-// outline and shadow; a radial meter.
+// outline and shadow; a radial meter; a box turned and skewed.
 import std;
 import vec;
 import math;
@@ -178,4 +178,16 @@ fn main() {
     };
     print("radial meter: swept ", near(70, 30, 0xFF0000, 8), ", not yet ", near(30, 30, 0xFFFFFF, 8),
           ", past a quarter ", near(70, 70, 0xFFFFFF, 8));
+
+    // A bar turned a quarter about its center stands upright; a square
+    // skewed by 0.5 leans right, its top moved right and its bottom left.
+    render(none) {
+        imgui::panel(imgui::column().size(120, 20).bg(gfx2d::rgb(0x8000C0)).place(imgui::CENTER, imgui::CENTER)
+                     .rotate(PI * 0.5));
+        imgui::panel(imgui::column().size(40, 40).bg(gfx2d::rgb(0x00A0A0)).place(imgui::START, imgui::START)
+                     .offset(20, 20).skew(0.5));
+    };
+    print("turned: upright ", near(160, 70, 0x8000C0, 8), ", not across ", near(210, 120, 0xFFFFFF, 8),
+          "; skewed: top right ", near(66, 22, 0x00A0A0, 8), ", top left ", near(22, 22, 0xFFFFFF, 8),
+          ", bottom left ", near(14, 57, 0x00A0A0, 8));
 }

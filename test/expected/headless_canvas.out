@@ -6,3 +6,4 @@ drawn past its box: true
 in view: true
 scrolled away: true; canvases drawn: true
 hovered: true; pointer from the box: vec2<f32> { 40.0, 30.0 }; from its inner box: vec2<f32> { 30.0, 20.0 }
+rotate: turned true, not where it was true; clip_circle: inside true, its corner cut true; translate and scale: true, true

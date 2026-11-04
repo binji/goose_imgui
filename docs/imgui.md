@@ -234,6 +234,7 @@ damping)`, with or without `delay(seconds)`.
 | `.enter(fade_in(m))`, `slide_in(dx, dy, m)`, `pop_in(scale, m)`, `.delay(s)` | played the first frame a node's ID appears; a list staggered by `delay` |
 | `.glide(m)` | from where the node was laid out to where it is now: reordered rows slide to their places |
 | `.offset(x, y)`, `.scale(s)` | drawn moved, or scaled about its center, with its subtree |
+| `.rotate(radians)`, `.skew(radians)` | drawn turned clockwise about its center, or slanted (its verticals leaning right), with its subtree: a fanned hand of cards, a diamond, a slanted panel. It is hit where it is drawn; its `it.pointer` is from the box around it |
 
 ## Widgets
 
@@ -297,6 +298,8 @@ How a canvas works:
 | `stroke_polyline(points, width, c)`, `fill_polygon(points, c)` | `float2` points |
 | `draw_text(x, y, s, size, c, align, baseline)`, `measure(s, size)` | in the canvas's inherited font; `gfx2d::ALIGN_*`, `BASELINE_*` |
 | `draw_image(texture[, src], x, y, w, h, tint)` | |
+| `rotate(a[, cx, cy]) { … }`, `translate(x, y) { … }`, `scale(s) { … }`, `transform(m) { … }` | the calls in the block, turned (about (0, 0) or (cx, cy)), moved, scaled or by any `gfx2d::Affine`: a needle, a minimap that turns |
+| `clip_circle(cx, cy, r) { … }` | the calls in the block, clipped to a circle: an orb filled to a level |
 
 ## Making widgets
 

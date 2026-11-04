@@ -2,7 +2,7 @@
 // box's inner pixels (padding, layout and motion moving them); the size
 // the block is given; drawing past a clipping canvas cut off; opacity; a
 // canvas scrolled out of its pane not drawn; the pointer, in the canvas's
-// pixels.
+// pixels; transforms and a circle clip in a canvas.
 import std;
 import vec;
 import math;
@@ -109,4 +109,18 @@ fn main() {
     for k in 3 { render(imgui::Pointer { pos: float2 { 40.0, 30.0 }, .. }) { it = hover(); }; }
     print("hovered: ", it.hovered, "; pointer from the box: ", it.pointer, "; from its inner box: ",
           it.pointer - float2 { 10.0, 10.0 });
+
+    // Transforms in a canvas: a bar from the center turned a quarter points
+    // down; a square clipped to a circle loses its corners; a square moved
+    // and scaled by 2.
+    render(none) {
+        imgui::canvas("turned", imgui::column().size(200, 200)) { size =>
+            imgui::rotate(PI * 0.5, 100, 100) { imgui::fill_rect(100, 95, 80, 10, gfx2d::rgb(0xC00000)); };
+            imgui::clip_circle(50, 50, 30) { imgui::fill_rect(20, 20, 60, 60, gfx2d::rgb(0x0000C0)); };
+            imgui::translate(150, 0) { imgui::scale(2) { imgui::fill_rect(0, 10, 10, 10, gfx2d::rgb(0x00A000)); }; };
+        };
+    };
+    print("rotate: turned ", near(100, 150, 0xC00000), ", not where it was ", near(150, 100, 0xFFFFFF),
+          "; clip_circle: inside ", near(50, 50, 0x0000C0), ", its corner cut ", near(24, 24, 0xFFFFFF),
+          "; translate and scale: ", near(160, 30, 0x00A000), ", ", near(155, 15, 0xFFFFFF));
 }

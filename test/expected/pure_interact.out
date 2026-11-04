@@ -28,3 +28,4 @@ cancelled: true
 Ctrl+Q true, Ctrl+Shift+Q false, Ctrl+W false
 hud panel: over its background, wants pointer true; over its button true
 hud panel, passthrough: over its background, wants pointer false; over its button true
+turned card: hovered where it is drawn true, in the box around it false

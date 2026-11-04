@@ -29,15 +29,24 @@ fn draw() {
 // size its glide has reached.
 fn box_of(n: Node&) -> gfx2d::Rect { gfx2d::Rect { n.rect.x, n.rect.y, n.shown.w, n.shown.h } }
 
-fn moved(n: Node&) -> bool { n.zoom != 1.0 || n.shift != float2_0 }
+fn moved(n: Node&) -> bool { n.zoom != 1.0 || n.shift != float2_0 || n.d.mot.turn != 0.0 || n.d.mot.slant != 0.0 }
 
-// What node n's motion does to it and its subtree: a shift, and a scale
-// about its box's center.
+// What node n's motion does to it and its subtree: a shift, and a scale,
+// a skew and a turn about its box's center (scaled, then skewed, then
+// turned).
 fn motion_affine(n: Node&) -> gfx2d::Affine {
     let b = box_of(n);
     let c = float2 { b.x + b.w * 0.5, b.y + b.h * 0.5 };
     let z = n.zoom;
-    gfx2d::Affine { z, 0.0, 0.0, z, c.x + n.shift.x - z * c.x, c.y + n.shift.y - z * c.y }
+    let turn = n.d.mot.turn;
+    let slant = n.d.mot.slant;
+    if turn == 0.0 && slant == 0.0 {
+        return gfx2d::Affine { z, 0.0, 0.0, z, c.x + n.shift.x - z * c.x, c.y + n.shift.y - z * c.y };
+    }
+    var m = gfx2d::scaling(z);
+    if slant != 0.0 { m = gfx2d::mul(gfx2d::skewing(-slant, 0.0), m); }      // top to the right
+    if turn != 0.0 { m = gfx2d::mul(gfx2d::rotation(turn), m); }
+    gfx2d::mul(gfx2d::translation(c.x + n.shift.x, c.y + n.shift.y), gfx2d::mul(m, gfx2d::translation(-c.x, -c.y)))
 }
 
 fn overlaps(a: gfx2d::Rect, b: gfx2d::Rect) -> bool {

@@ -1,7 +1,8 @@
 // Widgets driven by made-up input, no GPU: hover, press and click; a
 // checkbox, a toggle, radios and a slider changed by the pointer; focus
 // moved and widgets used by navigation; what wants_pointer says, and
-// what it says over a passthrough panel.
+// what it says over a passthrough panel; a turned box hit where it is
+// drawn.
 import std;
 import vec;
 import math;
@@ -200,4 +201,20 @@ fn main() {
         print("hud panel", if pass { ", passthrough" } else { "" }, ": over its background, wants pointer ",
               on_panel, "; over its button ", imgui::wants_pointer());
     }
+
+    // A card turned an eighth (down to the right) is hit where it is
+    // drawn, and not elsewhere in the box around it.
+    fn card(p: float2) -> bool {
+        var it = imgui::Interaction { .. };
+        for k in 2 {
+            imgui::frame(imgui::Input { pointer: imgui::Pointer { pos: p, .. }, viewport: float2 { 640.0, 480.0 }, .. },
+                         1.0 / 60.0) {
+                it = imgui::box("card", imgui::clickable(imgui::column().size(120, 20).bg(gfx2d::rgb(0x202020))
+                                                         .place(imgui::CENTER, imgui::CENTER).rotate(PI * 0.25))) {};
+            };
+        }
+        it.hovered
+    }
+    print("turned card: hovered where it is drawn ", card(float2 { 360.0, 280.0 }), ", in the box around it ",
+          card(float2 { 360.0, 200.0 }));
 }

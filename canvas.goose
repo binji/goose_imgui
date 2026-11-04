@@ -37,19 +37,27 @@ enum DrawOp {
     Poly { first: i32, count: i32, width: f32, c: gfx2d::Color },     // width 0: filled
     Text { at: float2, off: i32, len: i32, size: f32, align: u8, baseline: u8, c: gfx2d::Color },
     Image { t: gfx::Texture, dst: gfx2d::Rect, src: gfx2d::Rect, c: gfx2d::Color },
+    // The commands up to `end` (DrawCmd's) drawn transformed by m, or
+    // clipped to a circle.
+    Push { m: gfx2d::Affine, clip: bool, at: float2, radius: f32 },
 }
 
-// A command, and the canvas (node index) it draws in.
-struct DrawCmd { owner: i32, op: DrawOp }
+// A command, the canvas (node index) it draws in, and for a Push, where the
+// commands inside it end.
+struct DrawCmd { owner: i32, op: DrawOp, end: i32 = 0 }
 
 var draw_cmds: DrawCmd[>..] = [];
 var draw_points: float2[>..] = [];
 var canvas_stack: i32[>..<] = [];
+// The transform the drawing calls are under, in the canvas's pixels: for the
+// box their drawing reaches.
+var canvas_m: gfx2d::Affine[>..<] = [];
 
 fn begin_canvases() {
     draw_cmds.clear();
     draw_points.clear();
     canvas_stack.clear();
+    canvas_m.clear();
 }
 
 // The canvas the drawing calls go to, and the box its drawing reaches.
@@ -60,18 +68,43 @@ fn current_canvas() -> i32 {
 fn record(op: DrawOp, lo: float2, hi: float2) {
     let i = current_canvas();
     guard i >= 0;
-    draw_cmds.push(DrawCmd { i, op });
+    draw_cmds.push(DrawCmd { i, op, 0 });
+    // Under a transform, what it reaches is the box around the corners moved.
+    let m = canvas_m[canvas_m.len - 1];
+    var a = lo;
+    var b = hi;
+    if m != gfx2d::IDENTITY {
+        let r = gfx2d::transformed_bounds(m, gfx2d::Rect { lo.x, lo.y, hi.x - lo.x, hi.y - lo.y });
+        a = float2 { r.x, r.y };
+        b = float2 { r.x + r.w, r.y + r.h };
+    }
     let n .= nodes[i];
     if n.cmd_count == 0 {
         n.cmd_first = (draw_cmds.len - 1) as i32;
-        n.cmd_lo = lo;
-        n.cmd_hi = hi;
+        n.cmd_lo = a;
+        n.cmd_hi = b;
     } else {
-        n.cmd_lo = float2 { min(n.cmd_lo.x, lo.x), min(n.cmd_lo.y, lo.y) };
-        n.cmd_hi = float2 { max(n.cmd_hi.x, hi.x), max(n.cmd_hi.y, hi.y) };
+        n.cmd_lo = float2 { min(n.cmd_lo.x, a.x), min(n.cmd_lo.y, a.y) };
+        n.cmd_hi = float2 { max(n.cmd_hi.x, b.x), max(n.cmd_hi.y, b.y) };
     }
     n.cmd_count += 1;
     n.cmd_end = draw_cmds.len as i32;
+}
+
+// A block of drawing calls under a Push: transformed by m, or clipped.
+fn push_block<F>(m: gfx2d::Affine, clip: bool, at: float2, radius: f32) {
+    let i = current_canvas();
+    if i < 0 { F(); return; }
+    let k = draw_cmds.len;
+    draw_cmds.push(DrawCmd { i, DrawOp.Push { m, clip, at, radius }, 0 });
+    let n .= nodes[i];
+    if n.cmd_count == 0 { n.cmd_first = k as i32; n.cmd_lo = float2_0; n.cmd_hi = float2_0; }
+    n.cmd_count += 1;
+    canvas_m.push(gfx2d::mul(canvas_m[canvas_m.len - 1], m));
+    F();
+    canvas_m.pop();
+    draw_cmds[k].end = draw_cmds.len as i32;
+    nodes[i].cmd_end = draw_cmds.len as i32;
 }
 
 // --- canvases -------------------------------------------------------------------------
@@ -96,7 +129,9 @@ fn canvas<F>(i: Id, d: Desc) -> Interaction {
     let at = nodes.len as i32;
     let it = box(i, dk) {
         canvas_stack.push(at);
+        canvas_m.push(gfx2d::IDENTITY);
         F(size);
+        canvas_m.pop();
         canvas_stack.pop();
     };
     it
@@ -186,6 +221,19 @@ fn draw_image(t: gfx::Texture, src: gfx2d::Rect, x: f64, y: f64, w: f64, h: f64,
     record(DrawOp.Image { t, rect4(x, y, w, h), src, tint }, f2(x, y), f2(x + w, y + h));
 }
 
+// The drawing calls in the block, transformed: turned about the canvas's
+// (0, 0), or about (cx, cy); moved; scaled about (0, 0); or by any matrix.
+// For a needle, a minimap that turns with the player, a clock's hand.
+//   imgui::rotate(angle, c.x, c.y) { imgui::fill_polygon(needle, red); };
+fn transform<F>(m: gfx2d::Affine) { push_block(m, false, float2_0, 0.0) { F(); }; }
+fn rotate<F>(radians: f64) { transform(gfx2d::rotation(radians)) { F(); }; }
+fn rotate<F>(radians: f64, cx: f64, cy: f64) { transform(gfx2d::rotation_about(radians, cx, cy)) { F(); }; }
+fn translate<F>(x: f64, y: f64) { transform(gfx2d::translation(x, y)) { F(); }; }
+fn scale<F>(s: f64) { transform(gfx2d::scaling(s)) { F(); }; }
+// The drawing calls in the block, clipped to a circle: a round minimap, an
+// orb filled to a level.
+fn clip_circle<F>(cx: f64, cy: f64, r: f64) { push_block(gfx2d::IDENTITY, true, f2(cx, cy), r as f32) { F(); }; }
+
 // --- replaying ----------------------------------------------------------------------------
 
 fn shifted(r: gfx2d::Rect, o: float2) -> gfx2d::Rect { gfx2d::Rect { r.x + o.x, r.y + o.y, r.w, r.h } }
@@ -195,11 +243,28 @@ fn replay(i: i32, a: f32) {
     let n .= nodes[i];
     guard n.cmd_count > 0;
     let o = float2 { n.rect.x + n.d.lay.padding.x, n.rect.y + n.d.lay.padding.y };
-    let font = n.style.font;
-    for k in n.cmd_first..n.cmd_end {
+    replay_range(i, a, o, n.style.font, n.cmd_first, n.cmd_end);
+}
+
+// Node i's commands from `from` up to `to`; a Push's, inside its transform
+// or clip.
+recursive fn replay_range(i: i32, a: f32, o: float2, font: gfx2d::Font, from: i32, to: i32) {
+    var k = from;
+    while k < to {
         let cmd = draw_cmds[k];
+        k++;
         if cmd.owner != i { continue; }
         match cmd.op {
+            Push v => {
+                if v.clip {
+                    gfx2d::clip_circle(v.at.x + o.x, v.at.y + o.y, v.radius) { replay_range(i, a, o, font, k, cmd.end); };
+                } else {
+                    // m is in the canvas's pixels: moved to the box and back.
+                    let m = gfx2d::mul(gfx2d::translation(o.x, o.y), gfx2d::mul(v.m, gfx2d::translation(-o.x, -o.y)));
+                    gfx2d::transform(m) { replay_range(i, a, o, font, k, cmd.end); };
+                }
+                k = cmd.end;
+            },
             Rect v => {
                 let r = shifted(v.r, o);
                 if v.radius == float4_0 { gfx2d::rect(r, faded(v.c, a)); }

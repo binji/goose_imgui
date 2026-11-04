@@ -125,6 +125,8 @@ struct MotionDesc {
     glide: Motion = Motion { .. },      // from where it was to where it is, when its layout moves
     offset: float2 = float2 { 0.0, 0.0 },   // drawn this far from its laid-out place
     zoom: f32 = 1.0,                    // and scaled about its center
+    turn: f32 = 0.0,                    // and turned about it, radians clockwise
+    slant: f32 = 0.0,                   // and skewed: its verticals leaning right by this angle
 }
 
 // Desc.bits.
@@ -369,6 +371,13 @@ fn glide(var d: Desc, m: Motion) -> Desc { d.mot.glide = m; d }
 fn delay(var d: Desc, seconds: f64) -> Desc { d.mot.enter.motion.wait = seconds as f32; d }
 fn offset(var d: Desc, x: f64, y: f64) -> Desc { d.mot.offset = float2 { x as f32, y as f32 }; d }
 fn scale(var d: Desc, s: f64) -> Desc { d.mot.zoom = s as f32; d }
+// Drawn turned about its center by `radians`, clockwise, with its subtree:
+// a fanned hand of cards, an icon in a diamond. It is hit where it is
+// drawn.
+fn rotate(var d: Desc, radians: f64) -> Desc { d.mot.turn = radians as f32; d }
+// Drawn slanted about its center, its verticals leaning right by `radians`
+// (left if negative), with its subtree: a slanted panel.
+fn skew(var d: Desc, radians: f64) -> Desc { d.mot.slant = radians as f32; d }
 
 // The enter transitions: from transparent, from (dx, dy) away, from
 // `from` times the size; and all of them together.

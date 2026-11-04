@@ -109,7 +109,20 @@ var pointer_moved = false;      // the pointer is somewhere else than last frame
 var last_pointer = float2 { -1.0e9, -1.0e9 };
 
 // The hit list: last frame's, in the order it was drawn.
-struct Hit { id: u64, rect: gfx2d::Rect, clip: gfx2d::Rect, bits: u32, level: i32 }
+struct Hit {
+    id: u64, rect: gfx2d::Rect, clip: gfx2d::Rect, bits: u32, level: i32,
+    turned: i32 = -1,               // drawn turned or skewed: where in turned_hits its own box is
+}
+// A turned or skewed hit's own box, and the pointer taken back into it.
+struct TurnedHit { inv: gfx2d::Affine, local: gfx2d::Rect }
+var turned_hits: TurnedHit[>..<] = [];
+// Whether the pointer at p is on hit h: in its box, turned as it is drawn.
+fn hit_at(h: Hit, p: float2) -> bool {
+    if !inside(h.clip, p) || !inside(h.rect, p) { return false; }
+    if h.turned < 0 { return true; }
+    let t = turned_hits[h.turned as i64];
+    inside(t.local, gfx2d::apply(t.inv, p))
+}
 var hits: Hit[>..<] = [];
 
 fn inside(r: gfx2d::Rect, p: float2) -> bool { p.x >= r.x && p.y >= r.y && p.x < r.x + r.w && p.y < r.y + r.h }
@@ -127,7 +140,7 @@ fn begin_input(inp: Input) {
     var k = hits.len - 1;
     while k >= 0 {
         let h = hits[k];
-        if h.level >= floor && inside(h.clip, p) && inside(h.rect, p) {
+        if h.level >= floor && hit_at(h, p) {
             over_ui = true;
             hot_level = h.level;
             if h.bits & HIT != 0 && h.bits & DISABLED == 0 { hot = h.id; }
@@ -174,8 +187,7 @@ fn begin_input(inp: Input) {
         var j = hits.len - 1;
         while j >= 0 {
             let h = hits[j];
-            if h.level == hot_level && h.bits & (SCROLLS_X | SCROLLS_Y) != 0 && inside(h.clip, p) &&
-               inside(h.rect, p) {
+            if h.level == hot_level && h.bits & (SCROLLS_X | SCROLLS_Y) != 0 && hit_at(h, p) {
                 wheel_id = h.id;
                 break;
             }
