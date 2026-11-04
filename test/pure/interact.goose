@@ -2,7 +2,7 @@
 // checkbox, a toggle, radios and a slider changed by the pointer; focus
 // moved and widgets used by navigation; what wants_pointer says, and
 // what it says over a passthrough panel; a turned box hit where it is
-// drawn.
+// drawn; the focus cursor.
 import std;
 import vec;
 import math;
@@ -217,4 +217,32 @@ fn main() {
     }
     print("turned card: hovered where it is drawn ", card(float2 { 360.0, 280.0 }), ", in the box around it ",
           card(float2 { 360.0, 200.0 }));
+
+    // The focus cursor: round the focused widget, FOCUS_CURSOR's
+    // ring_offset (4) outside it, the widgets' rings not drawn; moved to the
+    // next by its motion; off again, the ring is back.
+    fn focus_rect() -> gfx2d::Rect {
+        for n in imgui::nodes { if n.id == imgui::focused { return n.screen; } }
+        gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 }
+    }
+    fn rings() -> bool {
+        for n in imgui::nodes { if n.ring { return true; } }
+        false
+    }
+    fn cursor() -> gfx2d::Rect { imgui::nodes[imgui::cursor_node].rect }
+    fn r4(r: gfx2d::Rect) -> u8[>..] { str(round(r.x), " ", round(r.y), " ", round(r.w), " ", round(r.h)) }
+    imgui::set_focus_cursor(imgui::FOCUS_CURSOR, imgui::tween(0.2));
+    imgui::focus(imgui::id("Play"), true);
+    for k in 20 { nav(imgui::NavInput { .. }); }
+    print("cursor: ", r4(cursor()), " round ", r4(focus_rect()), "; rings drawn ", rings());
+    let was = cursor();
+    nav(imgui::NavInput { down: true, .. });
+    nav(imgui::NavInput { .. });
+    let mid = cursor();
+    for k in 20 { nav(imgui::NavInput { .. }); }
+    let now = cursor();
+    print("moving down: between ", mid.y > was.y && mid.y < now.y, "; then ", r4(now), " round ", r4(focus_rect()));
+    imgui::set_focus_cursor(imgui::NONE, imgui::INSTANT);
+    nav(imgui::NavInput { .. });
+    print("off: cursor ", imgui::cursor_node >= 0, ", rings drawn ", rings());
 }

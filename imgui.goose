@@ -79,6 +79,7 @@ fn end_frame() {
     layout_all();
     finish_frame();
     end_nav();
+    place_focus_cursor();
     if frame_index % 30 == 0 {
         sweep_states();
         sweep_anims();
@@ -178,7 +179,8 @@ fn finish_frame() {
         n.owner = if n.d.bits & HIT != 0 { i } else if n.parent >= 0 { nodes[n.parent].owner } else { -1 };
         n.pass = n.d.bits & PASSTHROUGH != 0 || (n.parent >= 0 && nodes[n.parent].pass);
         // Its own focus, or its widget's, for a part that shares it (a slider's thumb).
-        n.ring = (focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0) || n.d.vis.state.focus > 0.01;
+        n.ring = !focus_cursor_on() &&
+                 ((focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0) || n.d.vis.state.focus > 0.01);
         let screen = gfx2d::transformed_bounds(n.m, box_of(n));
         n.screen = screen;
         if keeps {
@@ -327,6 +329,7 @@ fn scroll_focused_into_view() {
 // The frame's tree, one node a line: its kind, rect and text, for tests.
 fn dump() {
     for n, i in nodes {
+        if i == cursor_node { continue; }
         var line: u8[>..] = [];
         var d = 0;
         var p = n.parent;

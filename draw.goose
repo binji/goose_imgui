@@ -19,10 +19,15 @@ fn draw() {
         return;
     }
     if ui_scale != 1.0 {
-        gfx2d::scale(ui_scale) { for r in roots { draw_tree(r.node, 1.0); } };
+        gfx2d::scale(ui_scale) { draw_roots(); };
     } else {
-        for r in roots { draw_tree(r.node, 1.0); }
+        draw_roots();
     }
+}
+// Each root, then the focus cursor over them all.
+fn draw_roots() {
+    for r in roots { draw_tree(r.node, 1.0); }
+    if cursor_node >= 0 { draw_tree(cursor_node, 1.0); }
 }
 
 // Where node n's own box is drawn, in its layout's space: its rect, at the

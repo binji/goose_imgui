@@ -1,6 +1,7 @@
 // A title screen, in the game theme: the title drops in, the menu's
 // buttons slide in one after another, and the arrow keys (or a pad, through
-// nav_from_pad), Enter and Escape drive it. Options and Quit open modals.
+// nav_from_pad), Enter and Escape drive it, a focus cursor of gold corner
+// brackets gliding from one to the next. Options and Quit open modals.
 //
 //   goose examples/main_menu.goose [-- --frames 90 --screenshot menu.png]
 import std;
@@ -36,10 +37,36 @@ fn background(t: f64, w: f64, h: f64) {
                                                           gfx2d::rgba(0xFFE7A0, 0.0)));
 }
 
+// The focus cursor's look: brackets at the corners of a 24-pixel square,
+// drawn once into a texture, and stretched round the focused widget as a
+// nine-slice whose corners keep their size.
+fn bracket_cursor() -> imgui::StyleClass {
+    let tex = gfx::render_target(24, 24, gfx::RGBA8);
+    let gold = gfx2d::rgb(0xF2CF7A);
+    gfx2d::draw_into(tex, gfx2d::TRANSPARENT) {
+        for corner in 4 {
+            let x = if corner % 2 == 0 { 0.0 } else { 21.0 };
+            let y = if corner < 2 { 0.0 } else { 21.0 };
+            let hx = if corner % 2 == 0 { 0.0 } else { 16.0 };
+            let vy = if corner < 2 { 0.0 } else { 16.0 };
+            gfx2d::rect(hx, y, 8, 3, gold);
+            gfx2d::rect(x, vy, 3, 8, gold);
+        }
+    };
+    let slice = imgui::add_nine_slice(tex, gfx2d::rect_of(0, 0, 24, 24), float4 { 10.0, 10.0, 10.0, 10.0 });
+    imgui::add_class(imgui::style_set(imgui::Style { slice: slice, ring_offset: 7.0 }))
+}
+
 fn main() {
     imgui::theme_game();
     let menu_in = imgui::spring(260, 22);
+    var cursor_ready = false;
     run("imgui: main menu", 960, 600, false) {
+        // Made once the window is open: it draws into a texture.
+        if !cursor_ready {
+            imgui::set_focus_cursor(bracket_cursor(), imgui::spring(520, 34));
+            cursor_ready = true;
+        }
         let size = gfx::screen_size();
         gfx2d::frame(gfx2d::BLACK) {
             background(imgui::time(), size.x, size.y);

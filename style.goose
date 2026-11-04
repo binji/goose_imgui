@@ -116,7 +116,8 @@ let METER = StyleClass { 37 };          // a meter: its gap is between segments
 let METER_TRACK = StyleClass { 38 };    // each segment's groove
 let METER_FILL = StyleClass { 39 };
 let METER_TRAIL = StyleClass { 40 };    // what a drop took, easing down behind the fill
-let CLASS_COUNT = 41;
+let FOCUS_CURSOR = StyleClass { 41 };   // set_focus_cursor's look: drawn ring_offset outside the focused box
+let CLASS_COUNT = 42;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -424,6 +425,8 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
                                                       min_size: float2 { 160.0, 8.0 } });
     classes[PROGRESS_FILL.index] = style_set(Style { bg: p.accent, radius: radii(4.0) });
     classes[METER.index] = style_set(Style { gap: 3.0 });
+    classes[FOCUS_CURSOR.index] = style_set(Style { border: p.accent, border_width: 2.0, radius: radii(p.radius + 4.0),
+                                                    ring_offset: 4.0 });
     classes[METER_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(3.0) });
     classes[METER_FILL.index] = style_set(Style { bg: p.accent, radius: radii(3.0) });
     classes[METER_TRAIL.index] = style_set(Style { bg: gfx2d::with_alpha(p.ink, 0.45), radius: radii(3.0) });

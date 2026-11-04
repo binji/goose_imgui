@@ -233,3 +233,51 @@ fn end_nav() {
     wanted_default = 0;
     scope_stack.clear();
 }
+
+// --- the focus cursor ---------------------------------------------------------------------
+
+// One look drawn round the focused widget, over everything, that moves to
+// the next as the focus does: a frame, or brackets at its corners from a
+// nine-slice. It is a node of its own, added after layout and drawn last;
+// while it is on, the widgets' own focus rings are not drawn.
+var cursor_class = StyleClass { 0 };
+var cursor_motion = Motion { .. };
+var cursor_node: i32 = -1;          // this frame's, in nodes; -1: none
+var cursor_gen: u64 = 0;            // a new one each time it appears, so it starts on the widget
+var cursor_alive = false;
+var cursor_rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 };   // where it is going, kept while it fades out
+let CURSOR_KEY: u64 = 0xC0450F0C05;
+
+// The focus cursor drawn in class c's look, `ring_offset` outside the
+// focused box, moving to each next one by m; NONE turns it off.
+//   imgui::set_focus_cursor(imgui::FOCUS_CURSOR, imgui::spring(500, 32));
+fn set_focus_cursor(c: StyleClass, m: Motion) { cursor_class = c; cursor_motion = m; }
+fn focus_cursor_on() -> bool { cursor_class.index != 0 }
+
+// After layout and navigation: the cursor's node, at the focused box, or
+// fading where it was.
+fn place_focus_cursor() {
+    cursor_node = -1;
+    guard focus_cursor_on();
+    var at: i32 = -1;
+    if focus_visible && focused != 0 {
+        let found = node_of.get(focused);
+        if found { at = found; }
+    }
+    let t, alive = presence(Id { CURSOR_KEY }, at >= 0, tween(0.12));
+    if !alive { cursor_alive = false; return; }
+    // Appearing: a new key, so that it starts on the widget, not where it
+    // last was.
+    if !cursor_alive { cursor_gen++; }
+    cursor_alive = true;
+    let st = resolve_style(cursor_class, LookState { .. });
+    if at >= 0 { cursor_rect = gfx2d::inflate(nodes[at].screen, st.ring_offset); }
+    let goal = float4 { cursor_rect.x, cursor_rect.y, cursor_rect.w, cursor_rect.h };
+    let r = animate_lanes(hash_combine(CURSOR_KEY, cursor_gen), goal, cursor_motion, goal, true);
+    let rect = gfx2d::Rect { r.x, r.y, max(r.z, 0.0), max(r.w, 0.0) };
+    let everywhere = gfx2d::Rect { -1.0e9, -1.0e9, 2.0e9, 2.0e9 };
+    let reach = st.shadow.blur * 3.0 + max(abs(st.shadow.offset.x), abs(st.shadow.offset.y)) + st.shadow.spread + 2.0;
+    cursor_node = nodes.len as i32;
+    nodes.push(Node { id: hash_combine(CURSOR_KEY, cursor_gen), kind: NODE_BOX, style: st, rect: rect, shown: rect,
+                      alpha: st.alpha * t as f32, clip: everywhere, screen: rect, bounds: gfx2d::inflate(rect, reach), .. });
+}

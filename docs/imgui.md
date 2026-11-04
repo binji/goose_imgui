@@ -209,6 +209,7 @@ The classes are:
 - CHECKBOX, CHECK, TOGGLE, TOGGLE_KNOB, RADIO, RADIO_DOT;
 - SLIDER_TRACK, SLIDER_FILL, SLIDER_THUMB, PROGRESS_TRACK, PROGRESS_FILL;
 - METER (its gap is between segments), METER_TRACK, METER_FILL, METER_TRAIL;
+- FOCUS_CURSOR, for `set_focus_cursor`;
   a `Meter` can name other classes for its parts, so that health is red and
   stamina green;
 - SEPARATOR, SELECTABLE, SCROLLBAR, SCROLL_THUMB;
@@ -366,6 +367,13 @@ widget: the pointer on any of them hovers, presses and drags the widget.
   when it closes.
 - **Scrolling and the ring.** Focus moved by navigation scrolls its panes
   to keep it in view. The focus ring shows only after navigation.
+- **A focus cursor.** `set_focus_cursor(class, motion)` draws one look
+  round the focused widget instead of each widget's ring, over everything,
+  and moves it to the next by `motion` as the focus moves (a spring glides
+  it). It is the class's normal style, `ring_offset` outside the widget:
+  a frame (FOCUS_CURSOR, in the themes), or brackets at its corners from a
+  nine-slice, as `examples/main_menu.goose` has. It fades in and out as
+  focus shows and hides. `set_focus_cursor(NONE, INSTANT)` turns it off.
 
 ## How it works
 
