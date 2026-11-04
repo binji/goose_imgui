@@ -85,7 +85,9 @@ fn text_input<A>(label: const u8[:], buf: A&, d: Desc = row(), max_len: i64 = 25
     let up = inherited[inherited.len - 1];
     let cs = class_style(INPUT).normal;
     let style = gfx2d::TextStyle { font: if cs.font.id != 0 { cs.font } else { up.font },
-                                   size: if cs.text_size > 0.0 { cs.text_size } else { up.size }, .. };
+                                   size: if cs.text_size > 0.0 { cs.text_size } else { up.size },
+                                   letter_spacing: over_look(text_look_of(cs.text_look),
+                                                             node_looks[up.look as i64]).letter_spacing, .. };
     let inset = cs.padding;
     // The pointer places the caret, and drags out a selection.
     if it.held {

@@ -136,6 +136,17 @@ imgui::row().gap(8).padding(12, 6).align(imgui::CENTER).grow_w().skin(imgui::PAN
   field names (`lay`, `dim`, `vis`, `mot`, `bits`).
 - `pad` is a keyword, so padding is set with `padding`.
 - Scalars are `f64`, as in gfx2d, so any number can be passed.
+- What few nodes use is kept out of the structs that every node copies.
+  56 bytes more in `Style` made recording about 12% slower, used or not.
+  So text effects (letter spacing, outline, shadow) are indices:
+  - A Style refers to a `TextLook` registered by `add_text_look`, as it
+    refers to a nine-slice.
+  - A Desc's setters put theirs in a table. Set during a frame, they go in
+    that frame's table, and using the Desc in a later frame is misuse. Set
+    outside any frame (a Desc made once and kept), they go in a lasting
+    table, with each different value stored once.
+  - Each node keeps an index into the frame's resolved looks. It is its
+    parent's unless its style or Desc changes something.
 
 ## Layout
 

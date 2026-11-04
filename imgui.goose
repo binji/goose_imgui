@@ -204,8 +204,14 @@ fn list_bounds() {
     while i >= 0 {
         let n .= nodes[i];
         let s .= n.style;
-        let reach = max(s.shadow.blur * 3.0 + max(abs(s.shadow.offset.x), abs(s.shadow.offset.y)) + s.shadow.spread,
+        var reach = max(s.shadow.blur * 3.0 + max(abs(s.shadow.offset.x), abs(s.shadow.offset.y)) + s.shadow.spread,
                         s.ring_offset + s.ring_width) + 2.0;
+        if n.kind == NODE_TEXT {
+            // A text's outline and shadow reach past its box.
+            let l = look_of(n);
+            let o = l.shadow_offset;
+            reach = max(reach, max(l.outline, 0.0) + max(abs(o.x), abs(o.y)) + 2.0);
+        }
         var b = gfx2d::inflate(n.screen, reach * n.m.a);
         if n.cmd_count > 0 {
             // What a canvas draws may reach past its box.

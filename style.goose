@@ -45,6 +45,7 @@ struct Style {
     ink: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },  // transparent: the parent's
     font: gfx2d::Font = gfx2d::Font { 0 },  // 0: the parent's
     text_size: f32 = 0.0,                   // 0: the parent's
+    text_look: u16 = 0,                     // letter spacing, outline, shadow (add_text_look); 0: the parent's
     slice: u16 = 0,                         // a nine-slice (add_nine_slice), drawn over the bg
     slice_tint: gfx2d::Color = gfx2d::Color { 1.0, 1.0, 1.0, 1.0 },
     alpha: f32 = 1.0,
@@ -144,6 +145,34 @@ fn add_nine_slice(t: gfx::Texture, src: gfx2d::Rect, insets: float4,
     (nine_slices.len - 1) as u16
 }
 
+// Text's letter spacing, outline and shadow, for Style.text_look. Text
+// inherits each part from its parents unless it is set here: a spacing of
+// 0, an outline of 0 and a transparent shadow are unset. An outline < 0,
+// or a shadow moved by (0, 0), is none.
+struct TextLook {
+    letter_spacing: f32 = 0.0,              // pixels after each character
+    outline: f32 = 0.0,                     // pixels around the glyphs
+    outline_color: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },
+    shadow: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },     // a copy under the text and its outline
+    shadow_offset: float2 = float2 { 0.0, 0.0 },
+}
+var text_looks: TextLook[>..] = [];
+fn add_text_look(l: TextLook) -> u16 {
+    if text_looks.len == 0 { text_looks.push(TextLook { .. }); }
+    text_looks.push(l);
+    (text_looks.len - 1) as u16
+}
+fn text_look_of(k: u16) -> TextLook { if k < text_looks.len { text_looks[k as i64] } else { TextLook { .. } } }
+
+// `l`'s parts over `up`'s, where l sets them.
+fn over_look(l: TextLook, up: TextLook) -> TextLook {
+    var r = up;
+    if l.letter_spacing != 0.0 { r.letter_spacing = l.letter_spacing; }
+    if l.outline != 0.0 { r.outline = l.outline; r.outline_color = l.outline_color; }
+    if l.shadow.a > 0.0 { r.shadow = l.shadow; r.shadow_offset = l.shadow_offset; }
+    r
+}
+
 // --- mixing ---------------------------------------------------------------------------
 
 // Colors mix premultiplied: from transparent to red passes through faint
@@ -177,7 +206,7 @@ fn mix_style(a: Style, b: Style, t: f32) -> Style {
     s.shadow.spread = mix_f(a.shadow.spread, b.shadow.spread, t);
     s.padding = a.padding + (b.padding - a.padding) * t;
     s.ink = mix_color(a.ink, b.ink, t);
-    if t >= 0.5 { s.font = b.font; s.slice = b.slice; }
+    if t >= 0.5 { s.font = b.font; s.slice = b.slice; s.text_look = b.text_look; }
     s.text_size = mix_f(a.text_size, b.text_size, t);
     s.slice_tint = mix_color(a.slice_tint, b.slice_tint, t);
     s.alpha = mix_f(a.alpha, b.alpha, t);
@@ -234,6 +263,7 @@ fn add_delta(var s: Style, from: Style, to: Style, t: f32) -> Style {
     if t >= 0.5 {
         if to.font != from.font { s.font = to.font; }
         if to.slice != from.slice { s.slice = to.slice; }
+        if to.text_look != from.text_look { s.text_look = to.text_look; }
     }
     s.text_size += (to.text_size - from.text_size) * t;
     s.slice_tint = delta_color(s.slice_tint, from.slice_tint, to.slice_tint, t);

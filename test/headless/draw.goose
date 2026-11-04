@@ -1,7 +1,8 @@
 // imgui drawn headless and read back: a box's fill, border and corners; a
 // gradient; opacity, multiplied in and through a layer; clipping by a box
 // that clips (a scroll pane's content past its edge); a motion offset and
-// scale; the focus ring, which shows only after navigation.
+// scale; the focus ring, which shows only after navigation; a text's
+// outline and shadow.
 import std;
 import vec;
 import math;
@@ -136,4 +137,34 @@ fn main() {
     render(imgui::NavInput { down: true, .. }) { buttons(); };
     for k in 10 { render(none) { buttons(); }; }
     print("ring after navigation: ", !close_to(rx, ry, 0xFFFFFF, 40));
+
+    // Text effects: an outline in red around black glyphs, a shadow in
+    // blue under them, inherited from a box, and turned off by a child.
+    fn count(rgb: i64, tol: i64) -> i64 {
+        var n = 0;
+        for y in H { for x in W { if close_to(x, y, rgb, tol) { n++; } } }
+        n
+    }
+    fn word(d: imgui::Desc) {
+        imgui::text("HUD", d.text_size(40).ink(gfx2d::BLACK).place(imgui::CENTER, imgui::CENTER));
+    }
+    render(none) { word(imgui::column()); };
+    let plain_red = count(0xFF0000, 60);
+    let plain_blue = count(0x0000FF, 60);
+    render(none) { word(imgui::column().text_outline(2, gfx2d::rgb(0xFF0000))); };
+    let red = count(0xFF0000, 60);
+    render(none) {
+        imgui::box(imgui::stack().grow().text_shadow(gfx2d::rgb(0x0000FF), 4, 4)) { word(imgui::column()); };
+    };
+    let blue = count(0x0000FF, 60);
+    render(none) {
+        imgui::box(imgui::stack().grow().text_shadow(gfx2d::rgb(0x0000FF), 4, 4).text_outline(2, gfx2d::rgb(0xFF0000))) {
+            word(imgui::column().no_text_shadow().no_text_outline());
+        };
+    };
+    let off_red = count(0xFF0000, 60);
+    let off_blue = count(0x0000FF, 60);
+    print("text outline: none plain ", plain_red == 0, ", drawn ", red > 100);
+    print("text shadow: none plain ", plain_blue == 0, ", inherited ", blue > 100,
+          "; turned off ", off_red == 0 && off_blue == 0);
 }

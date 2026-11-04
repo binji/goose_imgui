@@ -154,6 +154,12 @@ How children share space:
 | `border(w, c)`, `radius(r)`, `radius(float4)` | inside the box; corners top left, top right, bottom right, bottom left |
 | `shadow(c, blur, dx, dy)` | a box shadow |
 | `ink(c)`, `text_size(s)`, `font(f)` | the node's text, and its text descendants' |
+| `letter_spacing(px)` | pixels after each character, inherited the same way |
+| `text_outline(w, c)`, `no_text_outline()` | an outline `w` pixels wide around the glyphs (up to a sixteenth of the text's size), inherited; for text over a busy scene. Faded, `isolate()` keeps it from showing through the glyphs |
+| `text_shadow(c, dx, dy)`, `no_text_shadow()` | a copy of the text and its outline, moved, under it; inherited |
+
+A Desc with text effects set during a frame is good for that frame only.
+One made outside any frame, and kept, is good for any frame.
 | `opacity(o)` | multiplied into its colors and its subtree's |
 | `isolate()` | the subtree drawn into a gfx2d layer and composited at its opacity, so overlaps inside it don't show through (a pass more) |
 | `clip()` | children clipped to its rounded box |
@@ -166,6 +172,11 @@ A `Style` has:
 - `shadow`;
 - `padding`;
 - `ink`, `font` and `text_size` (which text inherits);
+- `text_look`: a `TextLook` from `add_text_look(TextLook { … })`: letter
+  spacing, an outline and its color, a shadow and its offset. Text inherits
+  each part unless the look sets it. A spacing or outline of 0, or a
+  transparent shadow, is unset. An outline < 0, or a shadow moved by
+  (0, 0), is none;
 - `slice` and `slice_tint`: a nine-slice from `add_nine_slice(texture, src,
   insets)`;
 - `alpha`, `offset` and `zoom`: a state's motion, such as a pressed button

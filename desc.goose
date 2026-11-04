@@ -85,6 +85,9 @@ let OV_TEXT_SIZE = 16;
 let OV_FONT = 32;
 let OV_SHADOW = 64;
 let OV_PADDING = 128;
+let OV_LETTER_SPACING = 256;
+let OV_TEXT_OUTLINE = 512;
+let OV_TEXT_SHADOW = 1024;
 
 struct LookDesc {
     class: StyleClass = StyleClass { 0 },   // NONE: no style but the overrides
@@ -99,6 +102,8 @@ struct LookDesc {
     text_size: f32 = 0.0,
     font: gfx2d::Font = gfx2d::Font { 0 },
     shadow: Shadow = Shadow { .. },
+    fx: u32 = 0,                        // its text effects: 0 none, else where in a table (desc_fx)
+    fx_frame: u32 = 0,                  // the frame they were set in, if in that frame's table
     opacity: f32 = 1.0,
     clips: bool = false,                // children clipped to the node's (rounded) box
     isolated: bool = false,             // drawn into a layer, composited at its opacity
@@ -139,6 +144,47 @@ struct Desc {
     vis: LookDesc = LookDesc { .. },
     mot: MotionDesc = MotionDesc { .. },
     bits: u32 = 0,
+}
+
+// --- text effects ---------------------------------------------------------------------
+
+// A Desc's text effects are kept out of it, in a table: few nodes have
+// them, and every setter copies the whole Desc. Set during a frame, they go
+// in that frame's table, and the Desc is good for that frame only; set
+// outside any frame (a Desc made once and kept), in a lasting table, each
+// different value once. Its flags in `ov` say which parts it sets.
+var frame_fx: TextLook[>..<] = [];
+var lasting_fx: TextLook[>..<] = [];
+let FX_LASTING: u32 = 0x80000000;
+
+fn desc_fx(v: LookDesc) -> TextLook {
+    if v.fx == 0 { return TextLook { .. }; }
+    if v.fx & FX_LASTING != 0 { return lasting_fx[((v.fx & ~FX_LASTING) - 1) as i64]; }
+    if v.fx_frame != frame_index as u32 || v.fx > frame_fx.len {
+        misuse("a Desc's text effects were set in an earlier frame: set them in the frame that uses the Desc, or outside any frame");
+        return TextLook { .. };
+    }
+    frame_fx[(v.fx - 1) as i64]
+}
+
+fn with_fx(var d: Desc, fx: TextLook, flag: i64) -> Desc {
+    if in_frame {
+        frame_fx.push(fx);
+        d.vis.fx = frame_fx.len as u32;
+        d.vis.fx_frame = frame_index as u32;
+    } else {
+        var k = 0;
+        while k < lasting_fx.len && !same_fx(lasting_fx[k], fx) { k++; }
+        if k == lasting_fx.len { lasting_fx.push(fx); }
+        d.vis.fx = (k + 1) as u32 | FX_LASTING;
+    }
+    d.vis.ov |= flag as u16;
+    d
+}
+
+fn same_fx(a: TextLook, b: TextLook) -> bool {
+    a.letter_spacing == b.letter_spacing && a.outline == b.outline && a.outline_color == b.outline_color &&
+    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset
 }
 
 // --- starting points ------------------------------------------------------------------
@@ -273,6 +319,30 @@ fn shadow(var d: Desc, c: gfx2d::Color, blur: f64, dx: f64 = 0.0, dy: f64 = 0.0)
 fn ink(var d: Desc, c: gfx2d::Color) -> Desc { d.vis.ink = c; d.vis.ov |= OV_INK; d }
 fn text_size(var d: Desc, s: f64) -> Desc { d.vis.text_size = s as f32; d.vis.ov |= OV_TEXT_SIZE; d }
 fn font(var d: Desc, f: gfx2d::Font) -> Desc { d.vis.font = f; d.vis.ov |= OV_FONT; d }
+// Pixels added after each character of the node's text, and its text
+// descendants'.
+fn letter_spacing(d: Desc, px: f64) -> Desc {
+    var fx = desc_fx(d.vis);
+    fx.letter_spacing = px as f32;
+    with_fx(d, fx, OV_LETTER_SPACING)
+}
+// An outline `w` pixels wide around the glyphs, in c, for text over busy
+// scenes. It can be up to a sixteenth of the text's size.
+fn text_outline(d: Desc, w: f64, c: gfx2d::Color) -> Desc {
+    var fx = desc_fx(d.vis);
+    fx.outline = w as f32;
+    fx.outline_color = c;
+    with_fx(d, fx, OV_TEXT_OUTLINE)
+}
+fn no_text_outline(d: Desc) -> Desc { text_outline(d, -1.0, gfx2d::TRANSPARENT) }
+// A copy of the text (and its outline) in c, moved by (dx, dy), under it.
+fn text_shadow(d: Desc, c: gfx2d::Color, dx: f64 = 1.0, dy: f64 = 1.0) -> Desc {
+    var fx = desc_fx(d.vis);
+    fx.shadow = c;
+    fx.shadow_offset = float2 { dx as f32, dy as f32 };
+    with_fx(d, fx, OV_TEXT_SHADOW)
+}
+fn no_text_shadow(d: Desc) -> Desc { text_shadow(d, gfx2d::BLACK, 0.0, 0.0) }
 fn opacity(var d: Desc, o: f64) -> Desc { d.vis.opacity = o as f32; d }
 fn clip(var d: Desc) -> Desc { d.vis.clips = true; d }
 fn isolate(var d: Desc) -> Desc { d.vis.isolated = true; d }

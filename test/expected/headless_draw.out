@@ -8,3 +8,5 @@ nine-slice: corner true, edge true, middle true, past the corner's 10 true
 scale 2: true, past it true
 no ring: true
 ring after navigation: true
+text outline: none plain true, drawn true
+text shadow: none plain true, inherited true; turned off true

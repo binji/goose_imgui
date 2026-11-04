@@ -181,7 +181,29 @@ fn draw_text(i: i32, a: f32) {
             style.align = gfx2d::ALIGN_LEFT;
         }
     }
-    gfx2d::text(x, y, node_text(i), style, faded(n.style.ink, a));
+    let s = node_text(i);
+    // Under the text: its shadow (a copy of it and its outline, moved),
+    // then its outline (a stroke, half of it hidden by the glyphs).
+    let l = look_of(n);
+    let ow = outline_width(l, n.style.text_size);
+    var os = style;
+    os.outline = ow * 2.0;
+    let sh = l.shadow_offset;
+    if l.shadow.a > 0.0 && sh != float2_0 {
+        let c = faded(l.shadow, a);
+        if ow > 0.0 { gfx2d::text(x + sh.x, y + sh.y, s, os, c); }
+        gfx2d::text(x + sh.x, y + sh.y, s, style, c);
+    }
+    if ow > 0.0 && l.outline_color.a > 0.0 {
+        gfx2d::text(x, y, s, os, faded(l.outline_color, a));
+    }
+    gfx2d::text(x, y, s, style, faded(n.style.ink, a));
+}
+
+// The outline drawn around text of a size, outside its glyphs: no more
+// than the glyphs' distance field reaches (a sixteenth of the size).
+fn outline_width(l: TextLook, size: f32) -> f64 {
+    if l.outline <= 0.0 { 0.0 } else { min(l.outline, size / 16.0) }
 }
 
 fn draw_ring(i: i32, a: f32) {

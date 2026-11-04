@@ -1,6 +1,6 @@
 // The layout solver, no GPU: rows, columns, gaps and padding; fit, px,
 // grow, pct, min and max; justify and align; wrapping rows and text;
-// grids; stacks and absolute children. Each case is one frame, its tree
+// grids; stacks and absolute children; letter spacing. Each case is one frame, its tree
 // printed with each node's rect.
 import std;
 import vec;
@@ -90,4 +90,31 @@ fn main() {
             };
         };
     };
+    case("text: letter spacing, inherited and overridden") {
+        imgui::text("abc");
+        imgui::box(imgui::column().letter_spacing(4)) {
+            imgui::text("abc");
+            imgui::text("abc", imgui::column().letter_spacing(-1));
+        };
+    };
+
+    // Text effects on a Desc made outside any frame last from frame to
+    // frame. (Set in a frame and used in the next, they are misuse, which
+    // is fatal.)
+    print("--- text effects: a Desc made outside a frame, used in two");
+    let kept = imgui::column().letter_spacing(4);
+    for f in 2 {
+        imgui::frame(view(400, 300), 1.0 / 60.0) { imgui::box("kept", kept) { imgui::text("abc"); }; };
+        print("frame ", f + 1, ": ", round(imgui::rect_of(imgui::id("kept")).w));
+    }
+
+    // A class's text look: its spacing on the text inside, under a Desc's.
+    let look = imgui::add_text_look(imgui::TextLook { letter_spacing: 4.0, .. });
+    let spaced = imgui::add_class(imgui::style_set(imgui::Style { text_look: look, .. }));
+    imgui::frame(view(400, 300), 1.0 / 60.0) {
+        imgui::box("class", imgui::column().skin(spaced)) { imgui::text("abc"); };
+        imgui::box("over", imgui::column().skin(spaced).letter_spacing(-1)) { imgui::text("abc"); };
+    };
+    print("--- text look from a class: ", round(imgui::rect_of(imgui::id("class")).w), ", a Desc's over it: ",
+          round(imgui::rect_of(imgui::id("over")).w));
 }

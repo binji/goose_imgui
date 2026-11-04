@@ -67,6 +67,7 @@ struct Node {
     ring: bool = false,                 // its focus ring shows
     scope: u64 = 0,                     // its nav scope
     owner: i32 = -1,                    // the nearest node at or above it that takes the pointer
+    look: i32 = 0,                      // its text look, in node_looks
     // a canvas's commands: where in draw_cmds, how many, the box they reach
     cmd_first: i32 = 0,
     cmd_end: i32 = 0,
@@ -98,8 +99,31 @@ var tracks: f32[>..] = [];
 var parents: i32[>..<] = [];
 var roots: Root[>..<] = [];
 var node_of = dictionary<u64, i32> {};     // this frame's named nodes
-// What text inherits: the nearest ink, font and size up the tree.
-struct Inherited { ink: gfx2d::Color, font: gfx2d::Font, size: f32 }
+// What text inherits: the nearest ink, font and size up the tree, and its
+// text look: where in `node_looks` the letter spacing, outline and shadow
+// it gets are (0: none).
+struct Inherited { ink: gfx2d::Color, font: gfx2d::Font, size: f32, look: i32 = 0 }
+// The text looks this frame's nodes have, each from its style's and Desc's
+// over its parent's. A node keeps its parent's unless it changes it, so
+// this holds only what changes.
+var node_looks: TextLook[>..<] = [];
+
+// The look a node with style s and Desc look v has under a parent's `up`.
+fn resolve_look(s: Style, v: LookDesc, up: i32) -> i32 {
+    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW);
+    if s.text_look == 0 && fx_ov == 0 { return up; }
+    var l = node_looks[up as i64];
+    if s.text_look != 0 { l = over_look(text_look_of(s.text_look), l); }
+    if fx_ov != 0 {
+        let d = desc_fx(v);
+        if v.ov & OV_LETTER_SPACING != 0 { l.letter_spacing = d.letter_spacing; }
+        if v.ov & OV_TEXT_OUTLINE != 0 { l.outline = d.outline; l.outline_color = d.outline_color; }
+        if v.ov & OV_TEXT_SHADOW != 0 { l.shadow = d.shadow; l.shadow_offset = d.shadow_offset; }
+    }
+    node_looks.push(l);
+    (node_looks.len - 1) as i32
+}
+fn look_of(n: Node&) -> TextLook { node_looks[n.look as i64] }
 var inherited: Inherited[>..<] = [];
 
 fn begin_tree() {
@@ -110,9 +134,13 @@ fn begin_tree() {
     roots.clear();
     node_of.clear();
     inherited.clear();
+    frame_fx.clear();
+    node_looks.clear();
+    node_looks.push(TextLook { .. });
     let base = resolve_style(LABEL, LookState { .. });
     inherited.push(Inherited { base.ink, if base.font.id != 0 { base.font } else { gfx2d::default_font() },
-                               if base.text_size > 0.0 { base.text_size } else { 16.0 } });
+                               if base.text_size > 0.0 { base.text_size } else { 16.0 },
+                               resolve_look(base, LookDesc { .. }, 0) });
     open_root(ROOT_MAIN, 0, Anchor { kind: ANCHOR_VIEWPORT, rect: viewport, .. }, stack());
 }
 
@@ -130,19 +158,20 @@ fn open_root(kind: i64, popup: u64, a: Anchor, d: Desc) -> i32 {
     let st = apply_overrides(resolve_style(d.vis.class, d.vis.state), d.vis, d.lay);
     var nd = d;
     nd.lay.padding = st.padding;
-    nodes.push(Node { id: rid, kind: NODE_BOX, root: roots.len as i16, d: nd, style: st, .. });
+    let look = resolve_look(st, d.vis, inherited[inherited.len - 1].look);
+    nodes.push(Node { id: rid, kind: NODE_BOX, root: roots.len as i16, d: nd, style: st, look: look, .. });
     roots.push(Root { node: i, kind: kind as u8, popup: popup, anchor: a, level: popup_level(popup) });
     parents.push(i);
-    push_inherited(st);
+    push_inherited(st, look);
     i
 }
 fn close_root() { close_node(); }
 
-fn push_inherited(s: Style) {
+fn push_inherited(s: Style, look: i32) {
     let up = inherited[inherited.len - 1];
     inherited.push(Inherited { if s.ink.a > 0.0 { s.ink } else { up.ink },
                                if s.font.id != 0 { s.font } else { up.font },
-                               if s.text_size > 0.0 { s.text_size } else { up.size } });
+                               if s.text_size > 0.0 { s.text_size } else { up.size }, look });
 }
 
 // A node, linked under the open parent. `id` 0 is keyed by its place.
@@ -169,7 +198,7 @@ fn add_node(kind: i64, id: u64, var d: Desc) -> i32 {
     if st.text_size <= 0.0 { st.text_size = up.size; }
     let i = nodes.len as i32;
     nodes.push(Node { id: nid, parent: p, kind: kind as u8, named: named, root: nodes[p].root, d: d,
-                      style: st, scope: current_scope(), .. });
+                      style: st, scope: current_scope(), look: resolve_look(st, d.vis, up.look), .. });
     let last = nodes[p].last;
     if last >= 0 { nodes[last].next = i; } else { nodes[p].first = i; }
     nodes[p].last = i;
@@ -187,7 +216,7 @@ fn add_node(kind: i64, id: u64, var d: Desc) -> i32 {
 fn push_parent(i: i32, scoped: bool) {
     parents.push(i);
     if scoped { id_stack.push(nodes[i].id); nodes[i].scoped = true; }
-    push_inherited(nodes[i].style);
+    push_inherited(nodes[i].style, nodes[i].look);
 }
 
 fn close_node() {
@@ -250,7 +279,7 @@ fn spacer(d: Desc) { add_node(NODE_BOX, 0, d); }
 // --- text ---------------------------------------------------------------------------------
 
 fn text_style_of(n: Node&) -> gfx2d::TextStyle {
-    gfx2d::TextStyle { font: n.style.font, size: n.style.text_size, .. }
+    gfx2d::TextStyle { font: n.style.font, size: n.style.text_size, letter_spacing: look_of(n).letter_spacing, .. }
 }
 
 // Text, in the inherited ink, font and size, or its Desc's. A text's

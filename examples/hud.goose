@@ -7,7 +7,7 @@
 //
 // It is made from what imgui has now. Where a game's HUD wants something
 // imgui lacks, a comment names the item of docs/future_work.md that would
-// do it ("future work 3"), and the code works around it.
+// do it ("future work: meters"), and the code works around it.
 //
 //   goose examples/hud.goose [-- --frames 90 --screenshot hud.png]
 import std;
@@ -137,8 +137,8 @@ fn draw_world(cam: float2, view: float2, t: f64) {
 // A translucent panel for the HUD's corners.
 fn hud_panel(d: imgui::Desc) -> imgui::Desc { d.bg(rgba(0x0B0F14, 0.62)).radius(10).padding(12) }
 
-// A bar in segments, with a trail behind the value: future work 4 (a
-// `meter` would be segmented and trailed by itself).
+// A bar in segments, with a trail behind the value: future work: meters
+// (a `meter` would be segmented and trailed by itself).
 fn segmented_bar(label: const u8[:], value: f64, segments: i64, w: f64, h: f64, c: gfx2d::Color) {
     // The trail holds a moment, then eases down to the value; it jumps up
     // with it.
@@ -158,9 +158,10 @@ fn segmented_bar(label: const u8[:], value: f64, segments: i64, w: f64, h: f64, 
     };
 }
 
-// Letters spaced out by spaces between them: future work 1 (letter_spacing).
-let REGION = "A S H E N   H O L L O W";
-let QUEST = "T H E   E M B E R   S H R I N E";
+let REGION = "ASHEN HOLLOW";
+let QUEST = "THE EMBER SHRINE";
+// Text over the scene, shadowed to be read on any ground.
+let SHADE = 0x05070A;
 
 fn main() {
     setup();
@@ -180,7 +181,8 @@ fn main() {
             imgui::frame(frame_dt()) {
                 // A click on the ground, not on the HUD, pings it. The bars
                 // over the enemies have backgrounds, so they take the
-                // pointer too: future work 2 (passthrough).
+                // pointer too: future work: a HUD that lets the pointer
+                // through.
                 if gfx::mouse_pressed(gfx::MOUSE_LEFT) && !imgui::wants_pointer() {
                     pings.push(Ping { imgui::pointer().pos - center + me, t });
                 }
@@ -191,20 +193,21 @@ fn main() {
 
                 // Over each enemy, its name and health. A node is placed by
                 // its top left, so each is given a width and moved left by
-                // half of it: future work 3 (pivot).
+                // half of it: future work: placing by a point.
                 for i in enemies.len {
                     let e = enemies[i];
                     let s = to_screen(e.pos);
                     if s.x < -60.0 || s.y < -60.0 || s.x > view.x + 60.0 || s.y > view.y + 60.0 { continue; }
                     imgui::box(i, imgui::column().absolute(s.x - 50.0, s.y - 48.0).width(100).align(imgui::CENTER).gap(3)) {
-                        imgui::text(e.name, imgui::column().text_size(12).ink(rgb(INK)));
+                        imgui::text(e.name, imgui::column().text_size(12).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.8)));
                         segmented_bar("hp", e.hp / e.max_hp, 1, 56, 6, rgb(HP_RED));
                     };
                 }
 
-                // Damage numbers rise and fade. The program keeps each
-                // until it is done: future work 10 (notices). Their shadow
-                // is a second copy of the text: future work 1 (text_shadow).
+                // Damage numbers rise and fade, outlined and shadowed. Each
+                // is isolated, so that as it fades its outline doesn't show
+                // through its glyphs. The program keeps each until it is
+                // done: future work: notices.
                 k = 0;
                 while k < damage.len {
                     let d = damage[k];
@@ -213,10 +216,10 @@ fn main() {
                     let s = to_screen(d.pos);
                     let pop = 1.0 + 0.5 * max(1.0 - age * 8.0, 0.0);
                     imgui::box(imgui::id(str("dmg", d.key)), imgui::stack().absolute(s.x - 30.0, s.y - 70.0 - age * 50.0)
-                                                              .width(60).opacity(1.0 - age * age / 0.81).scale(pop)) {
-                        imgui::textf(imgui::column().text_size(20).ink(rgba(0x000000, 0.7)).place(imgui::CENTER, imgui::CENTER)
-                                       .offset(1.5, 1.5)) { out => format(out, d.amount); };
-                        imgui::textf(imgui::column().text_size(20).ink(rgb(0xFFE08A)).place(imgui::CENTER, imgui::CENTER)) { out =>
+                                                              .width(60).opacity(1.0 - age * age / 0.81).scale(pop)
+                                                              .isolate()) {
+                        imgui::textf(imgui::column().text_size(22).ink(rgb(0xFFE08A)).place(imgui::CENTER, imgui::CENTER)
+                                       .text_outline(1.4, rgb(0x5A2A08)).text_shadow(rgba(SHADE, 0.6), 0, 2)) { out =>
                             format(out, d.amount);
                         };
                     };
@@ -224,9 +227,10 @@ fn main() {
                 }
 
                 // The shrine: a marker over it on screen, or at the screen's
-                // edge pointing to it. The clamping is done here (future work
-                // 3, edge_clamp), and the arrow's points are turned by hand
-                // (future work 5, rotation).
+                // edge pointing to it. The clamping is done here (future
+                // work: placing by a point, and clamping to the screen),
+                // and the arrow's points are turned by hand (future work:
+                // rotation and skew).
                 let dist = length(SHRINE - me) as f64;
                 let ss_shrine = to_screen(SHRINE);
                 let margin = 56.0;
@@ -265,7 +269,7 @@ fn main() {
                             let hp = 0.55 + 0.3 * sin(t * 0.8) * (if sin(t * 2.3) > 0.0 { 1.0 } else { 0.6 });
                             segmented_bar("health", hp, 5, 220, 12, rgb(HP_RED));
                             // Stamina, with the built-in bar: horizontal is all
-                            // it does (future work 4).
+                            // it does (future work: meters).
                             imgui::progress(0.5 + 0.5 * sin(t * 1.3), imgui::column().width(220).height(5));
                         };
                     };
@@ -305,7 +309,8 @@ fn main() {
                     // Top right: the minimap, and the quest under it.
                     imgui::box("right", imgui::column().gap(12).align(imgui::END).place(imgui::END, imgui::START)) {
                         // North stays up: a map that turns with the player
-                        // needs a canvas transform (future work 5).
+                        // needs a canvas transform (future work: rotation
+                        // and skew).
                         imgui::canvas("minimap", imgui::column().size(170, 170).radius(85).clip().bg(rgba(0x0B0F14, 0.65))
                                                  .border(2, rgba(INK, 0.5))) { size =>
                             let c = size * 0.5;
@@ -330,7 +335,7 @@ fn main() {
                             imgui::fill_polygon([p(9, 0), p(7, 2.4), p(7, -2.4)], rgb(0x7FD3FF));
                         };
                         imgui::box("quest", hud_panel(imgui::column().gap(4).align(imgui::END))) {
-                            imgui::text(QUEST, imgui::column().text_size(12).ink(rgb(GOLD)));
+                            imgui::text(QUEST, imgui::column().text_size(12).letter_spacing(3).ink(rgb(GOLD)));
                             imgui::text("Light the brazier at the shrine", imgui::column().text_size(14).ink(rgb(INK)));
                             imgui::textf(imgui::column().text_size(12).ink(rgba(INK, 0.6))) { out =>
                                 format(out, round(dist / 4.0) as i64, " m away");
@@ -339,7 +344,7 @@ fn main() {
                     };
 
                     // Bottom center: the hotbar. Slot 2's cooldown is a
-                    // sweep on a canvas: future work 4 (a radial meter).
+                    // sweep on a canvas: future work: meters (radial).
                     imgui::box("hotbar", hud_panel(imgui::row().gap(8)).padding(8).place(imgui::CENTER, imgui::END)) {
                         for c, i in SLOTS {
                             let chosen = i == 0;
@@ -371,7 +376,8 @@ fn main() {
                     };
 
                     // Bottom right: the controls. A pad would want its own
-                    // glyphs here: future work 6 (prompts).
+                    // glyphs here: future work: prompts for the device in
+                    // use.
                     imgui::box("controls", imgui::row().gap(14).align(imgui::CENTER).place(imgui::END, imgui::END)) {
                         for pair in [["Click", "Ping"], ["Esc", "Quit"]] {
                             imgui::box(imgui::row().gap(6).align(imgui::CENTER)) {
@@ -385,12 +391,13 @@ fn main() {
 
                     // The region's name, for a few seconds after arriving. It
                     // is drawn while it fades out by the program keeping it:
-                    // future work 9 (exits) and 10 (notices).
+                    // future work: exit transitions, and notices.
                     let bt, alive = imgui::presence("region", t > 0.4 && t < 3.6, imgui::tween(0.6, imgui::EASE_OUT_CUBIC));
                     if alive {
                         imgui::box("region", imgui::column().align(imgui::CENTER).gap(6).place(imgui::CENTER, imgui::START)
                                                .offset(0, 120 + (1.0 - bt) * 16.0).opacity(bt)) {
-                            imgui::text(REGION, imgui::column().text_size(34).ink(rgb(INK)));
+                            imgui::text(REGION, imgui::column().text_size(34).letter_spacing(10).ink(rgb(INK))
+                                                    .text_shadow(rgba(SHADE, 0.7), 0, 2));
                             imgui::panel(imgui::column().size(260 * bt, 1).bg(rgba(INK, 0.6)));
                             imgui::text("The Cinder Reaches", imgui::column().text_size(14).ink(rgba(INK, 0.7)));
                         };
