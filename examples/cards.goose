@@ -5,8 +5,8 @@
 // is an orb filled to its level (a canvas clipped to a circle); the enemy's
 // health has a trail that shows what a card took; End turn is a slanted
 // button. The rules are rich text: numbers in color, a keyword
-// underlined, an icon on the line. Drag a card onto the enemy to play it,
-// or click it.
+// underlined (rest the pointer on it for what it means), an icon on the
+// line. Drag a card onto the enemy to play it, or click it.
 //
 //   goose examples/cards.goose [-- --frames 90 --screenshot cards.png]
 import std;
@@ -25,7 +25,7 @@ let DAMAGE = [6, 12, 0, 6, 0];
 let BLOCK = [0, 0, 5, 0, 0];
 let HEAL = [0, 0, 0, 0, 6];
 // Rich text: the numbers in spans, keywords underlined, icons on the line.
-let RULES = ["Deal [dmg]6[/] damage.", "Deal [dmg]12[/] damage. [kw]Burns[/kw].", "Gain [blk]5[/] [img=shield].",
+let RULES = ["Deal [dmg]6[/] damage.", "Deal [dmg]12[/] damage. [kw=burn]Burns[/kw].", "Gain [blk]5[/] [img=shield].",
              "Deal [dmg]6[/] damage.", "Heal [heal]6[/] [img=heart]."];
 let COLORS = [0xC8484F, 0xE2702C, 0x3D7DE0, 0xC8484F, 0x2EAE6A];
 let MAX_ENERGY = 3;
@@ -139,7 +139,12 @@ fn card_face(c: i64) {
                  .bg(gfx2d::lighten(rgb(COLORS[c]), 0.12), gfx2d::darken(rgb(COLORS[c]), 0.45))) {
         imgui::text(NAMES[c], imgui::column().text_size(17).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.7)));
         imgui::panel(imgui::column().size(70, 60).radius(6).bg(rgba(0xFFFFFF, 0.18)));
-        imgui::rich(RULES[c], imgui::column().text_size(13).ink(rgb(INK)).wrap().grow_w().justify(imgui::CENTER));
+        // A keyword's meaning, in a tooltip when the pointer rests on it.
+        let h = imgui::rich(RULES[c], imgui::column().text_size(13).ink(rgb(INK)).wrap().grow_w().justify(imgui::CENTER));
+        imgui::tooltip(h.it) {
+            if h.was("burn") { imgui::text("Burn: the enemy takes 2 damage at the start of each of its turns, for 3 turns.",
+                                           imgui::column().wrap()); }
+        };
     };
     imgui::box(imgui::stack().size(30, 30).place(imgui::START, imgui::START).offset(-8, -8)) {
         imgui::panel(imgui::column().size(26, 26).radius(4).bg(rgb(0xF0A030)).border(2, rgb(0x2A1E14))

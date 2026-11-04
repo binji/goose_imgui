@@ -393,6 +393,14 @@ spills past the box.
   text counts its pieces, newlines and broken spaces included, so both
   count a string alike. The count is kept with the text effects, out of
   the Desc, and not inherited.
+- A keyed span (`[kw=burn]`) is found under the pointer from where it was
+  last frame, as every widget's hover is: after layout, each keyed span's
+  boxes on its lines are kept, in screen space (so turned text is found
+  too). The text is not a hit target, which would take clicks from the
+  card or button it is in; a span is on when the pointer is in its box and
+  the widget it is in is the one under the pointer, so a panel over it
+  blocks it. The text gets an ID from its string in its scope, to keep the
+  span last hovered by, for a tooltip fading out.
 - Drawn in three passes over its lines, all shadows, then all outlines,
   then glyphs, images and underlines, so that one piece's shadow doesn't
   fall over the glyphs before it.

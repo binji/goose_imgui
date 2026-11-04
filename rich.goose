@@ -9,7 +9,14 @@
 //               imgui::column().wrap());
 //
 // [name] … [/] (or [/name]) is a span, and spans nest; [img=name] is an
-// image, as tall as the text by default and centered on it; [[ is a [. A
+// image, as tall as the text by default and centered on it; [[ is a [.
+// [name=key] … [/] is a span the pointer can rest on: rich() returns which
+// key is under it, and an Interaction for a tooltip there:
+//
+//   let h = imgui::rich("Deal 4 and [kw=burn]Burn[/] 2.", d);
+//   imgui::tooltip(h.it) { if h.was("burn") { imgui::text("Burn: 1 damage a turn."); } };
+//
+// A
 // span changes what it sets of the text's ink, font, size and look
 // (letter spacing, outline, shadow), and can underline. The text wraps,
 // justifies and sizes as text() does. Lines break at spaces only, so a
@@ -79,6 +86,7 @@ struct Piece {
     below: f32 = 0.0,                   // below it, to the next line
     fx: u16 = 0,                        // its span's effect, and the numbers for it
     fx_args: float4 = float4 { 0.0, 0.0, 0.0, 0.0 },
+    key: u64 = 0,                       // its span's key ([name=key]), hashed; 0: none
 }
 
 // This frame's pieces; a rich node's are text_len of them from text_off.
@@ -93,6 +101,7 @@ struct RunStyle {
     underline: bool,
     fx: u16,
     fx_args: float4,
+    key: u64,
 }
 
 fn run_text_style(r: RunStyle, letter_spacing: f32) -> gfx2d::TextStyle {
@@ -102,33 +111,37 @@ fn run_text_style(r: RunStyle, letter_spacing: f32) -> gfx2d::TextStyle {
 // The letter spacing of a piece in look `k` of a node whose own is `own`.
 fn piece_look(k: u16, own: TextLook) -> TextLook { if k == 0 { own } else { over_look(text_look_of(k), own) } }
 
-// Rich text from markup.
-fn rich(s: const u8[:], d: Desc) {
+// Rich text from markup; which of its keyed spans the pointer is on.
+fn rich(s: const u8[:], d: Desc) -> SpanHit {
     let i = record_rich(s, d);
-    if i < 0 { return; }
+    if i < 0 { return SpanHit { .. }; }
     var any = look_of(nodes[i]).text_fx != 0;
     for k in nodes[i].text_off..nodes[i].text_off + nodes[i].text_len { if pieces[k].fx != 0 { any = true; } }
     if any {
         rich_glyphs_of(i);
         run_glyphs(i) { g => standard_fx(g); };
     }
+    span_hit(i)
 }
 // Rich text with effects of the program's own: the block run for each
 // character, with a Glyph to change (textfx.goose).
-fn rich<F>(s: const u8[:], d: Desc) {
+fn rich<F>(s: const u8[:], d: Desc) -> SpanHit {
     let i = record_rich(s, d);
-    if i < 0 { return; }
+    if i < 0 { return SpanHit { .. }; }
     rich_glyphs_of(i);
     run_glyphs(i) { g => F(g); };
+    span_hit(i)
 }
 fn record_rich(s: const u8[:], d: Desc) -> i32 {
-    let i = add_node(NODE_RICH, 0, d);
+    // With keyed spans, it has an ID, from its text in its scope, to keep
+    // which was hovered by.
+    let i = add_node(NODE_RICH, if has_keys(s) { id(s).v } else { 0 }, d);
     if i < 0 { return -1; }
     let own = look_of(nodes[i]);
     let base_font = if nodes[i].style.font.id != 0 { nodes[i].style.font } else { gfx2d::default_font() };
     var stack: RunStyle[..16] = [];
     stack.push(RunStyle { base_font, nodes[i].style.text_size, gfx2d::Color { 0.0, 0.0, 0.0, 0.0 }, 0, false, 0,
-                          float4 { 0.0, 0.0, 0.0, 0.0 } });
+                          float4 { 0.0, 0.0, 0.0, 0.0 }, 0 });
     nodes[i].text_off = pieces.len as i32;
     var word = -1;              // where the word being read starts in text_arena, -1: none
     var glue = false;           // the next piece goes on from the one before
@@ -137,7 +150,7 @@ fn record_rich(s: const u8[:], d: Desc) -> i32 {
         let r = stack[stack.len - 1];
         pieces.push(Piece { kind: kind, underline: r.underline, glued: glue && (kind == PIECE_WORD || kind == PIECE_IMAGE), look: r.look, font: r.font, size: r.size,
                             ink: r.ink, off: off as i32, len: len as i32, w: w as f32, ascent: ascent as f32,
-                            below: below as f32, fx: r.fx, fx_args: r.fx_args });
+                            below: below as f32, fx: r.fx, fx_args: r.fx_args, key: r.key });
         glue = kind == PIECE_WORD || kind == PIECE_IMAGE;
     }
     fn text_piece(kind: u8, off: i64) {
@@ -182,7 +195,10 @@ fn record_rich(s: const u8[:], d: Desc) -> i32 {
                     let below = gfx2d::font_line_height(r.font, r.size) - ascent;
                     add(PIECE_IMAGE, k, 0, w, max(ascent, mid + h * 0.5), max(below, h * 0.5 - mid));
                 } else {
-                    let k = span_names.get(hash(tag));
+                    // A span, perhaps with a key: [name=key].
+                    var eq = 0;
+                    while eq < tag.len && tag[eq] != '=' { eq++; }
+                    let k = span_names.get(hash(tag[..eq]));
                     if !k { misuse("rich: no span of that name (add_span)"); continue; }
                     if stack.len == 16 { misuse("rich: spans nested too deep"); continue; }
                     let sp = spans[k];
@@ -193,6 +209,7 @@ fn record_rich(s: const u8[:], d: Desc) -> i32 {
                     if sp.text_look != 0 { r.look = sp.text_look; }
                     if sp.underline { r.underline = true; }
                     if sp.text_fx != 0 { r.fx = sp.text_fx; r.fx_args = sp.fx_args; }
+                    if eq < tag.len { r.key = hash(tag[eq + 1..]); }
                     stack.push(r);
                 }
                 continue;
@@ -241,8 +258,103 @@ fn record_rich(s: const u8[:], d: Desc) -> i32 {
     n.word = widest;
     i
 }
-fn rich(s: const u8[:]) { rich(s, column()); }
-fn rich(s: const u8[:], c: StyleClass) { rich(s, column().skin(c)); }
+fn rich(s: const u8[:]) -> SpanHit { rich(s, column()) }
+fn rich(s: const u8[:], c: StyleClass) -> SpanHit { rich(s, column().skin(c)) }
+
+// --- keyed spans ------------------------------------------------------------------------
+
+// Which keyed span of a rich text the pointer is on (`key`, 0 for none),
+// the one it was last on (`last`, to keep a tooltip's content as it
+// fades), and an Interaction for a tooltip: hovered while on one, its
+// rect that span's.
+struct SpanHit {
+    key: u64 = 0,
+    last: u64 = 0,
+    it: Interaction = Interaction { .. },
+}
+fn is(h: SpanHit, key: const u8[:]) -> bool { h.key != 0 && h.key == hash(key) }
+fn was(h: SpanHit, key: const u8[:]) -> bool { h.last != 0 && h.last == hash(key) }
+
+// Where each keyed span was on the screen, last frame: a box per line it
+// is on, with the rich text's ID and the widget it was in (its nearest
+// ancestor that takes the pointer).
+struct SpanBox { node: u64, owner: u64, key: u64, rect: gfx2d::Rect }
+var span_boxes: SpanBox[>..<] = [];
+
+// Whether s has a keyed span: a tag with '=' that is not an image.
+fn has_keys(s: const u8[:]) -> bool {
+    var at = 0;
+    while at < s.len {
+        if s[at] == '[' && at + 1 < s.len && s[at + 1] == '[' { at += 2; continue; }
+        if s[at] == '[' {
+            var k = at + 1;
+            while k < s.len && s[k] != ']' && s[k] != '=' { k++; }
+            if k < s.len && s[k] == '=' && !(k - at == 4 && s[at + 1..k] == "img") { return true; }
+        }
+        at++;
+    }
+    false
+}
+
+// Rich node i's keyed span under the pointer, from last frame's boxes: the
+// pointer in one, and the widget the text is in the one it is over.
+fn span_hit(i: i32) -> SpanHit {
+    let n .= nodes[i];
+    guard n.named else { return SpanHit { .. }; }
+    var st = state_of(n.id);
+    var h = SpanHit { it: Interaction { id: hash_combine(n.id, 0x5BA7), rect: st.span_rect, .. } };
+    let p = input.pointer.pos;
+    for b in span_boxes {
+        if b.node == n.id && b.owner == hot && gfx2d::contains(b.rect, p) {
+            h.key = b.key;
+            h.it.hovered = true;
+            h.it.rect = b.rect;
+            h.it.pointer = p - float2 { b.rect.x, b.rect.y };
+            st.span = b.key;
+            st.span_rect = b.rect;
+            break;
+        }
+    }
+    h.last = st.span;
+    st.seen = frame_index;
+    put_state(n.id, st);
+    h
+}
+
+// After layout: where this frame's keyed spans are, for the next frame.
+fn place_span_boxes() {
+    span_boxes.clear();
+    for i: i32 in 0..nodes.len as i32 {
+        let n .= nodes[i];
+        guard n.kind == NODE_RICH && n.named && n.ghost == 0 else { continue; }
+        let owner = if n.owner >= 0 { nodes[n.owner].id } else { 0 };
+        let b = box_of(n);
+        let x0 = b.x + n.d.lay.padding.x;
+        let w = b.w - pad_sum(n, 0);
+        let wrap = if n.d.lay.wrap && w + 0.5 < n.natural.x { w } else { 0.0 };
+        var y = b.y + n.d.lay.padding.y;
+        each_rich_line(i, wrap) { from, to, lw, ascent, below =>
+            var x = x0;
+            if n.d.lay.justify == CENTER { x += (w - lw) * 0.5; } else if n.d.lay.justify == END { x += w - lw; }
+            // A box for each run of pieces with one key on the line.
+            var key: u64 = 0;
+            var kx = x;
+            fn close() {
+                if key != 0 {
+                    let r = gfx2d::Rect { kx, y, x - kx, ascent + below };
+                    span_boxes.push(SpanBox { n.id, owner, key, gfx2d::transformed_bounds(n.m, r) });
+                }
+            }
+            for k in from..to {
+                let p = pieces[k];
+                if p.key != key { close(); key = p.key; kx = x; }
+                x += p.w;
+            }
+            close();
+            y += ascent + below;
+        };
+    }
+}
 
 // Each line of rich node i at `width` (0: broken only at newlines): its
 // pieces from..to, its width, and how far it reaches above and below its

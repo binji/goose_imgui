@@ -21,3 +21,12 @@ leaving:
   rich 81.9x19.4 (leaving), natural 81.9x19.4, longest word 40.3
     "Gone soon" width 81.9 ascent 15.5 below 3.9
   playing 1
+keyed spans:
+  box burn at 96.0,10.0 35.7x19.4
+  box weak at 48.0,29.4 74.9x19.4
+  on Burn: on burn, last burn, hovered true, tooltip false
+  resting on Burn: on burn, last burn, hovered true, tooltip true
+  on Weak's second line: on weak, last weak, hovered true, tooltip true
+  off, on the text: on none, last weak, hovered false, tooltip true
+  off a while: on none, last weak, hovered false, tooltip false
+  on Burn, under a panel: on none, last burn, hovered false, tooltip false

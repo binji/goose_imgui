@@ -76,6 +76,8 @@ struct WidgetState {
     caret: i32 = 0,
     anchor: i32 = 0,                // the other end of the selection
     text_scroll: f32 = 0.0,
+    span: u64 = 0,                  // rich text: its keyed span last hovered, and where it was
+    span_rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },
     seen: i64 = -1,                 // the frame it was last recorded in
     born: i64 = -1,                 // the frame it first was
     stamp: i64 = -1,                // the frame its amounts last moved in

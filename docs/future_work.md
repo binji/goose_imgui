@@ -16,10 +16,6 @@ item here, by its title, at each workaround.
    - `prompt(action)` would draw the glyph for an action, from a table of
      images the program fills in for each device.
 2. **Text.**
-    - Hovering a span of rich text: a keyword ("Weak", "Burn") whose
-      tooltip says what it means. Each span's rectangles on its lines would
-      be kept for hit testing, and `rich` would return which span is under
-      the pointer: `[kw=burn]Burn[/]`.
     - A soft text shadow. `text_shadow` is a hard copy; the glyphs'
       distance field could be drawn wider and faded to blur it.
     - Multi-line editing.

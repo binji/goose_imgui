@@ -84,6 +84,7 @@ fn end_frame() {
     layout_all();
     finish_frame();
     play_exits();
+    place_span_boxes();
     end_nav();
     place_focus_cursor();
     end_drag();

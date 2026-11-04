@@ -148,6 +148,7 @@ How children share space:
 | `text(s)`, `text(s, d)`, `text(s, CLASS)` | text in the inherited ink, font and size, or its Desc's |
 | `textf(d) { out => format(out, …); }` | text formatted straight into the frame's text, without a `str` first |
 | `rich(s)`, `rich(s, d)`, `rich(s, CLASS)` | text in several styles, with images on its lines, from BBCode-like markup: `"Deal [dmg]20[/] damage, [kw]Burn[/kw] 3 [img=coin]"`. `[name]…[/]` (or `[/name]`) is a span, and spans nest; `[img=name]` an image; `[[` a `[`. It wraps, justifies and sizes as `text` does; lines break at spaces only, so a word in two styles stays whole |
+| `[name=key]…[/]`, `rich(…) -> SpanHit` | a span the pointer can rest on: `rich` returns which key is under it (`h.is("burn")`), the one it was last on (`h.was("burn")`, to keep a tooltip's content as it fades), and `h.it`, an Interaction at that span for `tooltip(h.it) { … }`. The text doesn't take the pointer itself: a span is on when the widget the text is in (a card, a button) is the one under the pointer |
 | `add_span(name, Span { ink, font, text_size, text_look, underline })` | a span's style, by name: what it sets of the text's ink, font, size and look (`add_text_look`'s, over the text's own), and an underline |
 | `add_inline(name, texture, src, scale = 1, rise = 0)` | an image for `[img=name]`: `src` of the texture, `scale` times the text's size tall, centered on the text and raised by `rise` times its size |
 | `image(texture, d, fit_mode)`, `image(texture, src, d, fit_mode)` | an image, or a sprite from a sheet; fitted by `gfx2d::FIT_CONTAIN`, `COVER` or `STRETCH` |
@@ -445,7 +446,8 @@ The tests are in three groups:
   - `motion`: easing, tweens, springs at two frame rates, presence, enter,
     glide, exits (in a list, alone, nested, coming back);
   - `rich`: markup, measuring as plain text does, wrapping, a word in two
-    styles kept whole, images, `[[`, newlines, an exit;
+    styles kept whole, images, `[[`, newlines, an exit; keyed spans under
+    the pointer, under another widget, and their tooltip;
   - `textfx`: the built-in effects, a program's own by a block, rich text's
     spans, inheritance, popping in as revealed, an exit copy playing on;
   - `notices`: stacking and expiring, a queue's limit, a queue of the
