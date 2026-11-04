@@ -412,7 +412,7 @@ fn shortcut(s: const u8[:]) -> bool {
         else if part == "Alt" { want |= MOD_ALT; }
         else if part.len == 1 {
             let c = part[0];
-            key = if c >= 'A' && c <= 'Z' { (c + 32) as i32 } else { c as i32 };
+            key = if c >= 'A' && c <= 'Z' { c + 32 } else { c };
         }
         at = end + 1;
     }

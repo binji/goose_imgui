@@ -17,6 +17,7 @@ clicked File again: open 0
 submenu: open 2
 left it 0.2 s: open 2
 left it 0.5 s: open 1
+after 2.5 s, View hovered: View open true
 grid: true
 tab 1
 tab 2

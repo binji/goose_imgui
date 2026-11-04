@@ -28,6 +28,15 @@ struct OpenPopup {
     anchor: Anchor = Anchor { .. },
     seen: i64 = 0,              // the frame it was last recorded in
     header: u64 = 0,            // the widget that opens and closes it (a menu's title), if any
+    bar: u64 = 0,               // a menu's: the menu bar it belongs to
+    linger: f32 = 0.0,          // a submenu's: how long the pointer has been away from it
+}
+
+// What an open popup knows lives with it here, not in its ID's state,
+// which is dropped when nothing records the ID for a while.
+fn set_popup_bar(i: Id, bar: u64) {
+    let lv = popup_level(i.v);
+    if lv > 0 { popups[lv - 1].bar = bar; }
 }
 
 // The widget that toggles popup `i`: a press on it leaves the popup open
@@ -273,10 +282,7 @@ fn switch_bar_menu(step: i64) -> bool {
     focused = m.header;
     open_popup_at(Id { m.popup }, POPUP_MENU, Anchor { kind: ANCHOR_BELOW, rect: state_of(m.header).screen, .. });
     set_popup_header(Id { m.popup }, m.header);
-    var ps = state_of(m.popup);
-    ps.owner = bar;
-    ps.seen = frame_index;
-    put_state(m.popup, ps);
+    set_popup_bar(Id { m.popup }, bar);
     true
 }
 fn opens_submenu(id: u64) -> bool {
@@ -296,7 +302,7 @@ fn menu_bar<F>(label: const u8[:], d: Desc = row()) {
 
 // Whether one of the bar's menus is open: hovering another then opens it.
 fn bar_menu_open(bar: u64) -> bool {
-    for p in popups { if p.kind == POPUP_MENU && state_of(p.id).owner == bar { return true; } }
+    for p in popups { if p.kind == POPUP_MENU && p.bar == bar { return true; } }
     false
 }
 
@@ -326,10 +332,7 @@ fn menu<F>(label: const u8[:]) -> bool {
         let a = Anchor { kind: if nested { ANCHOR_RIGHT } else { ANCHOR_BELOW }, rect: it.rect, .. };
         open_popup_at(pid, POPUP_MENU, a);
         set_popup_header(pid, i.v);
-        var ps = state_of(pid.v);
-        ps.owner = ctx.bar;
-        ps.seen = frame_index;
-        put_state(pid.v, ps);
+        set_popup_bar(pid, ctx.bar);
         open = true;
     }
     if nested && open && !opening {
@@ -339,10 +342,10 @@ fn menu<F>(label: const u8[:]) -> bool {
         let panel_rect = state_of(sub_id(pid, "panel").v).screen;
         let deeper = popup_level(pid.v) < top_popup_level();
         let near = inside(it.rect, p) || inside(panel_rect, p) || deeper || focus_visible;
-        var ps = state_of(pid.v);
-        ps.value = if near { 0.0 } else { ps.value + delta as f32 };
-        put_state(pid.v, ps);
-        if ps.value > SUBMENU_LINGER {
+        let lv = popup_level(pid.v);
+        let away = if near { 0.0 } else { popups[lv - 1].linger + delta as f32 };
+        popups[lv - 1].linger = away;
+        if away > SUBMENU_LINGER {
             close_popup(pid);
             open = false;
         }

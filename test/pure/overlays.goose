@@ -171,6 +171,13 @@ fn main() {
     print("left it 0.2 s: open ", open_popups());
     wait(0.3);
     print("left it 0.5 s: open ", open_popups());
+    // Moving to View's title after more than the two seconds an idle ID's
+    // state lasts: it still knows File's menu is the bar's, and opens.
+    wait(2.5);
+    pos = at(find("View"));
+    step();
+    step();
+    print("after 2.5 s, View hovered: View open ", imgui::is_open(imgui::sub_id(find("View"), "menu")));
     nav(imgui::NavInput { cancel: true, .. });
     step();
     click_at(at(find("View")));
