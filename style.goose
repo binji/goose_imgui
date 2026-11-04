@@ -112,7 +112,11 @@ let CARET = StyleClass { 33 };
 let SELECTION = StyleClass { 34 };
 let DROPDOWN = StyleClass { 35 };
 let CHOICE = StyleClass { 36 };         // the row of a checkbox, toggle or radio and its label
-let CLASS_COUNT = 37;
+let METER = StyleClass { 37 };          // a meter: its gap is between segments
+let METER_TRACK = StyleClass { 38 };    // each segment's groove
+let METER_FILL = StyleClass { 39 };
+let METER_TRAIL = StyleClass { 40 };    // what a drop took, easing down behind the fill
+let CLASS_COUNT = 41;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -419,6 +423,10 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[PROGRESS_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(4.0),
                                                       min_size: float2 { 160.0, 8.0 } });
     classes[PROGRESS_FILL.index] = style_set(Style { bg: p.accent, radius: radii(4.0) });
+    classes[METER.index] = style_set(Style { gap: 3.0 });
+    classes[METER_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(3.0) });
+    classes[METER_FILL.index] = style_set(Style { bg: p.accent, radius: radii(3.0) });
+    classes[METER_TRAIL.index] = style_set(Style { bg: gfx2d::with_alpha(p.ink, 0.45), radius: radii(3.0) });
     classes[SEPARATOR.index] = style_set(Style { bg: p.line, min_size: float2 { 1.0, 1.0 } });
 
     var sel = clickable(Style { radius: r, padding: pad4(10.0, 6.0), ink: p.ink }, p.hover, p.pressed);
@@ -595,7 +603,7 @@ fn theme_game() {
 
     // Tracks: faint light over the dark panel, not a darker blue lost in it.
     let groove = gfx2d::rgba(0xF3E9D2, 0.14);
-    for c in [SLIDER_TRACK, PROGRESS_TRACK] {
+    for c in [SLIDER_TRACK, PROGRESS_TRACK, METER_TRACK] {
         var t = classes[c.index];
         t.normal.bg = groove;
         classes[c.index] = style_set(t.normal);

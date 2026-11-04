@@ -7,7 +7,7 @@
 //
 // It is made from what imgui has now. Where a game's HUD wants something
 // imgui lacks, a comment names the item of docs/future_work.md that would
-// do it ("future work: meters"), and the code works around it.
+// do it ("future work: notices"), and the code works around it.
 //
 //   goose examples/hud.goose [-- --frames 90 --screenshot hud.png]
 import std;
@@ -137,25 +137,28 @@ fn draw_world(cam: float2, view: float2, t: f64) {
 // A translucent panel for the HUD's corners.
 fn hud_panel(d: imgui::Desc) -> imgui::Desc { d.bg(rgba(0x0B0F14, 0.62)).radius(10).padding(12) }
 
-// A bar in segments, with a trail behind the value: future work: meters
-// (a `meter` would be segmented and trailed by itself).
-fn segmented_bar(label: const u8[:], value: f64, segments: i64, w: f64, h: f64, c: gfx2d::Color) {
-    // The trail holds a moment, then eases down to the value; it jumps up
-    // with it.
-    let trail = max(imgui::animate(str(label, " trail"), value, imgui::tween(0.5, imgui::EASE_IN_OUT_CUBIC).delay(0.35)), value);
-    imgui::canvas(label, imgui::column().size(w, h)) { size =>
-        let gap = 3.0;
-        let seg = (size.x - gap * (segments - 1)) / segments;
-        for k in segments {
-            let x = k * (seg + gap);
-            let lo = k as f64 / segments;
-            fn part(v: f64) -> f64 { clamp((v - lo) * segments, 0.0, 1.0) }
-            imgui::fill_rect(x, 0, seg, size.y, 2, rgba(0x000000, 0.45));
-            // Slivers under a pixel wide would show as specks.
-            if seg * part(trail) >= 1.0 { imgui::fill_rect(x, 0, seg * part(trail), size.y, 2, rgba(INK, 0.75)); }
-            if seg * part(value) >= 1.0 { imgui::fill_rect(x, 0, seg * part(value), size.y, 2, c); }
-        }
-    };
+// The meters' looks, made in main: a red bar in segments whose trail eases
+// down after a hit; one for the enemies, whole; stamina in green; and a
+// cooldown, a dark sweep over a slot.
+var health_bar = imgui::Meter { .. };
+var enemy_bar = imgui::Meter { .. };
+var stamina_bar = imgui::Meter { .. };
+var cooldown = imgui::Meter { .. };
+
+fn bar_class(c: gfx2d::Color) -> imgui::StyleClass {
+    imgui::add_class(imgui::style_set(imgui::Style { bg: c, radius: imgui::radii(2.0) }))
+}
+fn make_meters() {
+    let track = bar_class(rgba(0x000000, 0.45));
+    let trail = bar_class(rgba(INK, 0.75));
+    let ease = imgui::tween(0.5, imgui::EASE_IN_OUT_CUBIC).delay(0.35);
+    health_bar = imgui::Meter { segments: 5, trail: ease, track_class: track, fill_class: bar_class(rgb(HP_RED)),
+                                trail_class: trail, .. };
+    enemy_bar = health_bar;
+    enemy_bar.segments = 1;
+    stamina_bar = imgui::Meter { track_class: track, fill_class: bar_class(rgb(0x2EBE7A)), .. };
+    cooldown = imgui::Meter { track_class: imgui::add_class(imgui::style_set(imgui::Style { .. })),
+                              fill_class: bar_class(rgba(0x000000, 0.6)), .. };
 }
 
 let REGION = "ASHEN HOLLOW";
@@ -165,6 +168,7 @@ let SHADE = 0x05070A;
 
 fn main() {
     setup();
+    make_meters();
     parse_args();
     run("imgui: hud", 1280, 720) {
         let t = imgui::time();
@@ -199,7 +203,7 @@ fn main() {
                     if s.x < -60.0 || s.y < -60.0 || s.x > view.x + 60.0 || s.y > view.y + 60.0 { continue; }
                     imgui::box(i, imgui::column().absolute(s.x, s.y - 22.0).pivot(0.5, 1).align(imgui::CENTER).gap(3)) {
                         imgui::text(e.name, imgui::column().text_size(12).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.8)));
-                        segmented_bar("hp", e.hp / e.max_hp, 1, 56, 6, rgb(HP_RED));
+                        imgui::meter("hp", e.hp / e.max_hp, imgui::row().size(56, 6), enemy_bar);
                     };
                 }
 
@@ -259,10 +263,8 @@ fn main() {
                                 imgui::text("Lv 12", imgui::column().text_size(12).ink(rgba(INK, 0.6)));
                             };
                             let hp = 0.55 + 0.3 * sin(t * 0.8) * (if sin(t * 2.3) > 0.0 { 1.0 } else { 0.6 });
-                            segmented_bar("health", hp, 5, 220, 12, rgb(HP_RED));
-                            // Stamina, with the built-in bar: horizontal is all
-                            // it does (future work: meters).
-                            imgui::progress(0.5 + 0.5 * sin(t * 1.3), imgui::column().width(220).height(5));
+                            imgui::meter("health", hp, imgui::row().size(220, 12), health_bar);
+                            imgui::meter("stamina", 0.5 + 0.5 * sin(t * 1.3), imgui::row().size(220, 5), stamina_bar);
                         };
                     };
 
@@ -335,8 +337,8 @@ fn main() {
                         };
                     };
 
-                    // Bottom center: the hotbar. Slot 2's cooldown is a
-                    // sweep on a canvas: future work: meters (radial).
+                    // Bottom center: the hotbar. Slot 2's cooldown is a sweep
+                    // of what is left, bigger than the slot, clipped by it.
                     imgui::box("hotbar", hud_panel(imgui::row().gap(8)).padding(8).place(imgui::CENTER, imgui::END)) {
                         for c, i in SLOTS {
                             let chosen = i == 0;
@@ -352,13 +354,10 @@ fn main() {
                                 }
                                 if i == 1 {
                                     let left = 1.0 - (t / 4.0 - floor(t / 4.0));
-                                    imgui::canvas("cooldown", imgui::column().grow().place(imgui::START, imgui::START)) { size =>
-                                        let r = length(size) * 0.5;
-                                        imgui::fill_pie(size.x * 0.5, size.y * 0.5, r, -PI * 0.5, -PI * 0.5 + 2.0 * PI * left,
-                                                        rgba(0x000000, 0.6));
-                                        imgui::draw_text(size.x * 0.5, size.y * 0.5, str(min(floor(left * 4.0) as i64 + 1, 4)), 18,
-                                                         rgb(INK), gfx2d::ALIGN_CENTER, gfx2d::BASELINE_MIDDLE);
-                                    };
+                                    imgui::radial_meter("cooldown", left, imgui::column().size(80, 80)
+                                                                .place(imgui::CENTER, imgui::CENTER), cooldown);
+                                    imgui::textf(imgui::column().text_size(18).ink(rgb(INK)).place(imgui::CENTER, imgui::CENTER))
+                                        { out => format(out, min(floor(left * 4.0) as i64 + 1, 4)); };
                                 }
                                 if COUNTS[i] == 0 {
                                     imgui::panel(imgui::column().grow().radius(8).bg(rgba(0x000000, 0.55)).place(imgui::START, imgui::START));

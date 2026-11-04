@@ -208,6 +208,9 @@ The classes are:
 - PANEL, BUTTON, LABEL, TITLE, MUTED, CHOICE;
 - CHECKBOX, CHECK, TOGGLE, TOGGLE_KNOB, RADIO, RADIO_DOT;
 - SLIDER_TRACK, SLIDER_FILL, SLIDER_THUMB, PROGRESS_TRACK, PROGRESS_FILL;
+- METER (its gap is between segments), METER_TRACK, METER_FILL, METER_TRAIL;
+  a `Meter` can name other classes for its parts, so that health is red and
+  stamina green;
 - SEPARATOR, SELECTABLE, SCROLLBAR, SCROLL_THUMB;
 - TAB_BAR, TAB, TAB_PANEL, MENU_BAR, MENU_HEADER, MENU, MENU_ITEM;
 - POPUP, MODAL, BACKDROP, TOOLTIP;
@@ -241,6 +244,8 @@ damping)`, with or without `delay(seconds)`.
 | `radio(label, selected, value[, d])` | `selected` becomes `value` |
 | `slider(label, v, lo, hi, step[, d])` | `f64`, `f32`, `i64`, `i32`; dragged, clicked along, or left/right while focused |
 | `progress(value[, d])` | a bar from 0 to 1 |
+| `meter(label, value[, d][, m])` | a bar from 0 to 1 for health, stamina or a boss: `Meter { vertical, segments, trail, … }`; a trail (a Motion) eases down after a drop, showing what it took |
+| `radial_meter(label, value[, d][, m])` | the same round a circle from the top, clockwise: a ring `m.thickness` wide, or a sweep (for a cooldown over an icon) |
 | `selectable(label, selected[, d])` | a list row |
 | `separator()` | across a column, or up a row |
 | `scroll(label, d, axes) { … } -> ScrollInfo` | a clipped pane, scrolled by the wheel, its thumb, or the focus |

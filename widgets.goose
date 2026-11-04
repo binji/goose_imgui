@@ -204,6 +204,102 @@ fn progress(value: f64, d: Desc) {
     };
 }
 
+// --- meters -------------------------------------------------------------------------------
+
+// How a meter shows its value.
+struct Meter {
+    vertical: bool = false,         // filled from the bottom
+    segments: i32 = 1,              // cut into this many, METER's gap apart
+    trail: Motion = Motion { .. },  // a drop leaves a trail that eases down by this; INSTANT: none
+    thickness: f32 = 0.0,           // a radial meter's ring; 0: a sweep (a pie)
+    // Its parts' classes: one meter red for health, another green for stamina.
+    track_class: StyleClass = METER_TRACK,
+    fill_class: StyleClass = METER_FILL,
+    trail_class: StyleClass = METER_TRAIL,
+}
+
+// The trail behind a meter's value: eased down after a drop, up with a rise
+// at once.
+fn meter_trail(i: Id, value: f64, m: Meter) -> f64 {
+    if is_instant(m.trail) { return value; }
+    max(animate(sub_id(i, "trail"), value, m.trail), value)
+}
+
+// A bar filled to `value` (0 to 1), for health, stamina or a boss: in
+// segments, upright, and trailed as `m` says. Its look is METER's (the gap)
+// and its parts' classes' (METER_TRACK, METER_FILL and METER_TRAIL unless
+// `m` says others); it is 160 by 8 (8 by 160 upright) unless `d` sizes it.
+//   imgui::meter("hp", hp / max_hp, imgui::row().width(220), imgui::Meter { segments: 5, trail: imgui::tween(0.5).delay(0.4) });
+fn meter(label: const u8[:], value: f64) { meter(label, value, row(), Meter { .. }); }
+fn meter(label: const u8[:], value: f64, d: Desc) { meter(label, value, d, Meter { .. }); }
+fn meter(label: const u8[:], value: f64, d: Desc, m: Meter) {
+    let i = id(label);
+    let v = clamp(value, 0.0, 1.0);
+    let t = meter_trail(i, v, m);
+    var md = d.skin(METER);
+    md.lay.kind = if m.vertical { COLUMN } else { ROW };
+    if md.dim.w.kind == SIZE_FIT { md = md.width(if m.vertical { 8.0 } else { 160.0 }); }
+    if md.dim.h.kind == SIZE_FIT { md = md.height(if m.vertical { 160.0 } else { 8.0 }); }
+    let n = max(m.segments, 1);
+    box(i, md) {
+        for k in n {
+            // Upright, the first segment is at the bottom.
+            let lo = (if m.vertical { n - 1 - k } else { k }) as f64 / n;
+            fn part(x: f64) -> f64 { clamp((x - lo) * n, 0.0, 1.0) }
+            box(k, stack().skin(m.track_class).grow().clip()) {
+                let pv = part(v);
+                for c, f in [m.trail_class, m.fill_class] {
+                    let p = if f == 0 { part(t) } else { pv };
+                    // A trail no longer than the fill would not show.
+                    if p <= 0.0005 || (f == 0 && p <= pv + 0.0005) { continue; }
+                    let pd = if m.vertical { column().width(pct(1.0)).height(pct(p)).place(START, END) }
+                             else { column().width(pct(p)).height(pct(1.0)).place(START, START) };
+                    panel(pd.skin(c));
+                }
+            };
+        }
+    };
+}
+
+// A meter round a circle, from the top, clockwise: a ring (m.thickness) or
+// a sweep, for a cooldown over an icon or an ability's charge. Its colors
+// are the backgrounds of its parts' classes; a ring's segments are METER's
+// gap apart. 48 by 48 unless `d` sizes it.
+fn radial_meter(label: const u8[:], value: f64) { radial_meter(label, value, column(), Meter { .. }); }
+fn radial_meter(label: const u8[:], value: f64, d: Desc) { radial_meter(label, value, d, Meter { .. }); }
+fn radial_meter(label: const u8[:], value: f64, d: Desc, m: Meter) {
+    let i = id(label);
+    let v = clamp(value, 0.0, 1.0);
+    let t = meter_trail(i, v, m);
+    var cd = d;
+    if cd.dim.w.kind == SIZE_FIT { cd = cd.width(48); }
+    if cd.dim.h.kind == SIZE_FIT { cd = cd.height(48); }
+    let track = resolve_style(m.track_class, LookState { .. }).bg;
+    let fill = resolve_style(m.fill_class, LookState { .. }).bg;
+    let trail = resolve_style(m.trail_class, LookState { .. }).bg;
+    let gap = resolve_style(METER, LookState { .. }).gap;
+    let n = max(m.segments, 1);
+    canvas(i, cd) { size =>
+        let c = size * 0.5;
+        let w: f64 = m.thickness;
+        let r = max(min(c.x, c.y) - w * 0.5, 1.0);
+        let top = -PI * 0.5;
+        // Between segments, the gap as an angle on the ring.
+        let ga = if n > 1 { gap / r } else { 0.0 };
+        let seg = 2.0 * PI / n;
+        for k in n {
+            let a0 = top + k * seg + ga * 0.5;
+            let a1 = top + (k + 1) * seg - ga * 0.5;
+            fn upto(x: f64) -> f64 { min(a1, top + 2.0 * PI * x) }
+            for c2, f in [track, trail, fill] {
+                let e = if f == 0 { a1 } else { upto(if f == 1 { t } else { v }) };
+                if e <= a0 { continue; }
+                if w > 0.0 { stroke_arc(c.x, c.y, r, a0, e, w, c2); } else { fill_pie(c.x, c.y, r, a0, e, c2); }
+            }
+        }
+    };
+}
+
 // --- separators --------------------------------------------------------------------------
 
 // A line across a column, or up a row.

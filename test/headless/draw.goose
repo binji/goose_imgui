@@ -2,7 +2,7 @@
 // gradient; opacity, multiplied in and through a layer; clipping by a box
 // that clips (a scroll pane's content past its edge); a motion offset and
 // scale; the focus ring, which shows only after navigation; a text's
-// outline and shadow.
+// outline and shadow; a radial meter.
 import std;
 import vec;
 import math;
@@ -167,4 +167,15 @@ fn main() {
     print("text outline: none plain ", plain_red == 0, ", drawn ", red > 100);
     print("text shadow: none plain ", plain_blue == 0, ", inherited ", blue > 100,
           "; turned off ", off_red == 0 && off_blue == 0);
+
+    // A radial meter, a quarter swept from the top, clockwise: red in the
+    // top right quarter, not in the top left.
+    let red = imgui::add_class(imgui::style_set(imgui::Style { bg: gfx2d::rgb(0xFF0000) }));
+    let clear = imgui::add_class(imgui::style_set(imgui::Style { .. }));
+    render(none) {
+        imgui::radial_meter("sweep", 0.25, imgui::column().size(100, 100),
+                            imgui::Meter { track_class: clear, fill_class: red, .. });
+    };
+    print("radial meter: swept ", near(70, 30, 0xFF0000, 8), ", not yet ", near(30, 30, 0xFFFFFF, 8),
+          ", past a quarter ", near(70, 70, 0xFFFFFF, 8));
 }

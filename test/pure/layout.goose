@@ -1,8 +1,8 @@
 // The layout solver, no GPU: rows, columns, gaps and padding; fit, px,
 // grow, pct, min and max; justify and align; wrapping rows and text;
 // grids; stacks and absolute children, placed by a pivot; letter spacing;
-// edge_clamp. Each case is one frame, its tree printed with each node's
-// rect.
+// edge_clamp; meters. Each case is one frame, its tree printed with each
+// node's rect.
 import std;
 import vec;
 import gfx;
@@ -136,4 +136,19 @@ fn main() {
                   round(at.y * 10.0) / 10.0, " angle ", round(angle * 1000.0) / 1000.0, " seen ", seen);
         }
     };
+
+    case("meters: segments, upright") {
+        imgui::box(imgui::column().gap(4)) {
+            imgui::meter("hp", 0.6, imgui::row().size(106, 8), imgui::Meter { segments: 3, .. });
+            imgui::meter("mp", 0.25, imgui::row().size(6, 40), imgui::Meter { vertical: true, .. });
+        };
+    };
+    // A trail: after a drop from 1 to 0.4, it holds, then eases down.
+    let trailed = imgui::Meter { trail: imgui::tween(0.2).delay(0.1), .. };
+    for f in 40 {
+        imgui::frame(view(400, 300), 1.0 / 60.0) {
+            imgui::meter("boss", if f == 0 { 1.0 } else { 0.4 }, imgui::row().size(100, 8), trailed);
+        };
+        if f == 3 || f == 39 { print("--- meter trail, frame ", f + 1); imgui::dump(); }
+    }
 }
