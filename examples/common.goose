@@ -54,6 +54,9 @@ fn run<F>(title: const u8[:], w: i64, h: i64, escape_quits: bool = true) {
         write_stderr(str("gfx: ", gfx::error(), "\n"));
         return;
     }
+    // gfx takes keys only while its window has the focus, which one opened
+    // with no desktop (over ssh, say) never gets: given it, for --keys.
+    if keys.len > 0 { gfx::inject_focus(true); }
     var drawn = 0;
     while gfx::frame() {
         if drawn == frames_wanted { break; }
