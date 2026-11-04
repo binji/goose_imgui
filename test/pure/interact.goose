@@ -2,7 +2,7 @@
 // checkbox, a toggle, radios and a slider changed by the pointer; focus
 // moved and widgets used by navigation; what wants_pointer says, and
 // what it says over a passthrough panel; a turned box hit where it is
-// drawn; the focus cursor.
+// drawn; the focus cursor; drag and drop.
 import std;
 import vec;
 import math;
@@ -30,6 +30,12 @@ fn ui() {
 }
 
 var pos = float2 { -100.0, -100.0 };
+// Drag and drop's results, from the frames of slots().
+var carrying = -1;
+var over = -1;
+var dropped_on = -1;
+var dropped: i64 = -1;
+var slot_clicked = -1;
 var down = false;
 
 fn frame_with(p: imgui::Pointer, nav: imgui::NavInput) {
@@ -245,4 +251,80 @@ fn main() {
     imgui::set_focus_cursor(imgui::NONE, imgui::INSTANT);
     nav(imgui::NavInput { .. });
     print("off: cursor ", imgui::cursor_node >= 0, ", rings drawn ", rings());
+
+    // Drag and drop between three slots 60 wide, 20 apart: the first two
+    // hold gems (kind 1), the third a key (kind 2); each takes gems. The
+    // ghost under the pointer is never in its way.
+    fn slots(p: imgui::Pointer, n: imgui::NavInput) {
+        carrying = -1;
+        over = -1;
+        imgui::frame(imgui::Input { pointer: p, nav: n, viewport: float2 { 640.0, 480.0 }, .. }, 1.0 / 60.0) {
+            imgui::box(imgui::row().gap(20).padding(10)) {
+                for k in 3 {
+                    let it = imgui::box(k, imgui::clickable(imgui::column().size(60, 60).bg(gfx2d::rgb(0x303030)))) {};
+                    if it.clicked { slot_clicked = k; }
+                    if imgui::drag_source(it, if k == 2 { 2 } else { 1 }, 100 + k) { carrying = k; }
+                    let d = imgui::drop_target(it, 1);
+                    if d.over { over = k; }
+                    if d.dropped { dropped_on = k; dropped = d.payload; }
+                }
+            };
+            imgui::drag_ghost(imgui::column().bg(gfx2d::rgb(0x808080))) {};
+        };
+    }
+    fn at(x: f64, down: bool, pressed: bool = false, released: bool = false) -> imgui::Pointer {
+        imgui::Pointer { pos: float2 { x as f32, 40.0 }, down: down, pressed: pressed, released: released,
+                         clicks: if pressed { 1 } else { 0 }, .. }
+    }
+    let still = imgui::NavInput { .. };
+    fn reset() { dropped_on = -1; dropped = -1; slot_clicked = -1; }
+    // By the pointer: pressed on the first, moved onto the second, let go.
+    slots(at(-50, false), still);
+    slots(at(-50, false), still);
+    reset();
+    slots(at(40, true, true), still);
+    slots(at(60, true), still);
+    let picked = carrying;
+    slots(at(120, true), still);
+    slots(at(120, true), still);
+    let was_over = over;
+    slots(at(120, false, false, true), still);
+    print("drag: picked up ", picked, ", over ", was_over, ", dropped on ", dropped_on, " with ", dropped,
+          ", clicked ", slot_clicked);
+    // Let go over where it started: a drop on its own slot, not a click.
+    reset();
+    slots(at(40, true, true), still);
+    slots(at(55, true), still);
+    slots(at(45, true), still);
+    slots(at(45, false, false, true), still);
+    print("dropped back on its own: on ", dropped_on, ", clicked ", slot_clicked);
+    // A key (kind 2) over a slot that takes gems: not over it, not taken.
+    reset();
+    slots(at(200, true, true), still);
+    slots(at(180, true), still);
+    slots(at(120, true), still);
+    slots(at(120, true), still);
+    let key_over = over;
+    slots(at(120, false, false, true), still);
+    print("a key: picked up ", carrying >= 0 || dropped_on >= 0 || key_over >= 0, ", over ", key_over, ", dropped on ", dropped_on);
+    // Escape while carrying: put back, nothing dropped.
+    reset();
+    slots(at(40, true, true), still);
+    slots(at(60, true), still);
+    slots(at(120, true), imgui::NavInput { cancel: true, .. });
+    let after_escape = carrying;
+    slots(at(120, false, false, true), still);
+    print("escape: carrying after ", after_escape, ", dropped on ", dropped_on);
+    // With navigation: accept on the first picks it up, right moves, accept
+    // puts it down.
+    reset();
+    imgui::focus(imgui::id(0), true);
+    slots(at(-50, false), still);
+    slots(at(-50, false), imgui::NavInput { accept: true, .. });
+    let nav_picked = carrying;
+    slots(at(-50, false), imgui::NavInput { right: true, .. });
+    slots(at(-50, false), still);
+    let nav_over = over;
+    slots(at(-50, false), imgui::NavInput { accept: true, .. });
+    print("by navigation: picked up ", nav_picked, ", over ", nav_over, ", dropped on ", dropped_on, " with ", dropped);
 }

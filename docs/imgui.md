@@ -257,6 +257,7 @@ damping)`, with or without `delay(seconds)`.
 | `open_popup(label)`, `popup(label, d) { … }`, `close_popup`, `close_current_popup` | a popup at the pointer |
 | `modal(label, open, d) { … }` | centered over a backdrop while `open`; inert below; cancel sets `open` false |
 | `tooltip(it, s)`, `tooltip(it) { … }` | under a widget the pointer rests on, or the focus is on |
+| `drag_source(it, kind, payload) -> bool`, `drop_target(it, kind) -> Drop`, `drag_ghost(d) { … }` | drag and drop: a widget's payload (an `i64`) carried to a target that takes its `kind`, picked up by dragging it (or accepting it with the keys, carried by navigation, put down by accepting); `Drop { over, dropped, payload }`; the ghost drawn under the pointer, never in its way. Escape puts it back. `dragging(kind)`, `drag_payload()` |
 | `text_input(label, buf, d, max_len, placeholder) -> TextEdit` | one line, edited in place: a `u8[>..]` or a `u8[..N]` |
 
 A label's `##` and what follows it are part of the ID but not shown:

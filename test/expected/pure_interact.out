@@ -32,3 +32,8 @@ turned card: hovered where it is drawn true, in the box around it false
 cursor: 6.0 6.0 68.0 43.0 round 10.0 10.0 60.0 35.0; rings drawn false
 moving down: between true; then 6.0 49.0 89.0 32.0 round 10.0 53.0 81.0 24.0
 off: cursor false, rings drawn true
+drag: picked up 0, over 1, dropped on 1 with 100, clicked -1
+dropped back on its own: on 0, clicked -1
+a key: picked up true, over -1, dropped on -1
+escape: carrying after -1, dropped on -1
+by navigation: picked up 0, over 1, dropped on 1 with 100

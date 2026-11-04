@@ -3,7 +3,7 @@
 // card leaves and the rest glide and turn to their new places. The energy
 // is an orb filled to its level (a canvas clipped to a circle); the enemy's
 // health has a trail that shows what a card took; End turn is a slanted
-// button. Click a card to play it.
+// button. Drag a card onto the enemy to play it, or click it.
 //
 //   goose examples/cards.goose [-- --frames 90 --screenshot cards.png]
 import std;
@@ -26,6 +26,7 @@ let COLORS = [0xC8484F, 0xE2702C, 0x3D7DE0, 0xC8484F, 0x2EAE6A];
 let MAX_ENERGY = 3;
 
 struct Hit { key: i64, amount: i64, born: f64 }
+let CARD = 1;                   // what drag and drop carries: a card's place in the hand
 
 var hand: i64[>..] = [];            // the cards held, by index into the tables
 var energy = 3;
@@ -103,6 +104,24 @@ fn orb(level: f64, t: f64) {
     };
 }
 
+// A card's face: its name, its picture, its rules, its cost in a diamond
+// (a square turned).
+fn card_face(c: i64) {
+    imgui::box(imgui::column().grow().padding(12, 26, 12, 12).gap(8).align(imgui::CENTER)
+                 .radius(10).border(3, rgb(0xE8D8B0))
+                 .bg(gfx2d::lighten(rgb(COLORS[c]), 0.12), gfx2d::darken(rgb(COLORS[c]), 0.45))) {
+        imgui::text(NAMES[c], imgui::column().text_size(17).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.7)));
+        imgui::panel(imgui::column().size(70, 60).radius(6).bg(rgba(0xFFFFFF, 0.18)));
+        imgui::text(RULES[c], imgui::column().text_size(13).ink(rgb(INK)).wrap().grow_w().justify(imgui::CENTER));
+    };
+    imgui::box(imgui::stack().size(30, 30).place(imgui::START, imgui::START).offset(-8, -8)) {
+        imgui::panel(imgui::column().size(26, 26).radius(4).bg(rgb(0xF0A030)).border(2, rgb(0x2A1E14))
+                     .place(imgui::CENTER, imgui::CENTER).rotate(PI * 0.25));
+        imgui::textf(imgui::column().text_size(16).ink(rgb(0x2A1E14)).place(imgui::CENTER, imgui::CENTER))
+            { out => format(out, COSTS[c]); };
+    };
+}
+
 fn main() {
     new_turn();
     parse_args();
@@ -120,7 +139,13 @@ fn main() {
             gfx2d::rect(0, 0, ss.x, ss.y, gfx2d::radial(ss.x * 0.5, ss.y * 0.45, ss.x * 0.5, rgb(0x3A2A40), rgb(0x150F18)));
             imgui::frame(frame_dt()) {
                 // The enemy, its health trailed, and what it means to do.
-                imgui::box("enemy", imgui::column().align(imgui::CENTER).gap(8).place(imgui::CENTER, imgui::START).offset(0, 50)) {
+                // A card dropped on it is played; while one is over it, it
+                // is ringed.
+                let ed = imgui::column().align(imgui::CENTER).gap(8).padding(16).radius(16).hit()
+                                        .place(imgui::CENTER, imgui::START).offset(0, 34);
+                let on_enemy = imgui::drop_target(imgui::interact(imgui::id("enemy"), ed), CARD);
+                if on_enemy.dropped { play(on_enemy.payload, t); }
+                imgui::box("enemy", if on_enemy.over { ed.border(2, rgba(0xFFE08A, 0.8)).bg(rgba(0xFFE08A, 0.08)) } else { ed }) {
                     imgui::text("CINDER WARDEN", imgui::column().text_size(18).letter_spacing(6).ink(rgb(INK))
                                                    .text_shadow(rgba(SHADE, 0.8), 0, 2));
                     imgui::canvas("body", imgui::column().size(140, 140)) { size =>
@@ -193,29 +218,23 @@ fn main() {
                         let up = imgui::animate(imgui::sub_id(imgui::id("lift"), c), if s == top { 34.0 } else { 0.0 },
                                                 imgui::spring(400, 26));
                         let can = COSTS[c] <= energy;
+                        // A card that can be paid for can be carried: its place
+                        // in the hand then shows only its outline.
+                        let carried = can && imgui::drag_source(imgui::interact(imgui::id(c), spot(s)), CARD, s);
                         let it = imgui::box(c, spot(s)) {
-                            imgui::box(imgui::stack().grow().offset(0, -up).opacity(if can { 1.0 } else { 0.55 })) {
-                                imgui::box(imgui::column().grow().padding(12, 26, 12, 12).gap(8).align(imgui::CENTER)
-                                             .radius(10).border(3, rgb(0xE8D8B0))
-                                             .bg(gfx2d::lighten(rgb(COLORS[c]), 0.12), gfx2d::darken(rgb(COLORS[c]), 0.45))) {
-                                    imgui::text(NAMES[c], imgui::column().text_size(17).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.7)));
-                                    imgui::panel(imgui::column().size(70, 60).radius(6).bg(rgba(0xFFFFFF, 0.18)));
-                                    imgui::text(RULES[c], imgui::column().text_size(13).ink(rgb(INK)).wrap().grow_w()
-                                                              .justify(imgui::CENTER));
-                                };
-                                // The cost, in a diamond: a square turned.
-                                imgui::box(imgui::stack().size(30, 30).place(imgui::START, imgui::START).offset(-8, -8)) {
-                                    imgui::panel(imgui::column().size(26, 26).radius(4).bg(rgb(0xF0A030)).border(2, rgb(0x2A1E14))
-                                                 .place(imgui::CENTER, imgui::CENTER).rotate(PI * 0.25));
-                                    imgui::textf(imgui::column().text_size(16).ink(rgb(0x2A1E14)).place(imgui::CENTER, imgui::CENTER))
-                                        { out => format(out, COSTS[c]); };
-                                };
+                            imgui::box(imgui::stack().grow().offset(0, -up).opacity(if carried { 0.2 } else if can { 1.0 } else { 0.55 })) {
+                                card_face(c);
                             };
                         };
                         if it.clicked && can { played = s; }
                     }
                     if played >= 0 { play(played, t); }
                 };
+                // The card carried, under the pointer (not the frame it is
+                // played, when it has left the hand).
+                if imgui::dragging(CARD) && !on_enemy.dropped {
+                    imgui::drag_ghost(imgui::stack().size(130, 184).scale(1.05)) { card_face(hand[imgui::drag_payload()]); };
+                }
 
                 // Bottom right: End turn, slanted.
                 imgui::box("end", imgui::row().place(imgui::END, imgui::END).offset(-40, -50)) {

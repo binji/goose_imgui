@@ -45,6 +45,7 @@ import widgets;
 import scroll;
 import text_input;
 import canvas;
+import drag;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -80,6 +81,7 @@ fn end_frame() {
     finish_frame();
     end_nav();
     place_focus_cursor();
+    end_drag();
     if frame_index % 30 == 0 {
         sweep_states();
         sweep_anims();

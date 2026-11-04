@@ -195,6 +195,7 @@ fn begin_input(inp: Input) {
         }
     }
     begin_nav();
+    begin_drag();
 }
 
 fn hit_bits(id: u64) -> u32 {
