@@ -179,10 +179,10 @@ fn main() {
         gfx2d::frame(rgb(0x26332A)) {
             gfx2d::scale(imgui::ui_scale_of()) { draw_world(me, view, t); };
             imgui::frame(frame_dt()) {
-                // A click on the ground, not on the HUD, pings it. The bars
-                // over the enemies have backgrounds, so they take the
-                // pointer too: future work: a HUD that lets the pointer
-                // through.
+                // A click on the ground, not on the HUD, pings it. The
+                // player's panel and the hotbar take the pointer; the
+                // quest and the controls are passthrough, so a click on
+                // them reaches the ground.
                 if gfx::mouse_pressed(gfx::MOUSE_LEFT) && !imgui::wants_pointer() {
                     pings.push(Ping { imgui::pointer().pos - center + me, t });
                 }
@@ -334,7 +334,7 @@ fn main() {
                             fn p(r: f64, da: f64) -> float2 { f2(c.x + cos(a + da) * r, c.y + sin(a + da) * r) }
                             imgui::fill_polygon([p(9, 0), p(7, 2.4), p(7, -2.4)], rgb(0x7FD3FF));
                         };
-                        imgui::box("quest", hud_panel(imgui::column().gap(4).align(imgui::END))) {
+                        imgui::box("quest", hud_panel(imgui::column().gap(4).align(imgui::END)).passthrough()) {
                             imgui::text(QUEST, imgui::column().text_size(12).letter_spacing(3).ink(rgb(GOLD)));
                             imgui::text("Light the brazier at the shrine", imgui::column().text_size(14).ink(rgb(INK)));
                             imgui::textf(imgui::column().text_size(12).ink(rgba(INK, 0.6))) { out =>
@@ -378,7 +378,8 @@ fn main() {
                     // Bottom right: the controls. A pad would want its own
                     // glyphs here: future work: prompts for the device in
                     // use.
-                    imgui::box("controls", imgui::row().gap(14).align(imgui::CENTER).place(imgui::END, imgui::END)) {
+                    imgui::box("controls", imgui::row().gap(14).align(imgui::CENTER).place(imgui::END, imgui::END)
+                                             .passthrough()) {
                         for pair in [["Click", "Ping"], ["Esc", "Quit"]] {
                             imgui::box(imgui::row().gap(6).align(imgui::CENTER)) {
                                 imgui::box(imgui::row().bg(rgba(INK, 0.85)).radius(4).padding(6, 2)) {

@@ -137,6 +137,7 @@ let SCROLLS_Y = 128;
 let KEEP = 256;             // keeps state between frames though nothing else asks for it
 let DISABLED = 512;
 let CLICK_ON_PRESS = 1024;  // clicked when pressed, not when released over it
+let PASSTHROUGH = 2048;     // it and its subtree let the pointer through, but for what takes it
 
 struct Desc {
     lay: LayoutDesc = LayoutDesc { .. },
@@ -371,6 +372,11 @@ fn delay(var e: Enter, seconds: f64) -> Enter { e.motion.wait = seconds as f32; 
 fn hit(var d: Desc) -> Desc { d.bits |= HIT; d }
 fn focusable(var d: Desc) -> Desc { d.bits |= FOCUSABLE; d }
 fn blocks(var d: Desc) -> Desc { d.bits |= BLOCKS; d }
+// The pointer goes through this box and its subtree, though they have
+// backgrounds, to what is under them (a game, for wants_pointer). What in
+// it takes the pointer (a button, a hit() box, a scroll pane) and the
+// parts of those still do, and so does what blocks().
+fn passthrough(var d: Desc) -> Desc { d.bits |= PASSTHROUGH; d }
 fn nav_skip(var d: Desc) -> Desc { d.bits |= NAV_SKIP; d }
 fn keep(var d: Desc) -> Desc { d.bits |= KEEP; d }
 fn disabled(var d: Desc, on: bool) -> Desc {

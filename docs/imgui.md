@@ -81,7 +81,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `nav_from_pad(input, PadState)` | a gamepad's held buttons and stick, as navigation, with repeat (gfx v1 has no gamepads; a program reading one passes what it holds) |
 | `set_viewport(rect)` | the UI's area; by default the screen, under the scales |
 | `set_scale(s)` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE` |
-| `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over the UI, or holds a press) or the keyboard (a text field has focus) this frame |
+| `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over something that takes it or has a background, not in a `passthrough()` box, or holds a press) or the keyboard (a text field has focus) this frame |
 | `cancelled()` | Escape or B pressed with no popup open to close: for the game's own "back" |
 | `shortcut("Ctrl+Q")` | a key pressed with modifiers this frame: Ctrl (Cmd on a Mac), Shift, Alt, and a letter or digit. A `menu_item`'s shortcut text is only shown; this acts on it |
 | `time()`, `dt()` | imgui's clock |
@@ -311,6 +311,7 @@ fn slot(k: i64, item: Item, chosen: bool) -> bool {
 |---|---|
 | `clickable(d)`, `.hit()`, `.focusable()` | take the pointer, take the focus |
 | `.blocks()`, `.nav_skip()`, `.disabled(on)`, `.keep()` | stop the pointer; leave out of navigation; disable; keep state without a label |
+| `.passthrough()` | let the pointer through the box and its subtree, though they have backgrounds, for a HUD over a game; what in it takes the pointer (and its parts) and what `blocks()` still do |
 
 The parts inside a widget that have looks of their own (a toggle's
 track, a slider's thumb, the gem in an inventory slot) are hit as the

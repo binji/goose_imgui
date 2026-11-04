@@ -68,6 +68,7 @@ struct Node {
     scope: u64 = 0,                     // its nav scope
     owner: i32 = -1,                    // the nearest node at or above it that takes the pointer
     look: i32 = 0,                      // its text look, in node_looks
+    pass: bool = false,                 // it or a box above it is passthrough()
     // a canvas's commands: where in draw_cmds, how many, the box they reach
     cmd_first: i32 = 0,
     cmd_end: i32 = 0,

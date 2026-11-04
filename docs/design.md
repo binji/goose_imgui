@@ -278,7 +278,9 @@ repeat. Tests build their own `Input`, because gfx can't inject wheel or
 gamepad input.
 
 `wants_pointer()` and `wants_keyboard()` tell the game whether the UI took
-the input this frame.
+the input this frame. Anything with a background takes the pointer, as a
+menu's panel should. A HUD's panels often should not, so `passthrough()`
+lets it through a subtree. The widgets in that subtree still take it.
 
 ## Navigation
 

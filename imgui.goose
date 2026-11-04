@@ -175,6 +175,7 @@ fn finish_frame() {
             if p.d.vis.clips { gfx2d::intersect(p.clip, gfx2d::transformed_bounds(pm, box_of(p))) } else { p.clip }
         };
         n.owner = if n.d.bits & HIT != 0 { i } else if n.parent >= 0 { nodes[n.parent].owner } else { -1 };
+        n.pass = n.d.bits & PASSTHROUGH != 0 || (n.parent >= 0 && nodes[n.parent].pass);
         // Its own focus, or its widget's, for a part that shares it (a slider's thumb).
         n.ring = (focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0) || n.d.vis.state.focus > 0.01;
         let screen = gfx2d::transformed_bounds(n.m, box_of(n));
@@ -237,7 +238,11 @@ fn list_hits() {
         for i: i32 in r.node..nodes.len as i32 {
             let n .= nodes[i];
             if n.root != k { continue; }
-            let blocks = n.d.bits & BLOCKS != 0 || (n.kind == NODE_BOX && (n.style.bg.a > 0.0 || n.style.slice != 0));
+            // A box that shows blocks, unless it is in a passthrough subtree
+            // and not a part of a widget there.
+            let solid = n.kind == NODE_BOX && (n.style.bg.a > 0.0 || n.style.slice != 0) &&
+                        (!n.pass || (n.owner >= 0 && nodes[n.owner].pass));
+            let blocks = n.d.bits & BLOCKS != 0 || solid;
             if n.d.bits & (HIT | SCROLLS_X | SCROLLS_Y) != 0 {
                 hits.push(Hit { n.id, n.screen, n.clip, n.d.bits, level });
             } else if blocks {

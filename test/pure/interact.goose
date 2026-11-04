@@ -1,6 +1,7 @@
 // Widgets driven by made-up input, no GPU: hover, press and click; a
 // checkbox, a toggle, radios and a slider changed by the pointer; focus
-// moved and widgets used by navigation; what wants_pointer says.
+// moved and widgets used by navigation; what wants_pointer says, and
+// what it says over a passthrough panel.
 import std;
 import vec;
 import math;
@@ -179,4 +180,24 @@ fn main() {
               ", Ctrl+W ", imgui::shortcut("Ctrl+W"));
         ui();
     };
+
+    // A HUD panel with a background takes the pointer, unless it is
+    // passthrough; a button in a passthrough panel still takes it.
+    fn hud(pass: bool, p: float2) {
+        var d = imgui::column().size(200, 100).bg(gfx2d::rgb(0x202020)).padding(10).place(imgui::END, imgui::END);
+        if pass { d = d.passthrough(); }
+        for k in 2 {
+            imgui::frame(imgui::Input { pointer: imgui::Pointer { pos: p, .. }, viewport: float2 { 640.0, 480.0 }, .. },
+                         1.0 / 60.0) {
+                imgui::box("hud", d) { imgui::button("Use"); };
+            };
+        }
+    }
+    for pass in [false, true] {
+        hud(pass, float2 { 620.0, 470.0 });
+        let on_panel = imgui::wants_pointer();
+        hud(pass, float2 { 460.0, 400.0 });       // just inside the button, at the padding
+        print("hud panel", if pass { ", passthrough" } else { "" }, ": over its background, wants pointer ",
+              on_panel, "; over its button ", imgui::wants_pointer());
+    }
 }
