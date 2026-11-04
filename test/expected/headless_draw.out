@@ -16,3 +16,4 @@ exit: drawn after it left true, fading true, gone true true, playing 0
 rich: red span true, image true true, blue span true, underlined true
 text revealed: first line whole true, second line's first M where it was true, none at 0 true, all of it 7 11
 rich revealed: first line whole true, second line's first M where it was true, none at 0 true, all of it 7 11
+text effects: one character moved true true, the others in place true; a rainbow colored true; held by set_text_motion(0) true

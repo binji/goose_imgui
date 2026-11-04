@@ -30,6 +30,8 @@ struct Span {
     text_size: f32 = 0.0,
     text_look: u16 = 0,                 // add_text_look's: over the text's own
     underline: bool = false,
+    text_fx: u16 = 0,                   // an effect for its characters (textfx.goose), and its numbers
+    fx_args: float4 = float4 { 0.0, 0.0, 0.0, 0.0 },
 }
 
 // An image on a line: `src` of `texture`, `scale` times the text's size
@@ -75,6 +77,8 @@ struct Piece {
     w: f32 = 0.0,
     ascent: f32 = 0.0,                  // above the baseline
     below: f32 = 0.0,                   // below it, to the next line
+    fx: u16 = 0,                        // its span's effect, and the numbers for it
+    fx_args: float4 = float4 { 0.0, 0.0, 0.0, 0.0 },
 }
 
 // This frame's pieces; a rich node's are text_len of them from text_off.
@@ -87,6 +91,8 @@ struct RunStyle {
     ink: gfx2d::Color,
     look: u16,
     underline: bool,
+    fx: u16,
+    fx_args: float4,
 }
 
 fn run_text_style(r: RunStyle, letter_spacing: f32) -> gfx2d::TextStyle {
@@ -98,12 +104,31 @@ fn piece_look(k: u16, own: TextLook) -> TextLook { if k == 0 { own } else { over
 
 // Rich text from markup.
 fn rich(s: const u8[:], d: Desc) {
-    let i = add_node(NODE_RICH, 0, d);
+    let i = record_rich(s, d);
     if i < 0 { return; }
+    var any = look_of(nodes[i]).text_fx != 0;
+    for k in nodes[i].text_off..nodes[i].text_off + nodes[i].text_len { if pieces[k].fx != 0 { any = true; } }
+    if any {
+        rich_glyphs_of(i);
+        run_glyphs(i) { g => standard_fx(g); };
+    }
+}
+// Rich text with effects of the program's own: the block run for each
+// character, with a Glyph to change (textfx.goose).
+fn rich<F>(s: const u8[:], d: Desc) {
+    let i = record_rich(s, d);
+    if i < 0 { return; }
+    rich_glyphs_of(i);
+    run_glyphs(i) { g => F(g); };
+}
+fn record_rich(s: const u8[:], d: Desc) -> i32 {
+    let i = add_node(NODE_RICH, 0, d);
+    if i < 0 { return -1; }
     let own = look_of(nodes[i]);
     let base_font = if nodes[i].style.font.id != 0 { nodes[i].style.font } else { gfx2d::default_font() };
     var stack: RunStyle[..16] = [];
-    stack.push(RunStyle { base_font, nodes[i].style.text_size, gfx2d::Color { 0.0, 0.0, 0.0, 0.0 }, 0, false });
+    stack.push(RunStyle { base_font, nodes[i].style.text_size, gfx2d::Color { 0.0, 0.0, 0.0, 0.0 }, 0, false, 0,
+                          float4 { 0.0, 0.0, 0.0, 0.0 } });
     nodes[i].text_off = pieces.len as i32;
     var word = -1;              // where the word being read starts in text_arena, -1: none
     var glue = false;           // the next piece goes on from the one before
@@ -112,7 +137,7 @@ fn rich(s: const u8[:], d: Desc) {
         let r = stack[stack.len - 1];
         pieces.push(Piece { kind: kind, underline: r.underline, glued: glue && (kind == PIECE_WORD || kind == PIECE_IMAGE), look: r.look, font: r.font, size: r.size,
                             ink: r.ink, off: off as i32, len: len as i32, w: w as f32, ascent: ascent as f32,
-                            below: below as f32 });
+                            below: below as f32, fx: r.fx, fx_args: r.fx_args });
         glue = kind == PIECE_WORD || kind == PIECE_IMAGE;
     }
     fn text_piece(kind: u8, off: i64) {
@@ -167,6 +192,7 @@ fn rich(s: const u8[:], d: Desc) {
                     if sp.text_size > 0.0 { r.size = sp.text_size; }
                     if sp.text_look != 0 { r.look = sp.text_look; }
                     if sp.underline { r.underline = true; }
+                    if sp.text_fx != 0 { r.fx = sp.text_fx; r.fx_args = sp.fx_args; }
                     stack.push(r);
                 }
                 continue;
@@ -192,7 +218,7 @@ fn rich(s: const u8[:], d: Desc) {
     }
     end_word();
     // Empty, it is still a line tall.
-    if pieces.len == nodes[i].text_off as i64 { text_piece(PIECE_WORD, text_arena.len); }
+    if pieces.len == nodes[i].text_off { text_piece(PIECE_WORD, text_arena.len); }
     nodes[i].text_len = (pieces.len - nodes[i].text_off) as i32;
 
     // Its size on lines broken only at newlines, and its widest unbreakable run.
@@ -213,6 +239,7 @@ fn rich(s: const u8[:], d: Desc) {
         }
     }
     n.word = widest;
+    i
 }
 fn rich(s: const u8[:]) { rich(s, column()); }
 fn rich(s: const u8[:], c: StyleClass) { rich(s, column().skin(c)); }
@@ -288,7 +315,8 @@ fn draw_rich(i: i32, a: f32) {
     let own = look_of(n);
     // With reveal: the characters before each piece, the pieces between
     // lines (newlines, spaces where they broke) counted too.
-    let limit: i64 = if own.reveal < 0.0 { 1 << 62 } else { own.reveal as i64 };
+    let limit: i64 = if own.reveal < 0.0 { 1 << 62 } else { ceil(own.reveal) as i64 };
+    let fx = if has_glyphs(n) { n.cmd_first } else { -1 };
     for pass in 3 {
         var y = b.y + n.d.lay.padding.y;
         var counted = n.text_off;
@@ -309,8 +337,21 @@ fn draw_rich(i: i32, a: f32) {
                         let h: f64 = p.size * im.scale;
                         let ascent_f = gfx2d::font_ascent(p.font, p.size);
                         let mid = (ascent_f + gfx2d::font_descent(p.font, p.size)) * 0.5 + p.size * im.rise;
-                        gfx2d::image(im.texture, gfx2d::Rect { x, (base - mid - h * 0.5) as f32, p.w, h as f32 }, im.src,
-                                     faded(gfx2d::WHITE, a));
+                        let r = gfx2d::Rect { x, (base - mid - h * 0.5) as f32, p.w, h as f32 };
+                        if fx < 0 {
+                            gfx2d::image(im.texture, r, im.src, faded(gfx2d::WHITE, a));
+                        } else {
+                            // Changed as a glyph is, about its middle.
+                            let g = glyphs[fx + before];
+                            var e = gfx2d::GlyphEdit { .. };
+                            glyph_edit(e, g);
+                            let cx = r.x + r.w * 0.5;
+                            let cy = r.y + r.h * 0.5;
+                            let m = gfx2d::mul(gfx2d::translation(cx + e.offset.x, cy + e.offset.y),
+                                               gfx2d::mul(gfx2d::rotation(e.turn),
+                                                          gfx2d::mul(gfx2d::scaling(e.scale), gfx2d::translation(-cx, -cy))));
+                            gfx2d::transform(m) { gfx2d::image(im.texture, r, im.src, faded(gfx2d::WHITE, a * g.alpha)); };
+                        }
                     }
                 } else if p.kind == PIECE_WORD || p.kind == PIECE_SPACE {
                     let l = piece_look(p.look, own);
@@ -324,14 +365,14 @@ fn draw_rich(i: i32, a: f32) {
                     let sh = l.shadow_offset;
                     if pass == 0 && p.kind == PIECE_WORD && l.shadow.a > 0.0 && sh != float2_0 {
                         let c = faded(l.shadow, a);
-                        if ow > 0.0 { gfx2d::text(x + sh.x, base + sh.y, s, os, c); }
-                        gfx2d::text(x + sh.x, base + sh.y, s, style, c);
+                        if ow > 0.0 { fx_text(x + sh.x, base + sh.y, s, os, c, fx, before, false, a); }
+                        fx_text(x + sh.x, base + sh.y, s, style, c, fx, before, false, a);
                     }
                     if pass == 1 && p.kind == PIECE_WORD && ow > 0.0 && l.outline_color.a > 0.0 {
-                        gfx2d::text(x, base, s, os, faded(l.outline_color, a));
+                        fx_text(x, base, s, os, faded(l.outline_color, a), fx, before, false, a);
                     }
                     if pass == 2 {
-                        if p.kind == PIECE_WORD { gfx2d::text(x, base, s, style, ink); }
+                        if p.kind == PIECE_WORD { fx_text(x, base, s, style, ink, fx, before, true, a); }
                         if p.underline {
                             let t = max(p.size / 14.0, 1.0);
                             let uw = if whole { p.w } else { gfx2d::measure_text(s, style).x as f32 };

@@ -49,6 +49,7 @@ import drag;
 import exit;
 import notice;
 import rich;
+import textfx;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -226,6 +227,7 @@ fn list_bounds() {
         } else if n.kind == NODE_RICH {
             reach = max(reach, rich_reach(i) + 2.0);
         }
+        if (n.kind == NODE_TEXT || n.kind == NODE_RICH) && has_glyphs(n) { reach += glyph_reach(n); }
         var b = gfx2d::inflate(n.screen, reach * n.m.a);
         if n.cmd_count > 0 {
             // What a canvas draws may reach past its box.

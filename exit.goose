@@ -50,6 +50,8 @@ struct Leaver {
     point_count: i32 = 0,
     piece: i32 = 0,
     piece_count: i32 = 0,
+    glyph: i32 = 0,
+    glyph_count: i32 = 0,
 }
 
 var leavers: Leaver[>..] = [];
@@ -59,6 +61,7 @@ var leaver_looks: TextLook[>..] = [];
 var leaver_cmds: DrawCmd[>..] = [];
 var leaver_points: float2[>..] = [];
 var leaver_pieces: Piece[>..] = [];
+var leaver_glyphs: Glyph[>..] = [];
 var exit_nodes: i32[>..<] = [];     // this frame's nodes with exits (finish_frame)
 var kept: Leaver[>..<] = [];        // copies drawn this frame, `node` their top in `nodes`
 
@@ -113,6 +116,7 @@ fn play_exits() {
     leaver_cmds.clear();
     leaver_points.clear();
     leaver_pieces.clear();
+    leaver_glyphs.clear();
     for i in exit_nodes {
         let n .= nodes[i];
         var r = Leaver { id: n.id, exit: desc_exit(n.d.mot), .. };
@@ -145,6 +149,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
     r.cmd = leaver_cmds.len as i32;
     r.point = leaver_points.len as i32;
     r.piece = leaver_pieces.len as i32;
+    r.glyph = leaver_glyphs.len as i32;
     for k in i..end {
         var n = nodes[k];
         // Linked again below, without what is not in the copy.
@@ -169,6 +174,13 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
         }
         leaver_looks.push(node_looks[n.look as i64]);
         n.look = k - i;
+        if (n.kind == NODE_TEXT || n.kind == NODE_RICH) && has_glyphs(n) {
+            // Its characters' effects, as they were.
+            let g0 = leaver_glyphs.len as i32 - r.glyph;
+            for q in n.cmd_first..n.cmd_end { leaver_glyphs.push(glyphs[q]); }
+            n.cmd_end = g0 + (n.cmd_end - n.cmd_first);
+            n.cmd_first = g0;
+        }
         if n.cmd_count > 0 {
             let c0 = leaver_cmds.len as i32 - r.cmd;
             for c in n.cmd_first..n.cmd_end {
@@ -208,6 +220,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
     r.cmd_count = leaver_cmds.len as i32 - r.cmd;
     r.point_count = leaver_points.len as i32 - r.point;
     r.piece_count = leaver_pieces.len as i32 - r.piece;
+    r.glyph_count = leaver_glyphs.len as i32 - r.glyph;
     leavers.push(r);
 }
 
@@ -224,6 +237,19 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
     let everywhere = gfx2d::Rect { -1.0e9, -1.0e9, 2.0e9, 2.0e9 };
     text_arena.append(leaver_text[r.text..r.text + r.text_len]);
     let qb = pieces.len as i32 - r.piece;
+    // Its characters' effects: the built-in ones played on, at this frame's
+    // time; a program's own, whose code isn't run again, as they were.
+    let gb = glyphs.len as i32 - r.glyph;
+    for q in r.glyph..r.glyph + r.glyph_count {
+        var g = leaver_glyphs[q];
+        if is_standard_fx(g.text_fx) || is_standard_fx(g.span_fx) {
+            g = Glyph { index: g.index, count: g.count, cp: g.cp, seed: g.seed, time: clock, age: g.age,
+                        text_fx: g.text_fx, text_args: g.text_args, span_fx: g.span_fx, span_args: g.span_args,
+                        base: g.base, ink: g.base, .. };
+            standard_fx(g);
+        }
+        glyphs.push(g);
+    }
     for q in r.piece..r.piece + r.piece_count {
         var pc = leaver_pieces[q];
         if pc.kind != PIECE_IMAGE { pc.off += r.text + tb; }
@@ -248,6 +274,10 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
         n.next = moved_link(n.next, base);
         if n.kind == NODE_TEXT { n.text_off += r.text + tb; }
         if n.kind == NODE_RICH { n.text_off += r.piece + qb; }
+        if (n.kind == NODE_TEXT || n.kind == NODE_RICH) && has_glyphs(n) {
+            n.cmd_first += r.glyph + gb;
+            n.cmd_end += r.glyph + gb;
+        }
         node_looks.push(leaver_looks[(r.look + n.look) as i64]);
         n.look = lb + k;
         if n.cmd_count > 0 { n.cmd_first += r.cmd + cb; n.cmd_end += r.cmd + cb; }

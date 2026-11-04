@@ -162,6 +162,8 @@ struct TextLook {
     shadow: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },     // a copy under the text and its outline
     shadow_offset: float2 = float2 { 0.0, 0.0 },
     reveal: f32 = -1.0,                     // characters drawn (< 0: all); the node's own, not inherited
+    text_fx: u16 = 0,                       // its effect (textfx.goose), and the numbers for it
+    fx_args: float4 = float4 { 0.0, 0.0, 0.0, 0.0 },
 }
 var text_looks: TextLook[>..] = [];
 fn add_text_look(l: TextLook) -> u16 {
@@ -177,6 +179,7 @@ fn over_look(l: TextLook, up: TextLook) -> TextLook {
     if l.letter_spacing != 0.0 { r.letter_spacing = l.letter_spacing; }
     if l.outline != 0.0 { r.outline = l.outline; r.outline_color = l.outline_color; }
     if l.shadow.a > 0.0 { r.shadow = l.shadow; r.shadow_offset = l.shadow_offset; }
+    if l.text_fx != 0 { r.text_fx = l.text_fx; r.fx_args = l.fx_args; }
     r
 }
 

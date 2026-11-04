@@ -1,0 +1,57 @@
+built-in effects at 0.5 s, and none:
+  text:
+    0/4 'w' fx 2/0 offset 0.0,2.29 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    1/4 'a' fx 2/0 offset 0.0,0.63 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    2/4 'v' fx 2/0 offset 0.0,-1.15 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    3/4 'e' fx 2/0 offset 0.0,-2.7 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+  text:
+    0/4 'g' fx 3/0 offset 0.0,0.0 scale 1.09 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    1/4 'r' fx 3/0 offset 0.0,0.0 scale 1.02 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    2/4 'o' fx 3/0 offset 0.0,0.0 scale 0.94 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    3/4 'w' fx 3/0 offset 0.0,0.0 scale 0.88 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+  text:
+    0/3 'h' fx 5/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.87,0.68 alpha 1.0
+    1/3 'u' fx 5/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.87,0.84 alpha 1.0
+    2/3 'e' fx 5/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.84,0.98 alpha 1.0
+  "plain": none
+the program's own:
+  text:
+    0/4 'm' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 0.5
+    1/4 'i' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.1 ink 0.13,0.15,0.16 alpha 0.5
+    2/4 'n' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.2 ink 0.13,0.15,0.16 alpha 0.5
+    3/4 'e' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.3 ink 0.13,0.15,0.16 alpha 0.5
+rich spans:
+  rich:
+    0/7 'a' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.0,0.0 alpha 1.0
+    1/7 'b' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.0,0.0 alpha 1.0
+    2/7 ' ' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.0,0.0 alpha 1.0
+    3/7 'c' fx 0/1 offset 0.43,1.32 scale 1.0 turn 0.0 ink 0.0,0.0,0.0 alpha 1.0
+    4/7 'd' fx 0/1 offset -1.94,-0.92 scale 1.0 turn 0.0 ink 0.0,0.0,0.0 alpha 1.0
+    5/7 ' ' fx 0/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.0,0.0,0.0 alpha 1.0
+    6/7 'e' fx 0/6 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.51,0.63,0.89 alpha 1.0
+inherited from a box:
+  text:
+    0/2 'i' fx 4/0 offset 0.0,0.0 scale 1.0 turn 0.28 ink 0.13,0.15,0.16 alpha 1.0
+    1/2 'n' fx 4/0 offset 0.0,0.0 scale 1.0 turn 0.17 ink 0.13,0.15,0.16 alpha 1.0
+popping in as revealed, 3.5 of 6:
+  text:
+    0/6 't' fx 7/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0 age 3.5
+    1/6 'y' fx 7/0 offset 0.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0 age 2.5
+    2/6 'p' fx 7/0 offset 0.0,0.0 scale 1.05 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0 age 1.5
+    3/6 'i' fx 7/0 offset 0.0,0.0 scale 0.85 turn 0.0 ink 0.13,0.15,0.16 alpha 0.75 age 0.5
+    4/6 'n' fx 7/0 offset 0.0,0.0 scale 0.2 turn 0.0 ink 0.13,0.15,0.16 alpha 0.0 age -0.5
+    5/6 'g' fx 7/0 offset 0.0,0.0 scale 0.2 turn 0.0 ink 0.13,0.15,0.16 alpha 0.0 age -1.5
+leaving: the wave plays on, the program's own is held
+  text (leaving):
+    0/2 'w' fx 2/0 offset 0.0,1.45 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    1/2 'w' fx 2/0 offset 0.0,2.45 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+  text (leaving):
+    0/2 'm' fx 0/0 offset 8.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    1/2 'm' fx 0/0 offset 8.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+  text (leaving):
+    0/2 'w' fx 2/0 offset 0.0,-1.27 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    1/2 'w' fx 2/0 offset 0.0,0.04 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+  text (leaving):
+    0/2 'm' fx 0/0 offset 8.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+    1/2 'm' fx 0/0 offset 8.0,0.0 scale 1.0 turn 0.0 ink 0.13,0.15,0.16 alpha 1.0
+  playing 1

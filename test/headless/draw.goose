@@ -262,6 +262,46 @@ fn main() {
               ", none at 0 ", none_drawn, ", all of it ", imgui::text_chars("MMM MMM"), " ",
               imgui::rich_chars("[red]MMM[/] MMM [img=sq][[x"));
     }
+
+    // Text effects: the middle M of three moved 40 down by the program's
+    // block; then a rainbow, no longer black; then the move held still by
+    // set_text_motion(0).
+    fn mmm(down: bool, rainbow: bool) {
+        let d = imgui::column().text_size(32).ink(gfx2d::BLACK).place(imgui::START, imgui::START).offset(10, 10);
+        if rainbow { imgui::text("MMM", d.text_fx(imgui::FX_RAINBOW)); }
+        else if down { imgui::text("MMM", d) { g => if g.index == 1 { g.offset.y = 40.0; } }; }
+        else { imgui::text("MMM", d); }
+    }
+    render(none) { mmm(false, false); };
+    let row = dark_span(30);
+    let mid = (row.x + row.y) / 2;
+    let plain_mid = dark_in(mid - 6, 10, mid + 6, 50);
+    render(none) { mmm(true, false); };
+    let moved_mid = dark_in(mid - 6, 10, mid + 6, 50);
+    let below = dark_in(mid - 6, 50, mid + 6, 90);
+    let ends_same = dark_span(30).x == row.x && dark_span(30).y == row.y;
+    render(none) { mmm(false, true); };
+    var colored = 0;
+    for y in 10..50 { for x in row.x..row.y {
+        let c = at(x, y);
+        let r: i64 = (c >> 16) & 255;
+        let g: i64 = (c >> 8) & 255;
+        let b: i64 = c & 255;
+        if max(max(r, g), b) - min(min(r, g), b) > 80 { colored++; }
+    } }
+    imgui::set_text_motion(0.0);
+    render(none) { mmm(true, false); };
+    let held = dark_in(mid - 6, 10, mid + 6, 50) == plain_mid && dark_in(mid - 6, 50, mid + 6, 90) == 0;
+    imgui::set_text_motion(1.0);
+    print("text effects: one character moved ", moved_mid < plain_mid / 4, " ", below > plain_mid / 2,
+          ", the others in place ", ends_same, "; a rainbow colored ", colored > 100, "; held by set_text_motion(0) ", held);
+}
+
+// Dark pixels in the box x0..x1, y0..y1.
+fn dark_in(x0: i64, y0: i64, x1: i64, y1: i64) -> i64 {
+    var c = 0;
+    for y in y0..y1 { for x in x0..x1 { if !close_to(x, y, 0xFFFFFF, 60) { c++; } } }
+    c
 }
 
 // The first and last columns with anything not white in row y (-1: none).

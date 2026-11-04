@@ -1,9 +1,11 @@
 // Dialogue, as an RPG's: a speaker's portrait and name, and what they say
 // typed out a character at a time (rich text, revealed), its lines laid
-// out whole from the start so that nothing moves as it types. Names,
-// places and items are in spans; the key is an image on the line. Click,
-// Enter or Space shows the rest at once, then goes on to the next line; a
-// chevron bobs when a line is all there.
+// out whole from the start so that nothing moves as it types, each letter
+// popping in. Names, places and items are in spans, some with effects: a
+// place waving, an item glowing, a danger shaking, a cold voice shivering
+// (an effect of the program's own), magic in a rainbow; the key is an
+// image on the line. Click, Enter or Space shows the rest at once, then
+// goes on to the next line; a chevron bobs when a line is all there.
 //
 //   goose examples/dialogue.goose [-- --frames 90 --screenshot dialogue.png]
 import std;
@@ -18,11 +20,12 @@ import .scene;
 let LINES = [
     ["Elder Maren", "Ah, [who]Wren[/]. You came back from the [place]Ashen Hollow[/] alive. Few do, these days."],
     ["Elder Maren", "Did you find it? The [item]Cinder Key[/] [img=key], the one my grandmother hid beneath the old watchtower?"],
-    ["Wren", "I found it. But the [danger]Wardens[/] know it's gone, and they will come looking."],
-    ["Elder Maren", "Then we have little time. Rest tonight, and at first light, take the north road to [place]Emberfall[/]."],
+    ["Wren", "I found it. But the [danger]Wardens[/] know it's gone, and [cold]they will come looking[/]."],
+    ["Elder Maren", "Then we have little time. Rest tonight, and at first light, take the north road to [magic]Emberfall[/]."],
 ];
 let PORTRAITS = [0xC79A5A, 0x3D7DE0];
 let CHARS_PER_SECOND = 40.0;
+let SHIVER: u16 = imgui::FX_USER;     // the program's own effect: a quick, small tremble
 
 var line = 0;
 var line_at = 0.0;          // when the line began typing
@@ -33,9 +36,11 @@ fn speaker_color(name: const u8[:]) -> i64 { if name == "Wren" { PORTRAITS[1] } 
 // The spans, and the key: drawn once into a texture, after the window opens.
 fn spans() {
     imgui::add_span("who", imgui::Span { ink: rgb(0x8EC3FF), .. });
-    imgui::add_span("place", imgui::Span { ink: rgb(0xF2CF7A), .. });
-    imgui::add_span("item", imgui::Span { ink: rgb(0xFF9F5A), underline: true, .. });
-    imgui::add_span("danger", imgui::Span { ink: rgb(0xFF6A6A), .. });
+    imgui::add_span("place", imgui::Span { ink: rgb(0xF2CF7A), text_fx: imgui::FX_WAVE, fx_args: float4 { 2, 0.8, 0, 0 }, .. });
+    imgui::add_span("item", imgui::Span { ink: rgb(0xFF9F5A), underline: true, text_fx: imgui::FX_FLASH, .. });
+    imgui::add_span("danger", imgui::Span { ink: rgb(0xFF6A6A), text_fx: imgui::FX_SHAKE, fx_args: float4 { 1.2, 0, 0, 0 }, .. });
+    imgui::add_span("cold", imgui::Span { ink: rgb(0xB8D8FF), text_fx: SHIVER, .. });
+    imgui::add_span("magic", imgui::Span { text_fx: imgui::FX_RAINBOW, .. });
 }
 fn key_icon() {
     let tex = gfx::render_target(32, 32, gfx::RGBA8);
@@ -76,8 +81,16 @@ fn main() {
                         imgui::text(LINES[line][0], imgui::column().text_size(15).letter_spacing(2).ink(rgb(GOLD)));
                         // Laid out whole, three lines tall at least, so the
                         // panel keeps its size as the text types.
+                        // Each letter pops in as it is revealed; the spans'
+                        // effects are the built-in ones, and SHIVER, ours.
                         imgui::rich(LINES[line][1], imgui::column().text_size(19).ink(rgb(INK)).wrap().grow_w()
-                                                .min_h(84).reveal(shown));
+                                                .min_h(84).reveal(shown).text_fx(imgui::FX_POP_IN)) { g =>
+                            imgui::standard_fx(g);
+                            if g.span_fx == SHIVER {
+                                g.turn += (sin(g.time * 40.0 + g.index * 1.7) * 0.06) as f32;
+                                g.offset.x += (sin(g.time * 33.0 + g.index * 2.3) * 0.6) as f32;
+                            }
+                        };
                     };
                     // The chevron, once the line is all there, bobbing. Always
                     // laid out, so that the text's width doesn't change.

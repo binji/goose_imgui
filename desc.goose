@@ -91,6 +91,7 @@ let OV_LETTER_SPACING = 256;
 let OV_TEXT_OUTLINE = 512;
 let OV_TEXT_SHADOW = 1024;
 let OV_REVEAL = 2048;
+let OV_TEXT_FX = 4096;
 
 struct LookDesc {
     class: StyleClass = StyleClass { 0 },   // NONE: no style but the overrides
@@ -196,7 +197,8 @@ fn with_fx(var d: Desc, fx: TextLook, flag: i64) -> Desc {
 
 fn same_fx(a: TextLook, b: TextLook) -> bool {
     a.letter_spacing == b.letter_spacing && a.outline == b.outline && a.outline_color == b.outline_color &&
-    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset && a.reveal == b.reveal
+    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset && a.reveal == b.reveal &&
+    a.text_fx == b.text_fx && a.fx_args == b.fx_args
 }
 
 // A Desc's exit is kept in tables the same way: few nodes have one.
@@ -379,6 +381,15 @@ fn text_shadow(d: Desc, c: gfx2d::Color, dx: f64 = 1.0, dy: f64 = 1.0) -> Desc {
     with_fx(d, fx, OV_TEXT_SHADOW)
 }
 fn no_text_shadow(d: Desc) -> Desc { text_shadow(d, gfx2d::BLACK, 0.0, 0.0) }
+// The text's effect (FX_SHAKE, FX_WAVE … or a program's own, from
+// FX_USER), and up to four numbers for it (0: its default); its text
+// descendants' too. See textfx.goose.
+fn text_fx(d: Desc, fx: u16, a: f64 = 0.0, b: f64 = 0.0, c: f64 = 0.0, e: f64 = 0.0) -> Desc {
+    var t = desc_fx(d.vis);
+    t.text_fx = fx;
+    t.fx_args = float4 { a as f32, b as f32, c as f32, e as f32 };
+    with_fx(d, t, OV_TEXT_FX)
+}
 // Only the text's first `chars` characters drawn (a newline, a space or a
 // rich text's image each one), each where it is with all of them, so
 // that typing it out doesn't move its lines: dialogue revealed as it is

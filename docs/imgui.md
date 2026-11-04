@@ -66,7 +66,8 @@ The examples each show one part:
 - `stats`: a run's summary on canvases: a line chart with values on hover,
   bars that grow in, a gauge, a minimap, each filling a grid card;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
-  character at a time.
+  character at a time, each letter popping in, with spans that wave, glow,
+  shake, shiver (an effect of the program's own) and cycle their hue.
 
 Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 --scale 2 --keys Down,Return`. With `--frames`, every frame is 1/60 s.
@@ -164,7 +165,11 @@ How children share space:
 | `letter_spacing(px)` | pixels after each character, inherited the same way |
 | `text_outline(w, c)`, `no_text_outline()` | an outline `w` pixels wide around the glyphs (up to a sixteenth of the text's size), inherited; for text over a busy scene. Faded, `isolate()` keeps it from showing through the glyphs |
 | `text_shadow(c, dx, dy)`, `no_text_shadow()` | a copy of the text and its outline, moved, under it; inherited |
-| `reveal(chars)` | only the text's first `chars` characters drawn (of `text` or `rich`; a space, a newline or an image each one), each where it is with all of them, so typing it out doesn't move its lines: `reveal((time() - began) * 40)`. Not inherited |
+| `reveal(chars)` | only the text's first `chars` characters drawn (of `text` or `rich`; a space, a newline or an image each one), each where it is with all of them, so typing it out doesn't move its lines: `reveal((time() - began) * 40)`. A fraction shows the next character just begun (for `FX_POP_IN` and the like). Not inherited |
+| `text_fx(fx, a, b, c, d)` | an effect on each character of the text, and of its text descendants': `FX_SHAKE`, `FX_WAVE`, `FX_PULSE`, `FX_SWING`, `FX_RAINBOW`, `FX_FLASH`, and, as `reveal` uncovers them, `FX_POP_IN`, `FX_DROP_IN`, `FX_FADE_IN`; up to four numbers for it, 0 for its default (textfx.goose lists them). It moves only what is drawn, never the layout |
+| `Span { text_fx, fx_args, .. }` | a span's effect, over the text's own: `[scared]OUT[/]` |
+| `text(s, d) { g => … }`, `rich(s, d) { g => … }` | the block run for each character as the text is recorded, with a `Glyph`: what it reads (`index`, `count`, `cp`, `time`, `seed`, `age` since it was revealed, `text_fx`/`text_args`, `span_fx`/`span_args`) and what it sets (`offset`, `scale`, `turn`, `ink`, `alpha`). `standard_fx(g)` plays the built-in effects; a program's own are numbered from `FX_USER`. Without a block, a text with an effect runs `standard_fx` |
+| `set_text_motion(k)` | how much text effects move, from 0 (still; colors still change) to 1: for players who want less motion |
 | `text_chars(s)`, `rich_chars(s)` | the characters `reveal` counts in the whole of a text, or of a rich text (its markup left out): when the typing is done |
 
 A Desc with text effects set during a frame is good for that frame only.
@@ -441,6 +446,8 @@ The tests are in three groups:
     glide, exits (in a list, alone, nested, coming back);
   - `rich`: markup, measuring as plain text does, wrapping, a word in two
     styles kept whole, images, `[[`, newlines, an exit;
+  - `textfx`: the built-in effects, a program's own by a block, rich text's
+    spans, inheritance, popping in as revealed, an exit copy playing on;
   - `notices`: stacking and expiring, a queue's limit, a queue of the
     program's own type, clearing, text reused, long text kept whole;
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
@@ -450,7 +457,7 @@ The tests are in three groups:
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
   ring, the UI scale, exits drawn after their node has gone, rich text's
   spans, image and underline, text revealed in part where it is in the
-  whole (`draw`); typing through gfx's injected input
+  whole, text effects moving and coloring single characters (`draw`); typing through gfx's injected input
   (`typing`); canvases: placement, size, clipping, opacity, culling, the
   pointer (`canvas`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless

@@ -204,27 +204,34 @@ fn draw_text(i: i32, a: f32) {
     // Under the text: its shadow (a copy of it and its outline, moved),
     // then its outline (a stroke, half of it hidden by the glyphs).
     let l = look_of(n);
+    let fx = if has_glyphs(n) { n.cmd_first } else { -1 };
     let ow = outline_width(l, n.style.text_size);
     var os = style;
     os.outline = ow * 2.0;
     let sh = l.shadow_offset;
     if l.shadow.a > 0.0 && sh != float2_0 {
         let c = faded(l.shadow, a);
-        if ow > 0.0 { text_part(x + sh.x, y + sh.y, s, os, c, l.reveal); }
-        text_part(x + sh.x, y + sh.y, s, style, c, l.reveal);
+        if ow > 0.0 { text_part(x + sh.x, y + sh.y, s, os, c, l.reveal, fx, false, a); }
+        text_part(x + sh.x, y + sh.y, s, style, c, l.reveal, fx, false, a);
     }
     if ow > 0.0 && l.outline_color.a > 0.0 {
-        text_part(x, y, s, os, faded(l.outline_color, a), l.reveal);
+        text_part(x, y, s, os, faded(l.outline_color, a), l.reveal, fx, false, a);
     }
-    text_part(x, y, s, style, faded(n.style.ink, a), l.reveal);
+    text_part(x, y, s, style, faded(n.style.ink, a), l.reveal, fx, true, a);
 }
 
 // s drawn as gfx2d::text draws it, but only its first `chars` characters
 // (all, if < 0), each where it is with all of them: row by row, from
 // where each row of the whole starts.
-fn text_part(x: f64, y: f64, s: const u8[:], style: gfx2d::TextStyle, c: gfx2d::Color, chars: f32) {
-    if chars < 0.0 { gfx2d::text(x, y, s, style, c); return; }
-    var left = chars as i64;
+//
+// With effects (`fx`, its characters' first in `glyphs`; -1 for none),
+// each glyph changed as its character says: its ink, on the ink pass,
+// else `c`, faded by its alpha.
+fn text_part(x: f64, y: f64, s: const u8[:], style: gfx2d::TextStyle, c: gfx2d::Color, chars: f32,
+             fx: i32 = -1, ink_pass: bool = false, a: f32 = 1.0) {
+    if chars < 0.0 { fx_text(x, y, s, style, c, fx, 0, ink_pass, a); return; }
+    var left = ceil(chars) as i64;
+    var before: i64 = 0;
     let lh = gfx2d::font_line_height(gfx2d::style_font(style), style.size) * style.line_spacing;
     var row_style = style;
     row_style.wrap_width = 0.0;
@@ -233,10 +240,28 @@ fn text_part(x: f64, y: f64, s: const u8[:], style: gfx2d::TextStyle, c: gfx2d::
     for row in gfx2d::break_lines(s, style) {
         if left <= 0 { break; }
         let end = chars_end(s, row.start, row.end, left);
-        gfx2d::text(gfx2d::line_left(x, row.width, style), y + r * lh, s[row.start..end], row_style, c);
-        left -= text_chars(s[row.start..row.next]);
+        fx_text(gfx2d::line_left(x, row.width, style), y + r * lh, s[row.start..end], row_style, c, fx, before,
+                ink_pass, a);
+        let taken = text_chars(s[row.start..row.next]);
+        left -= taken;
+        before += taken;
         r++;
     }
+}
+
+// s drawn, its glyphs changed by their characters' effects if it has any:
+// its first character is `index` of the text's.
+fn fx_text(x: f64, y: f64, s: const u8[:], style: gfx2d::TextStyle, c: gfx2d::Color, fx: i32,
+           index: i64, ink_pass: bool, a: f32) {
+    if fx < 0 { gfx2d::text(x, y, s, style, c); return; }
+    var at: i64 = 0;            // the byte counted to, and the characters before it
+    var count = index;
+    gfx2d::text_glyphs(x, y, s, style, c) { e =>
+        while at < e.byte { if s[at] & 0xC0 != 0x80 { count++; } at++; }
+        let g = glyphs[fx + count];
+        glyph_edit(e, g);
+        e.color = if ink_pass { faded(g.ink, a * g.alpha) } else { faded(c, g.alpha) };
+    };
 }
 
 // The outline drawn around text of a size, outside its glyphs: no more

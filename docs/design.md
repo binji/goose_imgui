@@ -397,6 +397,36 @@ spills past the box.
   then glyphs, images and underlines, so that one piece's shadow doesn't
   fall over the glyphs before it.
 
+## Text effects
+
+- A program writes its own effects in Goose, and the built-in ones are
+  written the same way. A function can't be stored in a Span or a Desc
+  (Goose's function values exist only at compile time), so the effect
+  runs where the text is recorded: `text(s, d) { g => … }` calls the block
+  for each character with a `Glyph`, what the character is (its index,
+  the time, how long since it was revealed, its text's and span's effect
+  numbers) and what to change (offset, scale, turn, ink, alpha).
+  `standard_fx(g)` is the built-in effects, an ordinary function on the
+  same footing; without a block, a text with an effect runs it.
+- Effects need only the index, the time and the reveal, not where the
+  character lands, so working them out before layout loses nothing. They
+  move only what is drawn.
+- The characters' changes are in a side table for the frame; a text's
+  are its canvas command range, which text never uses, so Node doesn't
+  grow, and a text without effects costs nothing.
+- gfx2d draws every glyph as its own quad. Its `text_glyphs(…) { g => … }`
+  lets a block change each one's transform and color before it is added;
+  `text` is the same code with no block, inlined, so plain text pays
+  nothing for it.
+- Revealed text counts a fraction: `reveal(3.4)` shows a fourth character
+  just begun, and each character's `age` is how far past it the count
+  is, so `FX_POP_IN` grows letters in as they are typed.
+- An exit copy keeps its characters' changes. Its built-in effects are
+  played again each frame, so a shaking word shakes as it fades; a
+  program's own, whose block isn't run again, hold where they were.
+- `set_text_motion(k)` scales offsets, scales and turns, for players who
+  want less motion; colors still change.
+
 ## Widgets (first set)
 
 | | |
@@ -430,6 +460,7 @@ spills past the box.
 | `exit.goose` | exits: copies of what has left, drawn as they play |
 | `notice.goose` | notices: queues of what the program posted once |
 | `rich.goose` | rich text: markup read into pieces, broken into lines |
+| `textfx.goose` | text effects: each character's change, and the built-in effects |
 | `style.goose` | `Style`, `StyleSet`, the class registry, themes |
 | `draw.goose` | the draw walk |
 | `widgets.goose` | buttons, toggles, sliders and the rest |

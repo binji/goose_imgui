@@ -113,7 +113,7 @@ var node_looks: TextLook[>..<] = [];
 
 // The look a node with style s and Desc look v has under a parent's `up`.
 fn resolve_look(s: Style, v: LookDesc, up: i32) -> i32 {
-    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW | OV_REVEAL);
+    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW | OV_REVEAL | OV_TEXT_FX);
     if s.text_look == 0 && fx_ov == 0 && node_looks[up as i64].reveal < 0.0 { return up; }
     var l = node_looks[up as i64];
     l.reveal = -1.0;
@@ -124,6 +124,7 @@ fn resolve_look(s: Style, v: LookDesc, up: i32) -> i32 {
         if v.ov & OV_TEXT_OUTLINE != 0 { l.outline = d.outline; l.outline_color = d.outline_color; }
         if v.ov & OV_TEXT_SHADOW != 0 { l.shadow = d.shadow; l.shadow_offset = d.shadow_offset; }
         if v.ov & OV_REVEAL != 0 { l.reveal = d.reveal; }
+        if v.ov & OV_TEXT_FX != 0 { l.text_fx = d.text_fx; l.fx_args = d.fx_args; }
     }
     node_looks.push(l);
     (node_looks.len - 1) as i32
@@ -135,6 +136,7 @@ fn begin_tree() {
     nodes.clear();
     text_arena.clear();
     pieces.clear();
+    glyphs.clear();
     tracks.clear();
     parents.clear();
     roots.clear();
@@ -293,8 +295,24 @@ fn text_style_of(n: Node&) -> gfx2d::TextStyle {
 // Desc can wrap() it at its width, justify() its lines, and size it like
 // any box.
 fn text(s: const u8[:], d: Desc) {
-    let i = add_node(NODE_TEXT, 0, d);
+    let i = record_text(s, d);
+    if i >= 0 && look_of(nodes[i]).text_fx != 0 {
+        text_glyphs_of(i, s);
+        run_glyphs(i) { g => standard_fx(g); };
+    }
+}
+// Text with effects of the program's own: the block run for each
+// character, with a Glyph to change (textfx.goose).
+//   imgui::text("Wobbly", d) { g => g.turn = sin(g.time * 6.0 + g.index) * 0.2; };
+fn text<F>(s: const u8[:], d: Desc) {
+    let i = record_text(s, d);
     if i < 0 { return; }
+    text_glyphs_of(i, s);
+    run_glyphs(i) { g => F(g); };
+}
+fn record_text(s: const u8[:], d: Desc) -> i32 {
+    let i = add_node(NODE_TEXT, 0, d);
+    if i < 0 { return -1; }
     let n .= nodes[i];
     n.text_off = text_arena.len as i32;
     text_arena.append(s);
@@ -313,6 +331,7 @@ fn text(s: const u8[:], d: Desc) {
         }
         n.word = w;
     }
+    i
 }
 fn text(s: const u8[:]) { text(s, column()); }
 fn text(s: const u8[:], c: StyleClass) { text(s, column().skin(c)); }
