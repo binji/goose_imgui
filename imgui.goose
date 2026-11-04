@@ -47,6 +47,7 @@ import text_input;
 import canvas;
 import drag;
 import exit;
+import notice;
 
 // --- frames ---------------------------------------------------------------------------
 

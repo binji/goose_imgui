@@ -56,7 +56,7 @@ The examples each show one part:
 - `hello`: a box, text and a button;
 - `widgets`: the basic widgets in a settings panel;
 - `main_menu`: a title screen in the game theme, with staggered entrances,
-  keyboard navigation and modals;
+  keyboard navigation, modals and toasts;
 - `motion`: a leaderboard whose rows glide when re-sorted, and slide in or
   out when added or removed; a drawer on a spring; a rolling counter;
 - `inventory`: a grid of custom slots in a scroll pane, with tooltips and
@@ -214,7 +214,7 @@ The classes are:
   stamina green;
 - SEPARATOR, SELECTABLE, SCROLLBAR, SCROLL_THUMB;
 - TAB_BAR, TAB, TAB_PANEL, MENU_BAR, MENU_HEADER, MENU, MENU_ITEM;
-- POPUP, MODAL, BACKDROP, TOOLTIP;
+- POPUP, MODAL, BACKDROP, TOOLTIP, NOTICE;
 - INPUT, CARET, SELECTION, DROPDOWN.
 
 ## Motion
@@ -235,6 +235,12 @@ damping)`, with or without `delay(seconds)`.
 | `.enter(fade_in(m))`, `slide_in(dx, dy, m)`, `pop_in(scale, m)`, `.delay(s)` | played the first frame a node's ID appears; a list staggered by `delay` |
 | `.exit(fade_out(m))`, `slide_out(dx, dy, m)`, `pop_out(scale, m)`, `.delay(s)` on the Exit | played the first frame a node's ID is not recorded, on a copy of it and its subtree as they were last drawn, where they were: a removed row slides out, a gem thrown away pops. The node needs an ID of its own (a label, a key), not one from its place |
 | `exits_playing()` | how many such copies are drawn this frame |
+| `Notices<T> { limit: n, .. }` | a queue of notices holding the program's own fixed-size data: a damage number's amount and where it landed. At most `limit` are live (0: any number); past it the oldest go first |
+| `TextNotices { limit: n, .. }` | a queue of text of any length, kept by imgui and given back as each notice goes. Text with other data (a kill feed's names and weapon) is a `Notices<T>` whose `T` holds arrays of the size the program chooses |
+| `notify(q, data, seconds = 3)`, `notify(q, text, seconds = 3)` | posts a notice once, in a frame or out of one: a hit, a toast, an area's name, a line of a feed |
+| `notices(q, d) { n => … }` | the queue's live notices in a box of `d`, oldest first, each drawn by the block: `n.data` (or `n.text`), `n.age()`, `n.left()`. Its box should be `box(n.id(), …)`, with an exit to play as it is dropped, when its time is up or past the limit |
+| `notices(q, d = column().gap(8), item = notice_item())` | a queue of text, each an `item` holding its text: `notice_item()` is a NOTICE that slides in, glides, and fades out |
+| `clear_notices(q)`, `notice_count(q)` | the queue emptied (each plays its exit); how many are live |
 | `.glide(m)` | from where the node was laid out to where it is now: reordered rows slide to their places |
 | `.offset(x, y)`, `.scale(s)` | drawn moved, or scaled about its center, with its subtree |
 | `.rotate(radians)`, `.skew(radians)` | drawn turned clockwise about its center, or slanted (its verticals leaning right), with its subtree: a fanned hand of cards, a diamond, a slanted panel. It is hit where it is drawn; its `it.pointer` is from the box around it |
@@ -426,6 +432,8 @@ The tests are in three groups:
   - `overlays`: menus, submenus, tabs, dropdowns, tooltips, modals;
   - `motion`: easing, tweens, springs at two frame rates, presence, enter,
     glide, exits (in a list, alone, nested, coming back);
+  - `notices`: stacking and expiring, a queue's limit, a queue of the
+    program's own type, clearing, text reused, long text kept whole;
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
   - `text_input`: typing, caret and selection, words, cut and paste,
     limits.

@@ -117,7 +117,8 @@ let METER_TRACK = StyleClass { 38 };    // each segment's groove
 let METER_FILL = StyleClass { 39 };
 let METER_TRAIL = StyleClass { 40 };    // what a drop took, easing down behind the fill
 let FOCUS_CURSOR = StyleClass { 41 };   // set_focus_cursor's look: drawn ring_offset outside the focused box
-let CLASS_COUNT = 42;
+let NOTICE = StyleClass { 42 };         // a notice drawn by notices() without a block
+let CLASS_COUNT = 43;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -487,6 +488,10 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     modal.gap = 14.0;
     classes[MODAL.index] = style_set(modal);
     classes[BACKDROP.index] = style_set(Style { bg: p.backdrop });
+    var notice = floating;
+    notice.padding = pad4(18.0, 10.0);
+    notice.gap = 10.0;
+    classes[NOTICE.index] = style_set(notice);
     classes[TOOLTIP.index] = style_set(Style { bg: gfx2d::with_alpha(p.ink, 0.92), radius: radii(4.0),
                                                padding: pad4(8.0, 4.0), ink: p.surface,
                                                text_size: p.text_size * 0.875 });

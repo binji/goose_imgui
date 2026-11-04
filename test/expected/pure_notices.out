@@ -1,0 +1,33 @@
+two posted:
+  toasts: 2 live, 0 leaving
+    Saved at 0.0,6.0 alpha 0.517 age 0.2
+    Found a map at 0.0,61.0 alpha 0.0 age 0.1
+  toasts: 2 live, 0 leaving
+    Saved at 0.0,0.0 alpha 1.0 age 0.7
+    Found a map at 0.0,49.0 alpha 0.998 age 0.6
+the first gone:
+  toasts: 1 live, 1 leaving
+    Found a map at 0.0,21.0 alpha 1.0 age 1.0
+  toasts: 1 live, 1 leaving
+    Found a map at 0.0,4.0 alpha 1.0 age 1.1
+  toasts: 1 live, 0 leaving
+    Found a map at 0.0,-0.0 alpha 1.0 age 1.6
+both gone:
+  toasts: 0 live, 1 leaving
+feed of two:
+  feed: 2 live, 0 leaving
+    two at 200.0,0.0 alpha 1.0 age 0.2
+    three at 200.0,39.0 alpha 1.0 age 0.1
+feed cleared:
+  feed: 0 live, 0 leaving
+text reused: true (16 bytes)
+damage:
+  hits: 1 live, 0 leaving
+    12 at 100.0,95.0 alpha 1.0 age 0.5
+chained:
+  hits: 2 live, 0 leaving
+    12 at 100.0,94.0 alpha 1.0 age 0.6
+  hits: 2 live, 0 leaving
+    12 at 100.0,93.0 alpha 1.0 age 0.7
+    13 at 105.0,99.0 alpha 1.0 age 0.1
+long text kept: 200 of 200

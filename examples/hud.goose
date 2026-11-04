@@ -7,7 +7,7 @@
 // take the pointer, the controls let it through.
 //
 // Where a game's HUD wants something imgui lacks, a comment names the item
-// of docs/future_work.md that would do it ("future work: notices"), and the
+// of docs/future_work.md that would do it ("future work: gamepads"), and the
 // code works around it. See also wayfinding.goose (a compass, a minimap,
 // markers) and cards.goose (a hand of cards).
 //
@@ -22,14 +22,18 @@ import .common;
 import .scene;
 
 struct Enemy { name: u8[..16] = [], home: float2, pos: float2 = float2 { 0.0, 0.0 }, hp: f64, max_hp: f64 }
-struct Damage { key: i64, pos: float2, amount: i64, born: f64 }
 struct Ping { pos: float2, born: f64 }
 
 var enemies: Enemy[>..] = [];
-var damage: Damage[>..] = [];
-var next_damage = 0;
 var pings: Ping[>..] = [];
 var swing_at = 0.0;
+var region_told = false;
+
+// Notices: hits, each a damage number over where it landed, and the
+// region's name as it is entered.
+struct Hit { amount: i64, at: float2 }
+var hits = imgui::Notices<Hit> { .. };
+var banner = imgui::TextNotices { .. };
 var seed = rng { 7 };
 
 let HP_RED = 0xE0455A;
@@ -67,8 +71,8 @@ fn step(t: f64, me: float2) {
     let amount = 6 + rand_int(seed, 22);
     enemies[best].hp -= amount;
     if enemies[best].hp <= 0.0 { enemies[best].hp = enemies[best].max_hp; }
-    damage.push(Damage { next_damage, enemies[best].pos + f2(rand_flt(seed) * 30.0 - 15.0, 0.0), amount, t });
-    next_damage++;
+    // A notice, posted once: imgui keeps it and drops it when its time is up.
+    imgui::notify(hits, Hit { amount, enemies[best].pos + f2(rand_flt(seed) * 30.0 - 15.0, 0.0) }, 0.6);
 }
 
 // The enemies and the pings, over the ground.
@@ -147,27 +151,21 @@ fn main() {
                     };
                 }
 
-                // Damage numbers rise and fade, outlined and shadowed. Each
-                // is isolated, so that as it fades its outline doesn't show
-                // through its glyphs. The program keeps each until it is
-                // done: future work: notices.
-                k = 0;
-                while k < damage.len {
-                    let d = damage[k];
-                    let age = t - d.born;
-                    if age > 0.9 { damage[k] = damage[damage.len - 1]; damage.pop(); continue; }
-                    let s = to_screen(d.pos);
+                // Damage numbers rise, outlined and shadowed, and slide on
+                // up as they fade out. Each is isolated, so that as it
+                // fades its outline doesn't show through its glyphs.
+                imgui::notices(hits, imgui::stack().grow()) { n =>
+                    let age = n.age();
+                    let s = to_screen(n.data.at);
                     let pop = 1.0 + 0.5 * max(1.0 - age * 8.0, 0.0);
-                    imgui::box(imgui::id(str("dmg", d.key)), imgui::stack().absolute(s.x, s.y - 70.0 - age * 50.0).pivot(0.5, 0)
-                                                              .opacity(1.0 - age * age / 0.81).scale(pop)
-                                                              .isolate()) {
+                    imgui::box(n.id(), imgui::stack().absolute(s.x, s.y - 70.0 - age * 50.0).pivot(0.5, 0).scale(pop)
+                                         .isolate().exit(imgui::slide_out(0, -15, imgui::tween(0.3, imgui::EASE_LINEAR)))) {
                         imgui::textf(imgui::column().text_size(22).ink(rgb(0xFFE08A)).place(imgui::CENTER, imgui::CENTER)
                                        .text_outline(1.4, rgb(0x5A2A08)).text_shadow(rgba(SHADE, 0.6), 0, 2)) { out =>
-                            format(out, d.amount);
+                            format(out, n.data.amount);
                         };
                     };
-                    k++;
-                }
+                };
 
                 // The corners, kept clear of the screen's edges.
                 imgui::box("corners", imgui::stack().grow().padding(20)) {
@@ -233,19 +231,24 @@ fn main() {
                         }
                     };
 
-                    // The region's name, for a few seconds after arriving. It
-                    // is drawn while it fades out by the program keeping it:
-                    // future work: exit transitions, and notices.
-                    let bt, alive = imgui::presence("region", t > 0.4 && t < 3.6, imgui::tween(0.6, imgui::EASE_OUT_CUBIC));
-                    if alive {
-                        imgui::box("region", imgui::column().align(imgui::CENTER).gap(6).place(imgui::CENTER, imgui::START)
-                                               .offset(0, 120 + (1.0 - bt) * 16.0).opacity(bt)) {
-                            imgui::text(REGION, imgui::column().text_size(34).letter_spacing(10).ink(rgb(INK))
+                    // The region's name, for a few seconds after arriving:
+                    // posted once, sliding in, its rule drawn out, and
+                    // sinking as it fades.
+                    if t > 0.4 && !region_told {
+                        region_told = true;
+                        imgui::notify(banner, REGION, 3.2);
+                    }
+                    imgui::notices(banner, imgui::column().place(imgui::CENTER, imgui::START).offset(0, 120)) { n =>
+                        let m = imgui::tween(0.6, imgui::EASE_OUT_CUBIC);
+                        imgui::box(n.id(), imgui::column().align(imgui::CENTER).gap(6)
+                                             .enter(imgui::slide_in(0, 16, m)).exit(imgui::slide_out(0, 16, m))) {
+                            imgui::text(n.text, imgui::column().text_size(34).letter_spacing(10).ink(rgb(INK))
                                                     .text_shadow(rgba(SHADE, 0.7), 0, 2));
-                            imgui::panel(imgui::column().size(260 * bt, 1).bg(rgba(INK, 0.6)));
+                            let drawn = imgui::ease(imgui::EASE_OUT_CUBIC, min(n.age() / 0.6, 1.0));
+                            imgui::panel(imgui::column().size(260 * drawn, 1).bg(rgba(INK, 0.6)));
                             imgui::text("The Cinder Reaches", imgui::column().text_size(14).ink(rgba(INK, 0.7)));
                         };
-                    }
+                    };
                 };
             };
         };

@@ -17,15 +17,7 @@ var quit_open = false;
 var music: f64 = 0.8;
 var sfx: f64 = 0.6;
 var subtitles = true;
-var toast_until = -1.0;
-var toast_text: u8[>..] = [];
-
-fn toast(s: const u8[:]) {
-    toast_text.clear();
-    toast_text.append(s);
-    toast_until = imgui::time() + 2.0;
-}
-
+var toasts = imgui::TextNotices { limit: 3, .. };
 fn background(t: f64, w: f64, h: f64) {
     gfx2d::rect(0, 0, w, h, gfx2d::linear(0, 0, 0, h, gfx2d::rgb(0x0B1020), gfx2d::rgb(0x1B2B4F)));
     for k in 40 {
@@ -85,9 +77,9 @@ fn main() {
                                                     .disabled(k == 0);
                                 if k == 1 { imgui::default_focus(imgui::id(name)); }
                                 if imgui::button(name, d) {
-                                    if k == 1 { toast("A new journey begins"); }
+                                    if k == 1 { imgui::notify(toasts, "A new journey begins", 2.0); }
                                     if k == 2 { options_open = true; }
-                                    if k == 3 { toast("Made with Goose"); }
+                                    if k == 3 { imgui::notify(toasts, "Made with Goose", 2.0); }
                                     if k == 4 { quit_open = true; }
                                 }
                             }
@@ -112,13 +104,10 @@ fn main() {
                         if imgui::button("Quit") { gfx::quit(); }
                     };
                 };
-                let t, alive = imgui::presence("toast", imgui::time() < toast_until, imgui::spring(300, 26));
-                if alive {
-                    imgui::box("toast", imgui::row().skin(imgui::TOOLTIP).padding(18, 10).place(imgui::CENTER, imgui::END)
-                                          .offset(0, -96 + (1.0 - t) * 60).opacity(t)) {
-                        imgui::text(toast_text);
-                    };
-                }
+                // Each click's toast, stacked over the one before, until
+                // its time is up.
+                imgui::notices(toasts, imgui::column().gap(8).align(imgui::CENTER).place(imgui::CENTER, imgui::END)
+                                           .offset(0, -96));
             };
         };
     };

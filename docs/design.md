@@ -269,6 +269,23 @@ steps, so they move the same at any frame rate.
   test per node. The Exit itself is kept out of the Desc, in a table, as
   text effects are: it would add 36 bytes to every Desc copied, and cost
   about 5% of a frame.
+- Notices are the program's events shown for a while, in queues the
+  program keeps, of two kinds. A `Notices<T>` holds the program's own data,
+  fixed-size, as an element of a growing array must be, so imgui guesses
+  at no fields and a notice of an `i64` holds that and its time. A
+  `TextNotices` holds text of any length: each notice's is a run of one
+  `slice_pool<u8>` shared by every queue, taken when it is posted and given
+  back whenever it is dropped, so its space is reused. (The pool can't be
+  in the queue: a root can't own another yet.) One kind holding both would
+  keep room for text in notices that have none, or need the program to
+  free its own data, and Goose can't keep a function in a queue to do it.
+  The two share their bookkeeping: dropping and drawing are generic over
+  the notice, the text queue's dropping giving back its text. A queue is
+  bounded only by the limit the program gives it. `notify` drops what has
+  expired, so a queue not drawn doesn't grow, and
+  `notices` draws the queue each frame, dropping what has expired first. A
+  dropped notice is simply not recorded, so its exit plays as any other
+  node's does: notices need nothing of their own to leave.
 - Opacity is multiplied into colors, which is cheap. `.isolate()` draws a
   subtree through a gfx2d layer instead, so overlaps within it don't show
   through each other. That costs a pass.
@@ -383,6 +400,7 @@ spills past the box.
 | `nav.goose` | focus and navigation |
 | `motion.goose` | `Motion`, easing, springs, `animate`, `presence` |
 | `exit.goose` | exits: copies of what has left, drawn as they play |
+| `notice.goose` | notices: queues of what the program posted once |
 | `style.goose` | `Style`, `StyleSet`, the class registry, themes |
 | `draw.goose` | the draw walk |
 | `widgets.goose` | buttons, toggles, sliders and the rest |
