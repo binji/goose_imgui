@@ -44,6 +44,7 @@ import draw;
 import widgets;
 import scroll;
 import text_input;
+import canvas;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -63,6 +64,7 @@ fn begin_frame(inp: Input, dt: f64) {
     scope_stack.clear();
     begin_input(inp);
     in_frame = true;
+    begin_canvases();
     begin_tree();
 }
 // With gfx's input and frame time.
@@ -205,6 +207,12 @@ fn list_bounds() {
         let reach = max(s.shadow.blur * 3.0 + max(abs(s.shadow.offset.x), abs(s.shadow.offset.y)) + s.shadow.spread,
                         s.ring_offset + s.ring_width) + 2.0;
         var b = gfx2d::inflate(n.screen, reach * n.m.a);
+        if n.cmd_count > 0 {
+            // What a canvas draws may reach past its box.
+            let o = float2 { n.rect.x + n.d.lay.padding.x, n.rect.y + n.d.lay.padding.y };
+            let local = gfx2d::Rect { o.x + n.cmd_lo.x, o.y + n.cmd_lo.y, n.cmd_hi.x - n.cmd_lo.x, n.cmd_hi.y - n.cmd_lo.y };
+            b = gfx2d::union(b, gfx2d::inflate(gfx2d::transformed_bounds(n.m, local), 2.0));
+        }
         var c = n.first;
         while c >= 0 {
             b = gfx2d::union(b, nodes[c].bounds);

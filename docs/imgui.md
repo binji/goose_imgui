@@ -62,7 +62,9 @@ The examples each show one part:
 - `inventory`: a grid of custom slots in a scroll pane, with tooltips and
   a class of the program's own;
 - `settings`: a menu bar, tabs, dropdowns, a text field, a scrolling
-  list of key bindings, and a modal.
+  list of key bindings, and a modal;
+- `stats`: a run's summary on canvases: a line chart with values on hover,
+  bars that grow in, a gauge, a minimap, each filling a grid card.
 
 Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 --scale 2 --keys Down,Return`. With `--frames`, every frame is 1/60 s.
@@ -240,6 +242,44 @@ damping)`, with or without `delay(seconds)`.
 A label's `##` and what follows it are part of the ID but not shown:
 `"Play##dlc"`.
 
+## Canvases
+
+A canvas is a box whose block draws, for charts, meters, minimaps and
+portraits' frames:
+
+```goose
+let it = imgui::canvas("score", imgui::column().grow().hit()) { size =>
+    imgui::fill_polygon(area, gfx2d::with_alpha(accent, 0.2));
+    imgui::stroke_polyline(line, 2.5, accent);
+};
+if it.hovered { imgui::tooltip(it) { imgui::text(value_at(it.pointer.x / it.rect.w)); }; }
+```
+
+How a canvas works:
+- **Coordinates.** It draws in its inner box's pixels, from (0, 0) at the
+  top left.
+- **Size.** The block is given the box's inner size as it was laid out last
+  frame (on the first frame, its px size if it has one). So a chart fills
+  whatever room the layout gives it.
+- **Recording.** The calls are recorded as commands and replayed at draw
+  time, over the box's background and under its children, with its clip,
+  motion and opacity.
+- **Interaction.** `canvas` returns the box's `Interaction`. For a `hit()`
+  canvas, `it.pointer` says where the pointer is on it.
+- **Culling.** Drawing may reach past the box unless the box `clip()`s, and
+  the culling counts what it reaches.
+
+| In a canvas's block | |
+|---|---|
+| `fill_rect(x, y, w, h[, radius], c)`, `stroke_rect(x, y, w, h, width, c[, radius])` | |
+| `gradient_rect(x, y, w, h, c0, c1, vertical, radius)` | |
+| `fill_circle(cx, cy, r, c)`, `stroke_circle(cx, cy, r, width, c)` | |
+| `draw_line(x0, y0, x1, y1, width, c)` | round caps |
+| `stroke_arc(cx, cy, r, a0, a1, width, c)`, `fill_pie(cx, cy, r, a0, a1, c)` | radians, clockwise from +x |
+| `stroke_polyline(points, width, c)`, `fill_polygon(points, c)` | `float2` points |
+| `draw_text(x, y, s, size, c, align, baseline)`, `measure(s, size)` | in the canvas's inherited font; `gfx2d::ALIGN_*`, `BASELINE_*` |
+| `draw_image(texture[, src], x, y, w, h, tint)` | |
+
 ## Making widgets
 
 Every widget is made of the parts above:
@@ -359,7 +399,8 @@ The tests are in three groups:
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
   ring, the UI scale (`draw`); typing through gfx's injected input
-  (`typing`).
+  (`typing`); canvases: placement, size, clipping, opacity, culling, the
+  pointer (`canvas`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless
   test with no GPU is reported skipped.
 

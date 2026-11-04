@@ -66,20 +66,26 @@ fn draw_body(i: i32, a: f32) {
 
 fn draw_inner(i: i32, a: f32) {
     draw_self(i, a);
-    if nodes[i].first >= 0 {
+    if nodes[i].first >= 0 || nodes[i].cmd_count > 0 {
         if nodes[i].d.vis.clips {
             let b = box_of(nodes[i]);
             let r = nodes[i].style.radius;
             if r == float4_0 {
-                gfx2d::clip_rect(b.x, b.y, b.w, b.h) { draw_kids(i, a); };
+                gfx2d::clip_rect(b.x, b.y, b.w, b.h) { draw_content(i, a); };
             } else {
-                gfx2d::clip_rounded_rect(b.x, b.y, b.w, b.h, r) { draw_kids(i, a); };
+                gfx2d::clip_rounded_rect(b.x, b.y, b.w, b.h, r) { draw_content(i, a); };
             }
         } else {
-            draw_kids(i, a);
+            draw_content(i, a);
         }
     }
     draw_ring(i, a);
+}
+
+// A canvas's drawing, then the children over it.
+fn draw_content(i: i32, a: f32) {
+    replay(i, a);
+    draw_kids(i, a);
 }
 
 fn draw_kids(i: i32, a: f32) {

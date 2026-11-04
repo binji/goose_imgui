@@ -1,0 +1,8 @@
+first frame's size: vec2<f32> { 180.0, 80.0 }
+size: vec2<f32> { 180.0, 80.0 }
+rect: true; past it, the canvas's bg: true; in the padding: true; circle: true; line: true; triangle: true
+clipped: inside true, past the edge true; faded true
+drawn past its box: true
+in view: true
+scrolled away: true; canvases drawn: true
+hovered: true; pointer from the box: vec2<f32> { 40.0, 30.0 }; from its inner box: vec2<f32> { 30.0, 20.0 }

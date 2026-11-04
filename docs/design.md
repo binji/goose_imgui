@@ -35,10 +35,10 @@ This document is the plan and the reasoning behind it.
    menus, and scrolls into view.
 
 **Non-goals for now:** docking, multiple OS windows, tables, trees,
-plotting and the other developer-tool widgets. These and a public
-immediate drawing API for custom content (charts) are in
+plotting and the other developer-tool widgets. These are in
 [future_work.md](future_work.md). Goose already has `ui` (Nuklear) for
-developer UIs.
+developer UIs. Custom drawing inside the layout (charts, meters) came
+after the first set: see [Canvases](#canvases).
 
 ## The frame
 
@@ -310,6 +310,20 @@ the input this frame.
 - **Culling.** Drawing dominated the benchmark until subtrees outside
   their clip were skipped. Each node's bounds are found in one reverse
   pass after layout.
+
+## Canvases
+
+A canvas is a box whose block draws. Goose can't keep a block until the
+frame is drawn, so its calls (`fill_rect`, `stroke_polyline`,
+`draw_text`, …) are recorded as commands into a per-frame list. Each
+command names the node it belongs to. At draw time the list is replayed
+from the box's inner corner, between its background and its children,
+inside its clip, motion transform and opacity.
+
+The block is given the inner size from last frame's layout. The layout
+isn't known yet while the block runs, and charts want to fill their box.
+What the commands reach is kept per node, so culling counts drawing that
+spills past the box.
 
 ## Widgets (first set)
 

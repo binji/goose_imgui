@@ -19,6 +19,8 @@ menus, settings, inventories, HUDs and dialogs. It is drawn through
   when the layout changes. Looks ease between states. Any value can be
   animated with a tween or a spring. All of it is optional: everything
   defaults to instant.
+- **Canvases.** Charts, meters and minimaps are drawn in the layout, in a
+  box's own pixels, under its clip and motion.
 - **Gamepad and keyboard.** Widgets take focus and can be moved between
   with the arrows (or a d-pad, through `nav_from_pad`) and Tab. They are
   used with Enter or A and backed out of with Escape or B. Focus is kept
@@ -70,10 +72,11 @@ fn main() {
 | `nav.goose` | focus and navigation |
 | `draw.goose` | drawing the frame through gfx2d |
 | `widgets.goose`, `scroll.goose`, `popup.goose`, `text_input.goose` | the widgets |
+| `canvas.goose` | canvases: drawing of the program's own inside the layout |
 | `context.goose`, `id.goose` | the state kept between frames; IDs |
 | `docs/` | `imgui.md`, the reference; `design.md`, the plan and its reasoning; `future_work.md`, what is next |
 | `bench/` | `bench.goose`, and the latest `results.md` |
-| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`: programs using the package, each a root file |
+| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`, `stats`: programs using the package, each a root file |
 | `test/run_tests.py` | runs `test/pure/` (no GPU) and `test/headless/` (drawn and read back), comparing with `test/expected/` |
 
 All the modules are in `namespace imgui`.

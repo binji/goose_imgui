@@ -67,6 +67,12 @@ struct Node {
     ring: bool = false,                 // its focus ring shows
     scope: u64 = 0,                     // its nav scope
     owner: i32 = -1,                    // the nearest node at or above it that takes the pointer
+    // a canvas's commands: where in draw_cmds, how many, the box they reach
+    cmd_first: i32 = 0,
+    cmd_end: i32 = 0,
+    cmd_count: i32 = 0,
+    cmd_lo: float2 = float2 { 0.0, 0.0 },
+    cmd_hi: float2 = float2 { 0.0, 0.0 },
 }
 
 // A popup's root: where it goes is its anchor.
