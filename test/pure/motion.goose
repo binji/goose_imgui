@@ -1,7 +1,7 @@
 // Motion, no GPU: easing curves; tweens and springs by animate(),
 // retargeted mid-flight; a spring the same at 60 and 144 frames a second;
 // presence in and out; a node's enter transition and its glide when the
-// layout moves it.
+// layout moves it; exits played out on copies of what has left.
 import std;
 import vec;
 import math;
@@ -18,6 +18,9 @@ var toast_alive = false;
 var target = 0.0;
 var tween_v = 0.0;
 var spring_v = 0.0;
+var rows: i64[>..<] = [1, 2, 3];
+var lone_shown = true;
+var nest_shown = true;
 
 fn ui() {
     tween_v = imgui::animate("tween", target, imgui::tween(0.5, imgui::EASE_LINEAR));
@@ -30,6 +33,23 @@ fn ui() {
         imgui::panel(imgui::id(b), imgui::column().size(100, 20).glide(imgui::tween(0.3, imgui::EASE_LINEAR)));
         imgui::panel(imgui::id("C"), imgui::column().size(100, 20)
                      .enter(imgui::slide_in(0, 40, imgui::tween(0.4, imgui::EASE_LINEAR)).delay(0.1)));
+        imgui::box("list", imgui::column()) {
+            for r in rows {
+                imgui::panel(imgui::id(r), imgui::column().size(100, 10)
+                             .exit(imgui::slide_out(50, 0, imgui::tween(0.2, imgui::EASE_LINEAR))));
+            }
+        };
+        if lone_shown {
+            imgui::box("wrap", imgui::column().offset(5, 0)) {
+                imgui::panel(imgui::id("lone"), imgui::column().size(20, 20)
+                             .exit(imgui::fade_out(imgui::tween(0.2, imgui::EASE_LINEAR))));
+            };
+        }
+        if nest_shown {
+            imgui::box("outer", imgui::column().exit(imgui::fade_out(imgui::tween(0.2, imgui::EASE_LINEAR)))) {
+                imgui::text("inside", imgui::column().exit(imgui::pop_out(0.5, imgui::tween(0.2))));
+            };
+        }
     };
 }
 
@@ -40,6 +60,19 @@ fn node(label: const u8[:]) -> imgui::Node& {
     let want = imgui::id(label).v;
     for &n in imgui::nodes { if n.id == want { return n; } }
     imgui::nodes[0]
+}
+// The copies of what has left: where each is among its parent's children,
+// and how far its exit is.
+fn show_exits() {
+    print("  playing ", imgui::exits_playing());
+    for n, i in imgui::nodes {
+        guard n.ghost == imgui::GHOST_TOP || n.ghost == imgui::GHOST_ALONE else { continue; }
+        var at = 0;
+        var c = imgui::nodes[n.parent].first;
+        while c >= 0 && c != i { at++; c = imgui::nodes[c].next; }
+        print("  ", round(n.rect.w), "x", round(n.rect.h), " at y ", round(n.rect.y), if n.ghost == imgui::GHOST_ALONE { " (alone)" } else { "" }, ": child ", at,
+              " alpha ", r3(n.alpha), " shift ", r3(n.shift.x), " zoom ", r3(n.zoom), " children ", n.kids);
+    }
 }
 fn show(label: const u8[:]) {
     let n .= node(label);
@@ -106,4 +139,36 @@ fn main() {
     frame(0.2);
     show("A");
     show("B");
+
+    // Exits: row 2 removed slides out to the right over 0.2 s, between
+    // rows 1 and 3, then is gone.
+    rows = [1, 3];
+    frame(0.05);
+    print("row 2 removed:");
+    show_exits();
+    frame(0.1);
+    show_exits();
+    frame(0.1);
+    show_exits();
+    // Removed with its parent: drawn where it was, alone. One with an exit
+    // inside another: drawn in the other's copy.
+    lone_shown = false;
+    nest_shown = false;
+    frame(0.05);
+    print("lone and outer removed:");
+    show_exits();
+    frame(0.1);
+    show_exits();
+    frame(0.15);
+    show_exits();
+    // Back before its exit is over: itself again, the copy gone.
+    rows = [3];
+    frame(0.05);
+    frame(0.05);
+    print("row 1 removed:");
+    show_exits();
+    rows = [1, 3];
+    frame(0.05);
+    print("row 1 back:");
+    show_exits();
 }

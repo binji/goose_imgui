@@ -15,16 +15,12 @@ item here, by its title, at each workaround.
      A footer of prompts ("A Select, B Back") shows that device's glyphs.
    - `prompt(action)` would draw the glyph for an action, from a table of
      images the program fills in for each device.
-2. **Exit transitions without the program's help.** `presence` needs the
-   program to keep drawing what is leaving. Instead, a node with an `exit`
-   could leave behind a copy of its subtree's nodes, drawn while it plays
-   out.
-3. **Notices.** Damage numbers, an area's name as it is entered, a
+2. **Notices.** Damage numbers, an area's name as it is entered, a
    toast for an achievement, a kill feed. Each now needs a key and a
-   `presence` the program keeps alive. A queue would take them and play
-   them out by itself: `notify(text, d, seconds)` or a block, stacking,
-   sliding up and fading. It is easier once 2 is done.
-4. **Text.**
+   lifetime the program keeps. A queue would take them and play them out
+   by itself: `notify(text, d, seconds)` or a block, stacking, sliding up,
+   and leaving by an `exit`.
+3. **Text.**
     - Rich text: spans in another color, font or size, and images (button
       glyphs, coins) on the baseline, in wrapped text. Item tooltips and
       upgrade cards are made of it. A little markup in the string would do:
@@ -40,36 +36,36 @@ item here, by its title, at each workaround.
     - Measurements cached by text, font and size, if the benchmark shows a
       need.
     - Text drawn wrapped only where it must be.
-5. **A radial menu.** Items around a circle, chosen by the pointer's angle
+4. **A radial menu.** Items around a circle, chosen by the pointer's angle
     or the stick's, on release: a ping wheel, a weapon wheel. It needs the
     stick's direction, which `nav_from_pad` turns into d-pad steps now.
-6. **A safe triangle for submenus.** Moving the pointer diagonally from a
+5. **A safe triangle for submenus.** Moving the pointer diagonally from a
     submenu's item toward the submenu crosses the items below or above it,
     and hovering one of those closes the submenu before the pointer gets
     there. Desktop menus ignore hovers inside the triangle from where the
     pointer was to the submenu's near edge, for a moment, while the pointer
     keeps moving toward it. `menu_item`'s "hovering closes a sibling's
     submenu", and `menu`'s hover-to-open, would both check it.
-7. **The display's scale from gfx.** imgui's scale is the program's to set
+6. **The display's scale from gfx.** imgui's scale is the program's to set
     (`set_scale`, `IMGUI_SCALE`). gfx could expose SDL's display content
     scale and its window size in points, and then imgui would start at the
     right size on a high-density screen without being told.
-8. **Pixel art.** Nine-slices take a filter; images should too. The scale
+7. **Pixel art.** Nine-slices take a filter; images should too. The scale
     could snap to whole numbers, so that pixels stay square.
-9. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
+8. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
     blur their own content but only copy their backdrop. gfx2d needs to
     blur the backdrop first, and then a Desc could have `backdrop_blur(s)`.
-10. **Developer widgets:** tables with resizable columns, trees, color
+9. **Developer widgets:** tables with resizable columns, trees, color
     pickers, number fields with drag, plots (on a canvas).
-11. **Sizes from aspect ratios** (an image box as wide as its height says),
+10. **Sizes from aspect ratios** (an image box as wide as its height says),
     and grid tracks of `minmax`.
-12. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
+11. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
     (a carousel of cards).
-13. **Sounds on interaction:** a hook, polled once a frame, for "a button
+12. **Sounds on interaction:** a hook, polled once a frame, for "a button
     was hovered or clicked", for a game's UI sounds.
-14. **Accessibility:** the tree is all there, so an outline of it could be
+13. **Accessibility:** the tree is all there, so an outline of it could be
     given to a screen reader.
-15. **Several contexts:** the state is global, as gfx2d's is. Gathering it
+14. **Several contexts:** the state is global, as gfx2d's is. Gathering it
     into a `root struct` would allow, say, a UI in the world and a UI on
     the screen.
 
@@ -77,6 +73,10 @@ Smaller things:
 - A turned or skewed node is hit where it is drawn, but its
   `Interaction.pointer` is from the box around it. Its own pixels would
   need its inverse transform kept with its state.
+- An exit's copy is drawn where it was in its parent's layout: if the
+  parent is a scroll pane that scrolls while the exit plays, the copy
+  stays put. Its own motion (an enter not yet over, a glide) stops where it
+  was, too.
 
 Some things seen in games can be made now:
 - Staggered rows of slots: rows, each with its own left padding.

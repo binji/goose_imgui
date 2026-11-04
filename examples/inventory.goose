@@ -7,7 +7,7 @@
 // carried is drawn under the pointer. With the keys: Enter picks the
 // focused one up, the arrows carry it, and Enter puts it down; Escape puts
 // it back. Each gem glides to its new slot: from where it was let go, or,
-// swapped, from the other slot.
+// swapped, from the other slot. One thrown away pops where it was let go.
 //
 //   goose examples/inventory.goose [-- --frames 60 --screenshot inventory.png]
 import std;
@@ -39,10 +39,13 @@ let TRASH = -2;
 fn gem_id(g: i64) -> imgui::Id { imgui::sub_id(imgui::Id { 0x6E35A11 }, g) }
 let GLIDE = imgui::spring(420, 30);
 
-// A gem of `kind`, `size` across, gliding to wherever it is drawn next.
+let POP = imgui::pop_out(1.8, imgui::tween(0.25));
+
+// A gem of `kind`, `size` across, gliding to wherever it is drawn next;
+// when it is drawn nowhere (thrown away), popping where it was.
 fn gem(g: i64, kind: i64, size: f64, d: imgui::Desc) {
     let c = gfx2d::rgb(COLORS[kind]);
-    imgui::panel(gem_id(g), d.size(size, size).radius(size * 0.5).bg(gfx2d::lighten(c, 0.2), c).glide(GLIDE));
+    imgui::panel(gem_id(g), d.size(size, size).radius(size * 0.5).bg(gfx2d::lighten(c, 0.2), c).glide(GLIDE).exit(POP));
 }
 
 fn apply_move() {

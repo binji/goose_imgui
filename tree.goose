@@ -31,6 +31,7 @@ struct Node {
     kind: u8 = 0,
     scoped: bool = false,               // pushed an ID scope
     named: bool = false,                // its ID came from the program, not its place
+    ghost: u8 = 0,                      // a copy of what has left, playing its exit (GHOST_*)
     root: i16 = 0,
     d: Desc = Desc { .. },
     style: Style = Style { .. },        // its class's, mixed by its state, with the Desc's overrides
@@ -136,6 +137,7 @@ fn begin_tree() {
     node_of.clear();
     inherited.clear();
     frame_fx.clear();
+    frame_exits.clear();
     node_looks.clear();
     node_looks.push(TextLook { .. });
     let base = resolve_style(LABEL, LookState { .. });

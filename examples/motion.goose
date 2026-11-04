@@ -1,6 +1,7 @@
 // Motion: a leaderboard whose rows glide to their new places when it is
-// re-sorted, rows that slide in when added and fade out when removed, a
-// drawer that springs open, and a counter that rolls to its value.
+// re-sorted, rows that slide in when added and out when removed (the
+// program just drops them), a drawer that springs open, and a counter that
+// rolls to its value.
 //
 //   goose examples/motion.goose [-- --frames 120 --screenshot motion.png]
 import std;
@@ -11,7 +12,7 @@ import gfx2d from "../../goose_gfx2d";
 import imgui from "..";
 import .common;
 
-struct Player { id: i64, name: u8[..16], score: i64, leaving: bool }
+struct Player { id: i64, name: u8[..16], score: i64 }
 
 var players: Player[>..<] = [];
 var next_id = 0;
@@ -22,7 +23,7 @@ var seed = rng { 7 };
 fn add_player() {
     let names = ["Ada", "Brin", "Cass", "Dov", "Eli", "Fen", "Gus", "Hal", "Ivo", "Juno", "Kit", "Lux"];
     let n = names[next_id % names.len];
-    players.push(Player { id: next_id, name: n, score: rand_int(seed, 900) + 100, leaving: false });
+    players.push(Player { id: next_id, name: n, score: rand_int(seed, 900) + 100 });
     next_id++;
 }
 
@@ -56,33 +57,27 @@ fn main() {
                                 sort_players();
                             }
                             if imgui::button("Add") { add_player(); sort_players(); }
-                            if imgui::button("Remove") {
-                                for &p in players { if !p.leaving { p.leaving = true; break; } }
+                            if imgui::button("Remove") && players.len > 0 {
+                                players[0] = players[players.len - 1];
+                                players.pop();
+                                sort_players();
                             }
                         };
                         var total = 0;
                         var rank = 0;
-                        var k = 0;
-                        while k < players.len {
-                            let p = players[k];
-                            // A leaving row fades out, then is gone.
-                            let t, alive = imgui::presence(imgui::id(p.id), !p.leaving, imgui::tween(0.3));
-                            if !alive {
-                                players[k] = players[players.len - 1];
-                                players.pop();
-                                sort_players();
-                                continue;
-                            }
-                            if !p.leaving { rank++; total += p.score; }
+                        for p in players {
+                            rank++;
+                            total += p.score;
+                            // Keyed by the player, so that a row removed is
+                            // its own copy, sliding out where it was.
                             imgui::box(p.id, imgui::row().gap(12).padding(12, 8).grow_w().align(imgui::CENTER)
-                                               .radius(8).bg(gfx2d::rgba(0xFFFFFF, 0.05))
-                                               .glide(glide).opacity(t).scale(0.9 + 0.1 * t)
-                                               .enter(imgui::slide_in(-40, 0, imgui::tween(0.35)))) {
+                                               .radius(8).bg(gfx2d::rgba(0xFFFFFF, 0.05)).glide(glide)
+                                               .enter(imgui::slide_in(-40, 0, imgui::tween(0.35)))
+                                               .exit(imgui::slide_out(40, 0, imgui::tween(0.3)))) {
                                 imgui::textf(imgui::column().width(28).skin(imgui::MUTED)) { out => format(out, rank, "."); };
                                 imgui::text(p.name, imgui::column().grow_w());
                                 imgui::textf(imgui::column()) { out => format(out, p.score); };
                             };
-                            k++;
                         }
                         shown_total = imgui::animate("total", total, imgui::tween(0.6));
                         imgui::textf(imgui::column().skin(imgui::MUTED)) { out =>

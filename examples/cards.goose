@@ -1,6 +1,7 @@
 // A card battler's table: a hand of cards fanned (each turned, and hit where
 // it is drawn), the one under the pointer rising to the front; played, a
-// card leaves and the rest glide and turn to their new places. The energy
+// card flies up out of the hand (an exit), and the rest glide and turn to
+// their new places. The energy
 // is an orb filled to its level (a canvas clipped to a circle); the enemy's
 // health has a trail that shows what a card took; End turn is a slanted
 // button. Drag a card onto the enemy to play it, or click it.
@@ -221,7 +222,10 @@ fn main() {
                         // A card that can be paid for can be carried: its place
                         // in the hand then shows only its outline.
                         let carried = can && imgui::drag_source(imgui::interact(imgui::id(c), spot(s)), CARD, s);
-                        let it = imgui::box(c, spot(s)) {
+                        // Played, it flies up; carried, its place has no
+                        // exit (the card under the pointer has).
+                        let fly = if carried { imgui::Exit { .. } } else { imgui::slide_out(0, -160, imgui::tween(0.35)) };
+                        let it = imgui::box(c, spot(s).exit(fly)) {
                             imgui::box(imgui::stack().grow().offset(0, -up).opacity(if carried { 0.2 } else if can { 1.0 } else { 0.55 })) {
                                 card_face(c);
                             };
@@ -233,7 +237,14 @@ fn main() {
                 // The card carried, under the pointer (not the frame it is
                 // played, when it has left the hand).
                 if imgui::dragging(CARD) && !on_enemy.dropped {
-                    imgui::drag_ghost(imgui::stack().size(130, 184).scale(1.05)) { card_face(hand[imgui::drag_payload()]); };
+                    imgui::drag_ghost(imgui::stack().size(130, 184).scale(1.05)) {
+                        // Over the enemy, it bursts there if let go (and goes
+                        // back to the hand without a trace if not).
+                        let burst = if on_enemy.over { imgui::pop_out(1.3, imgui::tween(0.25)) } else { imgui::Exit { .. } };
+                        imgui::box("held", imgui::stack().grow().exit(burst)) {
+                            card_face(hand[imgui::drag_payload()]);
+                        };
+                    };
                 }
 
                 // Bottom right: End turn, slanted.

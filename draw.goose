@@ -63,7 +63,10 @@ recursive fn draw_tree(i: i32, alpha: f32) {
     if a <= 0.002 { return; }
     // Scrolled or clipped out of sight: none of it drawn.
     if !overlaps(nodes[i].bounds, nodes[i].clip) { return; }
-    if moved(nodes[i]) {
+    if nodes[i].ghost == GHOST_ALONE {
+        // What has left, whose parent has too: where it was on the screen.
+        gfx2d::transform(nodes[i].m) { draw_body(i, a); };
+    } else if moved(nodes[i]) {
         gfx2d::transform(motion_affine(nodes[i])) { draw_body(i, a); };
     } else {
         draw_body(i, a);

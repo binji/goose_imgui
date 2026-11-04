@@ -246,7 +246,7 @@ steps, so they move the same at any frame rate.
   `float2` or `Color`, keyed by ID. The value moves toward the target, and
   retargeting mid-flight is smooth.
 - `presence(key, visible, m) -> t, alive` handles enter and exit with no
-  ghost copies. `t` runs from 0 to 1 as the item appears and back as it
+  copies. `t` runs from 0 to 1 as the item appears and back as it
   leaves. `alive` stays true until it has left, so the program keeps
   drawing it while it fades out.
 - The per-node transitions are:
@@ -254,7 +254,21 @@ steps, so they move the same at any frame rate.
     which play the first frame a node's ID appears;
   - `.glide(m)`, which animates the node from its last laid-out rect to its
     new one, so reordered list items slide into place;
-  - `.delay(s)`, for staggering a list.
+  - `.delay(s)`, for staggering a list;
+  - `.exit(fade_out(m))`, `slide_out` or `pop_out`, which play on a copy
+    once the node's ID is not recorded (below).
+- Exits without the program's help: each frame, every node with an exit
+  is copied with its subtree (its nodes, text, looks and canvas commands,
+  their indices made relative). The next frame, a copy whose ID was not
+  recorded is drawn again, among its parent's children after the sibling
+  it came after, or over the main root where it was if its parent is gone
+  too. A copy inside another that is leaving is drawn in that one. Copies
+  are added after layout and the hit list, so they take no space and no
+  input, and are kept by copying them again each frame until their exit is
+  over. Only what has an exit is copied, so a frame without exits pays a
+  test per node. The Exit itself is kept out of the Desc, in a table, as
+  text effects are: it would add 36 bytes to every Desc copied, and cost
+  about 5% of a frame.
 - Opacity is multiplied into colors, which is cheap. `.isolate()` draws a
   subtree through a gfx2d layer instead, so overlaps within it don't show
   through each other. That costs a pass.
@@ -368,6 +382,7 @@ spills past the box.
 | `input.goose` | `Input`, `input_from_gfx`, hit testing |
 | `nav.goose` | focus and navigation |
 | `motion.goose` | `Motion`, easing, springs, `animate`, `presence` |
+| `exit.goose` | exits: copies of what has left, drawn as they play |
 | `style.goose` | `Style`, `StyleSet`, the class registry, themes |
 | `draw.goose` | the draw walk |
 | `widgets.goose` | buttons, toggles, sliders and the rest |

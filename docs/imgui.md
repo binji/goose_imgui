@@ -58,7 +58,7 @@ The examples each show one part:
 - `main_menu`: a title screen in the game theme, with staggered entrances,
   keyboard navigation and modals;
 - `motion`: a leaderboard whose rows glide when re-sorted, and slide in or
-  fade out when added or removed; a drawer on a spring; a rolling counter;
+  out when added or removed; a drawer on a spring; a rolling counter;
 - `inventory`: a grid of custom slots in a scroll pane, with tooltips and
   a class of the program's own;
 - `settings`: a menu bar, tabs, dropdowns, a text field, a scrolling
@@ -233,6 +233,8 @@ damping)`, with or without `delay(seconds)`.
 | `presence(key, visible, m) -> t, alive` | `t` from 0 to 1 while visible, and back after; `alive` until it has gone, so the program keeps drawing what is leaving |
 | `presence(key, visible, m) { t => … }` | the block, while alive |
 | `.enter(fade_in(m))`, `slide_in(dx, dy, m)`, `pop_in(scale, m)`, `.delay(s)` | played the first frame a node's ID appears; a list staggered by `delay` |
+| `.exit(fade_out(m))`, `slide_out(dx, dy, m)`, `pop_out(scale, m)`, `.delay(s)` on the Exit | played the first frame a node's ID is not recorded, on a copy of it and its subtree as they were last drawn, where they were: a removed row slides out, a gem thrown away pops. The node needs an ID of its own (a label, a key), not one from its place |
+| `exits_playing()` | how many such copies are drawn this frame |
 | `.glide(m)` | from where the node was laid out to where it is now: reordered rows slide to their places |
 | `.offset(x, y)`, `.scale(s)` | drawn moved, or scaled about its center, with its subtree |
 | `.rotate(radians)`, `.skew(radians)` | drawn turned clockwise about its center, or slanted (its verticals leaning right), with its subtree: a fanned hand of cards, a diamond, a slanted panel. It is hit where it is drawn; its `it.pointer` is from the box around it |
@@ -423,13 +425,13 @@ The tests are in three groups:
   - `interact`: clicks, checkboxes, sliders, radios, navigation;
   - `overlays`: menus, submenus, tabs, dropdowns, tooltips, modals;
   - `motion`: easing, tweens, springs at two frame rates, presence, enter,
-    glide;
+    glide, exits (in a list, alone, nested, coming back);
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
   - `text_input`: typing, caret and selection, words, cut and paste,
     limits.
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
-  ring, the UI scale (`draw`); typing through gfx's injected input
+  ring, the UI scale, exits drawn after their node has gone (`draw`); typing through gfx's injected input
   (`typing`); canvases: placement, size, clipping, opacity, culling, the
   pointer (`canvas`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless

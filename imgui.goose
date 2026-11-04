@@ -46,6 +46,7 @@ import scroll;
 import text_input;
 import canvas;
 import drag;
+import exit;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -79,6 +80,7 @@ fn end_frame() {
     in_frame = false;
     layout_all();
     finish_frame();
+    play_exits();
     end_nav();
     place_focus_cursor();
     end_drag();
@@ -129,7 +131,7 @@ fn set_viewport(r: gfx2d::Rect) { viewport = r; }
 // Whether node n keeps state between frames.
 fn keeps_state(n: Node&) -> bool {
     n.named || n.d.bits & (HIT | FOCUSABLE | SCROLLS_X | SCROLLS_Y | KEEP) != 0 ||
-    !is_instant(n.d.mot.enter.motion) || !is_instant(n.d.mot.glide)
+    !is_instant(n.d.mot.enter.motion) || !is_instant(n.d.mot.glide) || n.d.mot.exit != 0
 }
 
 // Motion applied, and the state, hit list and focus list the next frame
@@ -139,6 +141,7 @@ fn finish_frame() {
     hits.clear();
     turned_hits.clear();
     focusables.clear();
+    exit_nodes.clear();
     let everywhere = gfx2d::Rect { -1.0e9, -1.0e9, 2.0e9, 2.0e9 };
     for i: i32 in 0..nodes.len as i32 {
         let n .= nodes[i];
@@ -185,6 +188,7 @@ fn finish_frame() {
                  ((focus_visible && focused == n.id && n.d.bits & FOCUSABLE != 0) || n.d.vis.state.focus > 0.01);
         let screen = gfx2d::transformed_bounds(n.m, box_of(n));
         n.screen = screen;
+        if n.d.mot.exit != 0 { exit_nodes.push(i); }
         if keeps {
             st.rect = n.rect;
             st.screen = screen;
@@ -331,7 +335,7 @@ fn scroll_focused_into_view() {
 // The frame's tree, one node a line: its kind, rect and text, for tests.
 fn dump() {
     for n, i in nodes {
-        if i == cursor_node { continue; }
+        if i == cursor_node || n.ghost != 0 { continue; }
         var line: u8[>..] = [];
         var d = 0;
         var p = n.parent;

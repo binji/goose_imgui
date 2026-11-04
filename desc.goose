@@ -119,9 +119,15 @@ struct LookState { hover: f32 = 0.0, press: f32 = 0.0, focus: f32 = 0.0, checked
 
 struct Enter { alpha: f32 = 1.0, shift: float2 = float2 { 0.0, 0.0 }, zoom: f32 = 1.0,
                motion: Motion = Motion { .. } }
+// What a node goes to as it leaves: its opacity times `alpha`, moved by
+// `shift`, scaled by `zoom`.
+struct Exit { alpha: f32 = 1.0, shift: float2 = float2 { 0.0, 0.0 }, zoom: f32 = 1.0,
+              motion: Motion = Motion { .. } }
 
 struct MotionDesc {
     enter: Enter = Enter { .. },        // played the first frame the node's ID is seen
+    exit: u32 = 0,                      // played, on a copy of it, the first frame its ID is not: 0 none, else where in a table (desc_exit)
+    exit_frame: u32 = 0,                // the frame it was set in, if in that frame's table
     glide: Motion = Motion { .. },      // from where it was to where it is, when its layout moves
     offset: float2 = float2 { 0.0, 0.0 },   // drawn this far from its laid-out place
     zoom: f32 = 1.0,                    // and scaled about its center
@@ -190,6 +196,20 @@ fn with_fx(var d: Desc, fx: TextLook, flag: i64) -> Desc {
 fn same_fx(a: TextLook, b: TextLook) -> bool {
     a.letter_spacing == b.letter_spacing && a.outline == b.outline && a.outline_color == b.outline_color &&
     a.shadow == b.shadow && a.shadow_offset == b.shadow_offset
+}
+
+// A Desc's exit is kept in tables the same way: few nodes have one.
+var frame_exits: Exit[>..<] = [];
+var lasting_exits: Exit[>..<] = [];
+
+fn desc_exit(m: MotionDesc) -> Exit {
+    if m.exit == 0 { return Exit { .. }; }
+    if m.exit & FX_LASTING != 0 { return lasting_exits[((m.exit & ~FX_LASTING) - 1) as i64]; }
+    if m.exit_frame != frame_index as u32 || m.exit > frame_exits.len {
+        misuse("a Desc's exit was set in an earlier frame: set it in the frame that uses the Desc, or outside any frame");
+        return Exit { .. };
+    }
+    frame_exits[(m.exit - 1) as i64]
 }
 
 // --- starting points ------------------------------------------------------------------
@@ -366,6 +386,24 @@ fn look(var d: Desc, s: LookState) -> Desc { d.vis.state = s; d }
 // --- motion setters -------------------------------------------------------------------
 
 fn enter(var d: Desc, e: Enter) -> Desc { d.mot.enter = e; d }
+// When the node's ID is no longer recorded, a copy of it and its subtree,
+// as they were last drawn, plays `e` out where it was. It needs an ID that
+// stays its own (a label, a key): one from its place goes to its neighbour
+// when it is gone.
+fn exit(var d: Desc, e: Exit) -> Desc {
+    if is_instant(e.motion) { d.mot.exit = 0; return d; }
+    if in_frame {
+        frame_exits.push(e);
+        d.mot.exit = frame_exits.len as u32;
+        d.mot.exit_frame = frame_index as u32;
+    } else {
+        var k = 0;
+        while k < lasting_exits.len && lasting_exits[k] != e { k++; }
+        if k == lasting_exits.len { lasting_exits.push(e); }
+        d.mot.exit = (k + 1) as u32 | FX_LASTING;
+    }
+    d
+}
 fn glide(var d: Desc, m: Motion) -> Desc { d.mot.glide = m; d }
 // The enter transition starts this much later: a list staggered by index.
 fn delay(var d: Desc, seconds: f64) -> Desc { d.mot.enter.motion.wait = seconds as f32; d }
@@ -387,6 +425,15 @@ fn slide_in(dx: f64, dy: f64, m: Motion) -> Enter {
 }
 fn pop_in(from: f64, m: Motion) -> Enter { Enter { alpha: 0.0, zoom: from as f32, motion: m, .. } }
 fn delay(var e: Enter, seconds: f64) -> Enter { e.motion.wait = seconds as f32; e }
+
+// The exit transitions: to transparent, to (dx, dy) away, to `to` times the
+// size; each fading too.
+fn fade_out(m: Motion) -> Exit { Exit { alpha: 0.0, motion: m, .. } }
+fn slide_out(dx: f64, dy: f64, m: Motion) -> Exit {
+    Exit { alpha: 0.0, shift: float2 { dx as f32, dy as f32 }, motion: m, .. }
+}
+fn pop_out(to: f64, m: Motion) -> Exit { Exit { alpha: 0.0, zoom: to as f32, motion: m, .. } }
+fn delay(var e: Exit, seconds: f64) -> Exit { e.motion.wait = seconds as f32; e }
 
 // --- input setters --------------------------------------------------------------------
 

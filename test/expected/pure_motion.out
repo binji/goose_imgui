@@ -20,3 +20,22 @@ swapped:
   A: y 30.0 drawn at 20.0 alpha 1.0
   A: y 30.0 drawn at 30.0 alpha 1.0
   B: y 0.0 drawn at 0.0 alpha 1.0
+row 2 removed:
+  playing 1
+  100.0x10.0 at y 100.0: child 1 alpha 1.0 shift 0.0 zoom 1.0 children 0
+  playing 1
+  100.0x10.0 at y 100.0: child 1 alpha 0.5 shift 25.0 zoom 1.0 children 0
+  playing 0
+lone and outer removed:
+  playing 2
+  20.0x20.0 at y 120.0 (alone): child 1 alpha 1.0 shift 0.0 zoom 1.0 children 0
+  45.0x19.0 at y 150.0: child 4 alpha 1.0 shift 0.0 zoom 1.0 children 1
+  playing 2
+  20.0x20.0 at y 120.0 (alone): child 1 alpha 0.5 shift 0.0 zoom 1.0 children 0
+  45.0x19.0 at y 150.0: child 4 alpha 0.5 shift 0.0 zoom 1.0 children 1
+  playing 0
+row 1 removed:
+  playing 1
+  100.0x10.0 at y 90.0: child 0 alpha 0.75 shift 12.5 zoom 1.0 children 0
+row 1 back:
+  playing 0

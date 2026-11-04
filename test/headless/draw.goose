@@ -2,7 +2,8 @@
 // gradient; opacity, multiplied in and through a layer; clipping by a box
 // that clips (a scroll pane's content past its edge); a motion offset and
 // scale; the focus ring, which shows only after navigation; a text's
-// outline and shadow; a radial meter; a box turned and skewed.
+// outline and shadow; a radial meter; a box turned and skewed; what has
+// left drawn on, with its canvas, as its exit plays.
 import std;
 import vec;
 import math;
@@ -190,4 +191,21 @@ fn main() {
     print("turned: upright ", near(160, 70, 0x8000C0, 8), ", not across ", near(210, 120, 0xFFFFFF, 8),
           "; skewed: top right ", near(66, 22, 0x00A0A0, 8), ", top left ", near(22, 22, 0xFFFFFF, 8),
           ", bottom left ", near(14, 57, 0x00A0A0, 8));
+
+    // A box with an exit, and a canvas in it: once it is not recorded, its
+    // copy is drawn where it was, the canvas's dot too, until it has faded.
+    fn leaver() {
+        imgui::box("leaver", imgui::stack().size(60, 40).bg(gfx2d::rgb(0x20A040)).place(imgui::START, imgui::START)
+                               .offset(20, 20).exit(imgui::fade_out(imgui::tween(0.25, imgui::EASE_LINEAR)))) {
+            imgui::canvas("dot", imgui::column().size(20, 20)) { size => imgui::fill_circle(10, 10, 8, gfx2d::rgb(0xFF0000)); };
+        };
+    }
+    render(none) { leaver(); };
+    render(none) {};
+    let kept = near(70, 50, 0x20A040, 8) && near(30, 30, 0xFF0000, 8);
+    for k in 7 { render(none) {}; }
+    let fading = !close_to(70, 50, 0x20A040, 8) && !close_to(70, 50, 0xFFFFFF, 8);
+    for k in 10 { render(none) {}; }
+    print("exit: drawn after it left ", kept, ", fading ", fading, ", gone ", near(70, 50, 0xFFFFFF, 2),
+          " ", near(30, 30, 0xFFFFFF, 2), ", playing ", imgui::exits_playing());
 }
