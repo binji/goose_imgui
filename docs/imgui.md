@@ -185,6 +185,7 @@ state by state.
 |---|---|
 | `theme_light()`, `theme_dark()`, `theme_game()` | the built-in themes; the light one is in place from the start |
 | `theme(Palette { … })` | every built-in class from a palette: surface, raised, hover, pressed, line, ink, muted, accent and their sizes |
+| `screen_color()` | the theme's color for the screen behind the UI, for a menu screen to clear to, so that it changes with the theme |
 | `class_style(C)`, `set_class(C, set)` | read and replace a class |
 | `add_class(set) -> StyleClass` | a class of the program's own (kept across theme changes) |
 
@@ -290,7 +291,11 @@ widget: the pointer on any of them hovers, presses and drags the widget.
 - **Menus.** In a submenu, Left closes it and goes back to its item;
   Right on a submenu's item opens it. Otherwise, in a menu bar's menu,
   Left and Right open the menu next to it (wrapping around), as desktop
-  menus do.
+  menus do; so they do from the title of a menu opened by a click.
+  The pointer opens menus and submenus by hovering only when it moves, so
+  a pointer resting on a title doesn't take the menu back from the
+  keyboard. A click on an open menu's title closes it. A submenu closes
+  0.35 s after the pointer has left it and its item.
 - **Keys and a game's own bindings.** A game that maps keys itself (Q and E
   for tabs, say) should leave them alone while `wants_keyboard()`, when a
   text field is taking them.

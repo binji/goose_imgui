@@ -27,6 +27,21 @@ struct OpenPopup {
     kind: u8 = 0,
     anchor: Anchor = Anchor { .. },
     seen: i64 = 0,              // the frame it was last recorded in
+    header: u64 = 0,            // the widget that opens and closes it (a menu's title), if any
+}
+
+// The widget that toggles popup `i`: a press on it leaves the popup open
+// for the widget's click to close, not closed by the press and reopened.
+fn set_popup_header(i: Id, header: u64) {
+    let lv = popup_level(i.v);
+    if lv > 0 { popups[lv - 1].header = header; }
+}
+// The level to keep open when `id` is pressed: its own popup's, or the
+// one it is the header of.
+fn level_kept_by(id: u64, level: i32) -> i32 {
+    var keep = level;
+    for p, k in popups { if id != 0 && p.header == id { keep = max(keep, (k + 1) as i32); } }
+    keep
 }
 
 let MAX_POPUPS = 16;
@@ -213,6 +228,9 @@ fn modal<F>(label: const u8[:], open: bool&) { modal(label, open, column()) { F(
 
 // --- menus ------------------------------------------------------------------------------
 
+// How long a submenu stays open once the pointer has left it and its item.
+let SUBMENU_LINGER: f32 = 0.35;
+
 struct MenuCtx { bar: u64, in_popup: bool }
 var menu_stack: MenuCtx[>..<] = [];
 
@@ -254,6 +272,7 @@ fn switch_bar_menu(step: i64) -> bool {
     close_popups_above(0);
     focused = m.header;
     open_popup_at(Id { m.popup }, POPUP_MENU, Anchor { kind: ANCHOR_BELOW, rect: state_of(m.header).screen, .. });
+    set_popup_header(Id { m.popup }, m.header);
     var ps = state_of(m.popup);
     ps.owner = bar;
     ps.seen = frame_index;
@@ -297,18 +316,36 @@ fn menu<F>(label: const u8[:]) -> bool {
     } else if nested && it.focused && input.nav.right && !open {
         // Right on a submenu's item opens it (and the focus goes into it).
         opening = true;
-    } else if it.hovered && !open {
-        // Hovered: a submenu opens; a bar's menu opens if another of the bar's is.
+    } else if it.hovered && !open && pointer_moved {
+        // Hovered (by a pointer that moved there, not one resting where the
+        // keyboard took the menu from): a submenu opens; a bar's menu opens
+        // if another of the bar's is.
         if nested || (ctx.bar != 0 && bar_menu_open(ctx.bar)) { opening = true; }
     }
     if opening {
         let a = Anchor { kind: if nested { ANCHOR_RIGHT } else { ANCHOR_BELOW }, rect: it.rect, .. };
         open_popup_at(pid, POPUP_MENU, a);
+        set_popup_header(pid, i.v);
         var ps = state_of(pid.v);
         ps.owner = ctx.bar;
         ps.seen = frame_index;
         put_state(pid.v, ps);
         open = true;
+    }
+    if nested && open && !opening {
+        // The pointer gone from the submenu and its item (and from any
+        // submenu of its own) a moment: it closes.
+        let p = input.pointer.pos;
+        let panel_rect = state_of(sub_id(pid, "panel").v).screen;
+        let deeper = popup_level(pid.v) < top_popup_level();
+        let near = inside(it.rect, p) || inside(panel_rect, p) || deeper || focus_visible;
+        var ps = state_of(pid.v);
+        ps.value = if near { 0.0 } else { ps.value + delta as f32 };
+        put_state(pid.v, ps);
+        if ps.value > SUBMENU_LINGER {
+            close_popup(pid);
+            open = false;
+        }
     }
     if nested { submenu_items.push(i.v); } else if ctx.bar != 0 { bar_menus.push(BarMenu { ctx.bar, i.v, pid.v }); }
     let header = nodes.len as i32;
@@ -331,7 +368,7 @@ fn menu_item(label: const u8[:], shortcut: const u8[:] = "") -> bool {
     };
     // Hovering an item closes a sibling's submenu.
     let lv = current_level();
-    if it.hovered && lv > 0 && popups.len > lv {
+    if it.hovered && pointer_moved && lv > 0 && popups.len > lv {
         close_popups_above(lv);
     }
     if it.activated { close_all_popups(); }
@@ -366,6 +403,7 @@ fn dropdown(label: const u8[:], items: const u8[:][:], selected: i64&, d: Desc) 
             open = false;
         } else {
             open_popup_at(pid, POPUP_MENU, Anchor { kind: ANCHOR_BELOW, rect: it.rect, .. });
+            set_popup_header(pid, i.v);
             open = true;
             // The chosen item takes the focus, for the arrows to move from.
             if selected >= 0 && selected < items.len {

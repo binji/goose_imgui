@@ -11,6 +11,12 @@ left: open 1; back on Recent: true
   popup texts: New|Ctrl+N|Recent|level1.map|Quit|Grid|
 left: open 1; focus on Grid: true
 right: open 1; focus on New: true
+resting pointer, right: View open true, File open false
+clicked File: open 1
+clicked File again: open 0
+submenu: open 2
+left it 0.2 s: open 2
+left it 0.5 s: open 1
 grid: true
 tab 1
 tab 2

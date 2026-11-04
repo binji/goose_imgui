@@ -18,19 +18,12 @@ var difficulty = 1;
 var fov: i64 = 90;
 var saved = 0;
 
-// The theme --theme names, and a background to go with it.
-fn backdrop() -> gfx2d::Color {
-    if theme_name == "dark" { return gfx2d::rgb(0x111318); }
-    if theme_name == "game" { return gfx2d::rgb(0x0B1020); }
-    gfx2d::rgb(0xDDE2E8)
-}
-
 fn main() {
     parse_args();
     if theme_name == "dark" { imgui::theme_dark(); }
     if theme_name == "game" { imgui::theme_game(); }
     run("imgui: widgets", 720, 640, false) {
-        let bg = backdrop();
+        let bg = imgui::screen_color();
         gfx2d::frame(bg) {
             imgui::frame(frame_dt()) {
                 imgui::box("settings", imgui::column().skin(imgui::PANEL).width(420).gap(14)

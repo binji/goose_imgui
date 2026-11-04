@@ -105,6 +105,8 @@ var double_id: u64 = 0;
 var wheel_id: u64 = 0;          // the scroll pane the wheel goes to
 var accept_id: u64 = 0;         // the widget navigation accepted
 var keyboard_used = false;
+var pointer_moved = false;      // the pointer is somewhere else than last frame
+var last_pointer = float2 { -1.0e9, -1.0e9 };
 
 // The hit list: last frame's, in the order it was drawn.
 struct Hit { id: u64, rect: gfx2d::Rect, clip: gfx2d::Rect, bits: u32, level: i32 }
@@ -116,6 +118,8 @@ fn inside(r: gfx2d::Rect, p: float2) -> bool { p.x >= r.x && p.y >= r.y && p.x <
 fn begin_input(inp: Input) {
     input = inp;
     let p = input.pointer.pos;
+    pointer_moved = p != last_pointer;
+    last_pointer = p;
     let floor = input_floor();
     hot = 0;
     hot_level = 0;
@@ -143,7 +147,7 @@ fn begin_input(inp: Input) {
         active = 0;
     }
     if input.pointer.pressed {
-        close_popups_above(hot_level);
+        close_popups_above(level_kept_by(hot, hot_level));
         if hot != 0 {
             active = hot;
             pressed_id = hot;

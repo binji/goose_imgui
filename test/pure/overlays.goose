@@ -144,6 +144,35 @@ fn main() {
     step();
     print("right: open ", open_popups(), "; focus on New: ", imgui::is_focused(find("New")));
     nav(imgui::NavInput { cancel: true, .. });
+    step();
+
+    // The pointer resting on File's title does not take the menu back from
+    // the keyboard; a click on the open menu's title closes it.
+    click_at(at(find("File")));
+    nav(imgui::NavInput { right: true, .. });
+    for k in 5 { step(); }
+    print("resting pointer, right: View open ", imgui::is_open(imgui::sub_id(find("View"), "menu")),
+          ", File open ", imgui::is_open(imgui::sub_id(find("File"), "menu")));
+    nav(imgui::NavInput { cancel: true, .. });
+    click_at(at(find("File")));
+    print("clicked File: open ", open_popups());
+    click_at(at(find("File")));
+    print("clicked File again: open ", open_popups());
+
+    // A submenu lingers a moment after the pointer leaves it, then closes;
+    // the menu it is in stays.
+    click_at(at(find("File")));
+    pos = at(find("Recent"));
+    step();
+    step();
+    print("submenu: open ", open_popups());
+    pos = float2 { 600.0, 400.0 };
+    wait(0.2);
+    print("left it 0.2 s: open ", open_popups());
+    wait(0.3);
+    print("left it 0.5 s: open ", open_popups());
+    nav(imgui::NavInput { cancel: true, .. });
+    step();
     click_at(at(find("View")));
     click_at(at(find("Grid")));
     print("grid: ", grid_on);

@@ -36,20 +36,13 @@ let BINDINGS = [
     Binding { "Quick save", "F5" }, Binding { "Quick load", "F9" }, Binding { "Pause", "Escape" },
 ];
 
-// The theme --theme names, and a background to go with it.
-fn backdrop() -> gfx2d::Color {
-    if theme_name == "dark" { return gfx2d::rgb(0x111318); }
-    if theme_name == "game" { return gfx2d::rgb(0x0B1020); }
-    gfx2d::rgb(0xDDE2E8)
-}
-
 fn main() {
     name.append("Wanderer");
     parse_args();
     if theme_name == "dark" { imgui::theme_dark(); }
     if theme_name == "game" { imgui::theme_game(); }
     run("imgui: settings", 900, 620, false) {
-        let bg = backdrop();
+        let bg = imgui::screen_color();
         var inp = imgui::input_from_gfx();
         // Q and E switch tabs, but not while a text field has the keyboard.
         if !imgui::wants_keyboard() {

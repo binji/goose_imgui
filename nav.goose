@@ -119,6 +119,11 @@ fn begin_nav() {
     }
     // A focus outside what may be focused now (a popup opened over it) moves
     // into it on the first navigation.
+    // The focus on the title of the open bar menu (it was clicked open):
+    // left and right go to the menus beside it, as they do from inside it.
+    if top > 0 && focused != 0 && popups[0].header == focused && (nav.left || nav.right) {
+        if switch_bar_menu(if nav.left { -1 } else { 1 }) { focus_visible = true; return; }
+    }
     if cur >= 0 && !candidate(focusables[cur], floor, top, trap) {
         cur = -1;
         // Showing focus: it moves into the popup at once.

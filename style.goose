@@ -266,6 +266,7 @@ fn apply_overrides(var s: Style, v: LookDesc, lay: LayoutDesc) -> Style {
 
 // What a theme is made from.
 struct Palette {
+    screen: gfx2d::Color = gfx2d::rgb(0xDDE2E8),       // behind it all: for the game to clear to, if it likes
     surface: gfx2d::Color = gfx2d::rgb(0xFFFFFF),      // panels, popups
     raised: gfx2d::Color = gfx2d::rgb(0xF1F3F5),       // buttons, tracks
     hover: gfx2d::Color = gfx2d::rgb(0xE4E8EC),
@@ -292,7 +293,14 @@ fn pad4(x: f32, y: f32) -> float4 { float4 { x, y, x, y } }
 
 // Every built-in class, from a palette; the classes a program added kept
 // after them.
+var screen = gfx2d::rgb(0xDDE2E8);
+
+// The theme's screen color: what a menu screen behind the UI might be
+// cleared to, so that switching themes changes it too.
+fn screen_color() -> gfx2d::Color { screen }
+
 fn theme(p: Palette) {
+    screen = p.screen;
     var extra: StyleSet[>..] = [];
     for k in CLASS_COUNT..classes.len { extra.push(classes[k]); }
     classes = theme_classes(p);
@@ -463,7 +471,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
 fn theme_light() { theme(Palette { .. }); }
 
 fn dark_palette() -> Palette {
-    Palette { surface: gfx2d::rgb(0x1E2128), raised: gfx2d::rgb(0x2A2E37), hover: gfx2d::rgb(0x353A45),
+    Palette { screen: gfx2d::rgb(0x111318), surface: gfx2d::rgb(0x1E2128), raised: gfx2d::rgb(0x2A2E37), hover: gfx2d::rgb(0x353A45),
               pressed: gfx2d::rgb(0x414754), line: gfx2d::rgb(0x434957), ink: gfx2d::rgb(0xE9ECF1),
               muted: gfx2d::rgb(0x9AA3B2), accent: gfx2d::rgb(0x5B8CFF), accent_hover: gfx2d::rgb(0x7AA2FF),
               accent_ink: gfx2d::rgb(0x0E1117), backdrop: gfx2d::rgba(0x000000, 0.6),
@@ -475,7 +483,7 @@ fn theme_dark() { theme(dark_palette()); }
 // gold edge, buttons of gradients that glow when hovered and sink when
 // pressed, bigger type, springier motion.
 fn game_palette() -> Palette {
-    Palette { surface: gfx2d::rgb(0x182238), raised: gfx2d::rgb(0x24335A), hover: gfx2d::rgb(0x2E4170),
+    Palette { screen: gfx2d::rgb(0x0B1020), surface: gfx2d::rgb(0x182238), raised: gfx2d::rgb(0x24335A), hover: gfx2d::rgb(0x2E4170),
               pressed: gfx2d::rgb(0x1A2643), line: gfx2d::rgb(0xB8913F), ink: gfx2d::rgb(0xF3E9D2),
               muted: gfx2d::rgb(0xA99F8A), accent: gfx2d::rgb(0xE8B64C), accent_hover: gfx2d::rgb(0xF6CC6E),
               accent_ink: gfx2d::rgb(0x1B1406), backdrop: gfx2d::rgba(0x05070D, 0.7),
