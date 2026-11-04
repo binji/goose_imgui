@@ -70,6 +70,8 @@ struct LayoutDesc {
     self_align: u8 = 255,               // INHERIT: across the parent's main axis; in a stack, vertical
     self_justify: u8 = 0,               // in a stack: horizontal
     absolute: bool = false,             // out of the flow, at `at` in the parent's padding box
+    pivot_x: i16 = 0,                   // the point of its own put at `at`, in 1/PIVOT_UNIT of its size
+    pivot_y: i16 = 0,
     at: float2 = float2 { 0.0, 0.0 },
 }
 
@@ -253,6 +255,16 @@ fn place(var d: Desc, h: i64, v: i64) -> Desc { d.lay.self_justify = h as u8; d.
 fn absolute(var d: Desc, x: f64, y: f64) -> Desc {
     d.lay.absolute = true;
     d.lay.at = float2 { x as f32, y as f32 };
+    d
+}
+// The point of an absolute node that its (x, y) is, as fractions of its
+// size: (0.5, 1) is its bottom center, for a bar over a character's head.
+// Kept in 1/1024ths, between -32 and 32.
+let PIVOT_UNIT = 1024.0;
+fn pivot(var d: Desc, px: f64, py: f64) -> Desc {
+    fn unit(f: f64) -> i16 { clamp(round(f * PIVOT_UNIT), -32767.0, 32767.0) as i16 }
+    d.lay.pivot_x = unit(px);
+    d.lay.pivot_y = unit(py);
     d
 }
 

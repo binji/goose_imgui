@@ -1,7 +1,8 @@
 // The layout solver, no GPU: rows, columns, gaps and padding; fit, px,
 // grow, pct, min and max; justify and align; wrapping rows and text;
-// grids; stacks and absolute children; letter spacing. Each case is one frame, its tree
-// printed with each node's rect.
+// grids; stacks and absolute children, placed by a pivot; letter spacing;
+// edge_clamp. Each case is one frame, its tree printed with each node's
+// rect.
 import std;
 import vec;
 import gfx;
@@ -117,4 +118,22 @@ fn main() {
     };
     print("--- text look from a class: ", round(imgui::rect_of(imgui::id("class")).w), ", a Desc's over it: ",
           round(imgui::rect_of(imgui::id("over")).w));
+
+    case("absolute, placed by a pivot") {
+        imgui::box(imgui::stack().size(300, 200)) {
+            imgui::panel(imgui::column().size(40, 20).absolute(100, 50).pivot(0.5, 1));
+            imgui::text("abc", imgui::column().absolute(200, 100).pivot(1, 0.5));
+            imgui::panel(imgui::column().size(10, 10).absolute(0, 0).pivot(-1, 2));
+        };
+    };
+
+    // A marker's place: the point, if on screen; else on the edge, inset,
+    // toward it from the center.
+    imgui::frame(view(400, 300), 1.0 / 60.0) {
+        for p in [float2 { 100.0, 100.0 }, float2 { 600.0, 150.0 }, float2 { 1000.0, 1000.0 }] {
+            let at, angle, seen = imgui::edge_clamp(p, 20);
+            print("edge_clamp ", round(p.x), ",", round(p.y), ": ", round(at.x * 10.0) / 10.0, ",",
+                  round(at.y * 10.0) / 10.0, " angle ", round(angle * 1000.0) / 1000.0, " seen ", seen);
+        }
+    };
 }

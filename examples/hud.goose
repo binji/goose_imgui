@@ -191,14 +191,13 @@ fn main() {
                     if t - pings[k].born > 1.5 { pings[k] = pings[pings.len - 1]; pings.pop(); } else { k++; }
                 }
 
-                // Over each enemy, its name and health. A node is placed by
-                // its top left, so each is given a width and moved left by
-                // half of it: future work: placing by a point.
+                // Over each enemy, its name and health, placed by their
+                // bottom center just above it.
                 for i in enemies.len {
                     let e = enemies[i];
                     let s = to_screen(e.pos);
                     if s.x < -60.0 || s.y < -60.0 || s.x > view.x + 60.0 || s.y > view.y + 60.0 { continue; }
-                    imgui::box(i, imgui::column().absolute(s.x - 50.0, s.y - 48.0).width(100).align(imgui::CENTER).gap(3)) {
+                    imgui::box(i, imgui::column().absolute(s.x, s.y - 22.0).pivot(0.5, 1).align(imgui::CENTER).gap(3)) {
                         imgui::text(e.name, imgui::column().text_size(12).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.8)));
                         segmented_bar("hp", e.hp / e.max_hp, 1, 56, 6, rgb(HP_RED));
                     };
@@ -215,8 +214,8 @@ fn main() {
                     if age > 0.9 { damage[k] = damage[damage.len - 1]; damage.pop(); continue; }
                     let s = to_screen(d.pos);
                     let pop = 1.0 + 0.5 * max(1.0 - age * 8.0, 0.0);
-                    imgui::box(imgui::id(str("dmg", d.key)), imgui::stack().absolute(s.x - 30.0, s.y - 70.0 - age * 50.0)
-                                                              .width(60).opacity(1.0 - age * age / 0.81).scale(pop)
+                    imgui::box(imgui::id(str("dmg", d.key)), imgui::stack().absolute(s.x, s.y - 70.0 - age * 50.0).pivot(0.5, 0)
+                                                              .opacity(1.0 - age * age / 0.81).scale(pop)
                                                               .isolate()) {
                         imgui::textf(imgui::column().text_size(22).ink(rgb(0xFFE08A)).place(imgui::CENTER, imgui::CENTER)
                                        .text_outline(1.4, rgb(0x5A2A08)).text_shadow(rgba(SHADE, 0.6), 0, 2)) { out =>
@@ -227,21 +226,14 @@ fn main() {
                 }
 
                 // The shrine: a marker over it on screen, or at the screen's
-                // edge pointing to it. The clamping is done here (future
-                // work: placing by a point, and clamping to the screen),
-                // and the arrow's points are turned by hand (future work:
-                // rotation and skew).
+                // edge pointing to it. The arrow's points are turned by hand
+                // (future work: rotation and skew).
                 let dist = length(SHRINE - me) as f64;
-                let ss_shrine = to_screen(SHRINE);
-                let margin = 56.0;
-                let dir = ss_shrine - center;
-                let fx = (center.x - margin) / max(abs(dir.x as f64), 0.001);
-                let fy = (center.y - margin) / max(abs(dir.y as f64), 0.001);
-                let f = min(min(fx, fy), 1.0);
-                let at = center + dir * f as f32;
-                let off = f < 1.0;
-                let ang = atan2(dir.y as f64, dir.x as f64);
-                imgui::box("shrine marker", imgui::column().absolute(at.x - 40.0, at.y - 20.0).width(80).align(imgui::CENTER).gap(2)) {
+                let at, ang, seen = imgui::edge_clamp(to_screen(SHRINE), 56);
+                let off = !seen;
+                // Placed by its top center, 20 above the point: the middle of
+                // its 40-pixel ring.
+                imgui::box("shrine marker", imgui::column().absolute(at.x, at.y - 20.0).pivot(0.5, 0).align(imgui::CENTER).gap(2)) {
                     imgui::canvas("arrow", imgui::column().size(40, 40)) { size =>
                         let c = size * 0.5;
                         imgui::fill_circle(c.x, c.y, 13, rgba(0x0B0F14, 0.7));

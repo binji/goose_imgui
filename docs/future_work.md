@@ -6,16 +6,7 @@ Zero Dawn, Apex Legends, Hollow Knight and Diablo IV. `examples/hud.goose`
 works around what is missing and names the item here, by its title, at
 each workaround.
 
-1. **Placing by a point, and clamping to the screen.** A health bar under a
-   character, a damage number over an enemy, a marker on a quest's target:
-   each is placed by a point of its own, such as its bottom center. Now
-   `absolute(x, y)` places only a top left corner.
-   - `.pivot(px, py)`, as fractions of the node's size, would be subtracted
-     from where it is placed.
-   - `edge_clamp(p, inset) -> pos, angle, on_screen` would keep a marker for
-     something off screen at the screen's edge, with the angle for an arrow
-     that points to it.
-2. **Meters.** `progress` is one horizontal fill. HUDs need a `meter` that
+1. **Meters.** `progress` is one horizontal fill. HUDs need a `meter` that
    can be:
    - vertical;
    - segmented, by a count or a value per segment;
@@ -24,18 +15,18 @@ each workaround.
    - radial: a ring, or a sweep over an icon for a cooldown.
    Its parts would be classes (METER_TRACK, METER_FILL, METER_TRAIL), as a
    slider's are.
-3. **Rotation and skew per node**, beside the offset and scale: a fanned
+2. **Rotation and skew per node**, beside the offset and scale: a fanned
    hand of cards, icons in diamonds, slanted panels. Hit testing can use the
    bounding box at first.
    - Canvases need the same: `rotate(a) { … }`, `translate(x, y) { … }`,
      and `clip_circle(…) { … }`. They would serve a minimap that turns with
      the player, a clock's hand, or a round orb filled to a level.
-4. **A focus cursor that moves.** Console menus often have one highlight
+3. **A focus cursor that moves.** Console menus often have one highlight
    (brackets at the corners, a glowing frame) that glides from item to item.
    Now each item's ring fades in and out where it is. `focus_cursor(CLASS,
    motion)` would draw one node, in a root above the rest, at the focused
    rect, and animate the rect.
-5. **Gamepads, and prompts for the device in use.**
+4. **Gamepads, and prompts for the device in use.**
    - Gamepads from gfx: gfx's v1 has no gamepad calls, so a program reads
      its pad and passes it to `nav_from_pad`. Once a gfx release has them,
      `input_from_gfx` should read the first pad itself. The
@@ -44,7 +35,7 @@ each workaround.
      A footer of prompts ("A Select, B Back") shows that device's glyphs.
    - `prompt(action)` would draw the glyph for an action, from a table of
      images the program fills in for each device.
-6. **Drag and drop.** Items move between a chest and a bag, onto a trash
+5. **Drag and drop.** Items move between a chest and a bag, onto a trash
    can, or a card onto an enemy. `Interaction` has `dragging` and `drag`
    but nothing for what is dragged or where it goes.
    - `drag_source(it, payload)` would start a drag.
@@ -52,16 +43,16 @@ each workaround.
    - `drop_target(it) -> payload, dropped` would hover while a payload is
      over it.
    - With a pad: A picks up, navigation moves, and A puts down.
-7. **Exit transitions without the program's help.** `presence` needs the
+6. **Exit transitions without the program's help.** `presence` needs the
    program to keep drawing what is leaving. Instead, a node with an `exit`
    could leave behind a copy of its subtree's nodes, drawn while it plays
    out.
-8. **Notices.** Damage numbers, an area's name as it is entered, a
+7. **Notices.** Damage numbers, an area's name as it is entered, a
    toast for an achievement, a kill feed. Each now needs a key and a
    `presence` the program keeps alive. A queue would take them and play
    them out by itself: `notify(text, d, seconds)` or a block, stacking,
-   sliding up and fading. It is easier once 7 is done.
-9. **Text.**
+   sliding up and fading. It is easier once 6 is done.
+8. **Text.**
     - Rich text: spans in another color, font or size, and images (button
       glyphs, coins) on the baseline, in wrapped text. Item tooltips and
       upgrade cards are made of it. A little markup in the string would do:
@@ -77,36 +68,36 @@ each workaround.
     - Measurements cached by text, font and size, if the benchmark shows a
       need.
     - Text drawn wrapped only where it must be.
-10. **A radial menu.** Items around a circle, chosen by the pointer's angle
+9. **A radial menu.** Items around a circle, chosen by the pointer's angle
     or the stick's, on release: a ping wheel, a weapon wheel. It needs the
     stick's direction, which `nav_from_pad` turns into d-pad steps now.
-11. **A safe triangle for submenus.** Moving the pointer diagonally from a
+10. **A safe triangle for submenus.** Moving the pointer diagonally from a
     submenu's item toward the submenu crosses the items below or above it,
     and hovering one of those closes the submenu before the pointer gets
     there. Desktop menus ignore hovers inside the triangle from where the
     pointer was to the submenu's near edge, for a moment, while the pointer
     keeps moving toward it. `menu_item`'s "hovering closes a sibling's
     submenu", and `menu`'s hover-to-open, would both check it.
-12. **The display's scale from gfx.** imgui's scale is the program's to set
+11. **The display's scale from gfx.** imgui's scale is the program's to set
     (`set_scale`, `IMGUI_SCALE`). gfx could expose SDL's display content
     scale and its window size in points, and then imgui would start at the
     right size on a high-density screen without being told.
-13. **Pixel art.** Nine-slices take a filter; images should too. The scale
+12. **Pixel art.** Nine-slices take a filter; images should too. The scale
     could snap to whole numbers, so that pixels stay square.
-14. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
+13. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
     blur their own content but only copy their backdrop. gfx2d needs to
     blur the backdrop first, and then a Desc could have `backdrop_blur(s)`.
-15. **Developer widgets:** tables with resizable columns, trees, color
+14. **Developer widgets:** tables with resizable columns, trees, color
     pickers, number fields with drag, plots (on a canvas).
-16. **Sizes from aspect ratios** (an image box as wide as its height says),
+15. **Sizes from aspect ratios** (an image box as wide as its height says),
     and grid tracks of `minmax`.
-17. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
+16. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
     (a carousel of cards).
-18. **Sounds on interaction:** a hook, polled once a frame, for "a button
+17. **Sounds on interaction:** a hook, polled once a frame, for "a button
     was hovered or clicked", for a game's UI sounds.
-19. **Accessibility:** the tree is all there, so an outline of it could be
+18. **Accessibility:** the tree is all there, so an outline of it could be
     given to a screen reader.
-20. **Several contexts:** the state is global, as gfx2d's is. Gathering it
+19. **Several contexts:** the state is global, as gfx2d's is. Gathering it
     into a `root struct` would allow, say, a UI in the world and a UI on
     the screen.
 

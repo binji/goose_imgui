@@ -81,6 +81,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `nav_from_pad(input, PadState)` | a gamepad's held buttons and stick, as navigation, with repeat (gfx v1 has no gamepads; a program reading one passes what it holds) |
 | `set_viewport(rect)` | the UI's area; by default the screen, under the scales |
 | `set_scale(s)` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE` |
+| `edge_clamp(p, inset)`, `edge_clamp(p, rect)` | where to put a marker for p: p, if it is in the viewport inset by `inset` (or in `rect`); else where the line from the center to p leaves it. Also the angle to p, and whether it is in |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over something that takes it or has a background, not in a `passthrough()` box, or holds a press) or the keyboard (a text field has focus) this frame |
 | `cancelled()` | Escape or B pressed with no popup open to close: for the game's own "back" |
 | `shortcut("Ctrl+Q")` | a key pressed with modifiers this frame: Ctrl (Cmd on a Mac), Shift, Alt, and a letter or digit. A `menu_item`'s shortcut text is only shown; this acts on it |
@@ -117,6 +118,7 @@ the starting points.
 | `wrap()` | a row onto more lines; text at spaces to fit its width |
 | `columns(ts)`, `rows(ts)`, `cell(col, row)`, `span(cols, rows)` | grids: up to 8 tracks given each way; rows past those fit their content |
 | `absolute(x, y)` | out of the flow, at (x, y) in the parent's inner box, not scrolled |
+| `pivot(px, py)` | an absolute node's own point put at (x, y), as fractions of its size: (0.5, 1) is its bottom center, for a bar over a character's head |
 
 | Sizes | |
 |---|---|

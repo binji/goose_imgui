@@ -20,6 +20,7 @@ namespace imgui;
 
 import std;
 import vec;
+import math;
 import gfx;
 import gfx2d;
 
@@ -578,8 +579,8 @@ fn position_node(i: i32) {
             reach.x = max(reach.x, k.rect.x + k.rect.w - at.x);
             reach.y = max(reach.y, k.rect.y + k.rect.h - at.y);
         } else {
-            k.rect.x = origin.x + k.d.lay.at.x;
-            k.rect.y = origin.y + k.d.lay.at.y;
+            k.rect.x = origin.x + k.d.lay.at.x - k.rect.w * k.d.lay.pivot_x / PIVOT_UNIT;
+            k.rect.y = origin.y + k.d.lay.at.y - k.rect.h * k.d.lay.pivot_y / PIVOT_UNIT;
         }
         c = k.next;
     }
@@ -688,4 +689,26 @@ fn place_root(i: i32) {
     }
     n.rect.x = max(x, viewport.x);
     n.rect.y = max(y, viewport.y);
+}
+
+// --- placing by the screen ----------------------------------------------------------------
+
+// Where to put a marker for p, a point in the UI's space: p itself if it
+// is inside r, or else where the line from r's center to p leaves r. Also
+// the angle from the center to p (radians, clockwise from +x, as arcs
+// are), for an arrow that points to it, and whether p is inside.
+//   let at, angle, seen = imgui::edge_clamp(enemy_on_screen, 40);
+fn edge_clamp(p: float2, r: gfx2d::Rect) -> float2, f64, bool {
+    let c = float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 };
+    let d = p - c;
+    let angle: f64 = atan2(d.y, d.x);
+    if p.x >= r.x && p.y >= r.y && p.x <= r.x + r.w && p.y <= r.y + r.h { return p, angle, true; }
+    let f = min(r.w * 0.5 / max(abs(d.x), 0.0001), r.h * 0.5 / max(abs(d.y), 0.0001));
+    return c + d * f, angle, false;
+}
+// Inside the viewport, `inset` from its edges.
+fn edge_clamp(p: float2, inset: f64) -> float2, f64, bool {
+    let k = inset as f32;
+    return edge_clamp(p, gfx2d::Rect { viewport.x + k, viewport.y + k, max(viewport.w - 2.0 * k, 0.0),
+                                       max(viewport.h - 2.0 * k, 0.0) });
 }
