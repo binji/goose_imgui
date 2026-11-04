@@ -216,6 +216,55 @@ fn modal<F>(label: const u8[:], open: bool&) { modal(label, open, column()) { F(
 struct MenuCtx { bar: u64, in_popup: bool }
 var menu_stack: MenuCtx[>..<] = [];
 
+// The menus of the menu bars, in order, and the items that open
+// submenus: this frame's, and last frame's (for navigation, which comes
+// first).
+struct BarMenu { bar: u64, header: u64, popup: u64 }
+var bar_menus: BarMenu[>..<] = [];
+var last_bar_menus: BarMenu[>..<] = [];
+var submenu_items: u64[>..<] = [];
+var last_submenu_items: u64[>..<] = [];
+
+fn begin_menus() {
+    last_bar_menus.clear();
+    for m in bar_menus { last_bar_menus.push(m); }
+    bar_menus.clear();
+    last_submenu_items.clear();
+    for m in submenu_items { last_submenu_items.push(m); }
+    submenu_items.clear();
+}
+
+// Left or right in a menu bar's open menu: that bar's menu before or
+// after it opens instead (wrapping around), its header focused. False if
+// the top-level popup is not a bar's menu.
+fn switch_bar_menu(step: i64) -> bool {
+    guard popups.len > 0 && popups[0].kind == POPUP_MENU else { return false; }
+    var k = -1;
+    for m, j in last_bar_menus { if m.popup == popups[0].id { k = j; } }
+    guard k >= 0 else { return false; }
+    let bar = last_bar_menus[k].bar;
+    let n = last_bar_menus.len;
+    var j = k;
+    loop {
+        j = (j + step + n) % n;
+        if j == k { return false; }
+        if last_bar_menus[j].bar == bar { break; }
+    }
+    let m = last_bar_menus[j];
+    close_popups_above(0);
+    focused = m.header;
+    open_popup_at(Id { m.popup }, POPUP_MENU, Anchor { kind: ANCHOR_BELOW, rect: state_of(m.header).screen, .. });
+    var ps = state_of(m.popup);
+    ps.owner = bar;
+    ps.seen = frame_index;
+    put_state(m.popup, ps);
+    true
+}
+fn opens_submenu(id: u64) -> bool {
+    for m in last_submenu_items { if m == id { return true; } }
+    false
+}
+
 // A row of menus along the top of a window or screen.
 fn menu_bar<F>(label: const u8[:], d: Desc = row()) {
     let i = id(label);
@@ -261,6 +310,7 @@ fn menu<F>(label: const u8[:]) -> bool {
         put_state(pid.v, ps);
         open = true;
     }
+    if nested { submenu_items.push(i.v); } else if ctx.bar != 0 { bar_menus.push(BarMenu { ctx.bar, i.v, pid.v }); }
     let header = nodes.len as i32;
     box(i, hd.look(checked_look(open))) {
         text(label_text(label), column().grow_w());

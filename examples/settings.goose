@@ -27,6 +27,15 @@ var color = 0;
 var reset_open = false;
 var show_fps = false;
 
+struct Binding { action: const u8[:], key: const u8[:] }
+let BINDINGS = [
+    Binding { "Move forward", "W" }, Binding { "Move back", "S" }, Binding { "Strafe left", "A" },
+    Binding { "Strafe right", "D" }, Binding { "Jump", "Space" }, Binding { "Crouch", "Ctrl" },
+    Binding { "Sprint", "Shift" }, Binding { "Interact", "E" }, Binding { "Reload", "R" },
+    Binding { "Inventory", "Tab" }, Binding { "Map", "M" }, Binding { "Journal", "J" },
+    Binding { "Quick save", "F5" }, Binding { "Quick load", "F9" }, Binding { "Pause", "Escape" },
+];
+
 // The theme --theme names, and a background to go with it.
 fn backdrop() -> gfx2d::Color {
     if theme_name == "dark" { return gfx2d::rgb(0x111318); }
@@ -96,6 +105,17 @@ fn main() {
                                 imgui::slider("Sensitivity", sensitivity, 0.1, 3.0, 0.1, imgui::row().grow_w());
                                 imgui::toggle("Invert Y axis", invert, imgui::row().grow_w());
                                 imgui::toggle("Hold to aim", hold_to_aim, imgui::row().grow_w());
+                                imgui::text("Key bindings", imgui::MUTED);
+                                // A scroll pane: the wheel, its scrollbar's thumb, or the
+                                // arrows (the focus scrolls into view) move through it.
+                                imgui::scroll("bindings", imgui::column().gap(2).grow().padding(0, 0, 12, 0)) {
+                                    for b, k in BINDINGS {
+                                        imgui::box(k, imgui::row().grow_w().align(imgui::CENTER).padding(8, 4)) {
+                                            imgui::text(b.action, imgui::column().grow_w());
+                                            imgui::button(b.key, imgui::row().width(110));
+                                        };
+                                    }
+                                };
                             };
                             imgui::tab("Profile") {
                                 imgui::text("Name", imgui::MUTED);

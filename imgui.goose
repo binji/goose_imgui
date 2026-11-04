@@ -57,6 +57,7 @@ fn begin_frame(inp: Input, dt: f64) {
         viewport = gfx2d::Rect { 0.0, 0.0, inp.viewport.x, inp.viewport.y };
     }
     sweep_popups();
+    begin_menus();
     keyboard_used = false;
     id_stack.clear();
     scope_stack.clear();

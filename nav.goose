@@ -162,6 +162,9 @@ fn begin_nav() {
         close_top_popup();
         return;
     }
+    // In a menu bar's menu, left and right go to the menu next to it (right
+    // on an item with a submenu opens that instead).
+    if (left || (right && !opens_submenu(f.id))) && switch_bar_menu(if left { -1 } else { 1 }) { return; }
     var dx = 0;
     var dy = 0;
     if left { dx = -1; } else if right { dx = 1; } else if up { dy = -1; } else if down { dy = 1; }

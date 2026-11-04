@@ -8,6 +8,9 @@ chose: level1; open: 0
 on Recent: true; open 1
 right: open 2; focus in the submenu: true
 left: open 1; back on Recent: true
+  popup texts: New|Ctrl+N|Recent|level1.map|Quit|Grid|
+left: open 1; focus on Grid: true
+right: open 1; focus on New: true
 grid: true
 tab 1
 tab 2

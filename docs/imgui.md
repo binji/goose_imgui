@@ -61,7 +61,8 @@ The examples each show one part:
   fade out when added or removed; a drawer on a spring; a rolling counter;
 - `inventory`: a grid of custom slots in a scroll pane, with tooltips and
   a class of the program's own;
-- `settings`: a menu bar, tabs, dropdowns, a text field and a modal.
+- `settings`: a menu bar, tabs, dropdowns, a text field, a scrolling
+  list of key bindings, and a modal.
 
 Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 --scale 2 --keys Down,Return`. With `--frames`, every frame is 1/60 s.
@@ -227,7 +228,7 @@ damping)`, with or without `delay(seconds)`.
 | `selectable(label, selected[, d])` | a list row |
 | `separator()` | across a column, or up a row |
 | `scroll(label, d, axes) { … } -> ScrollInfo` | a clipped pane, scrolled by the wheel, its thumb, or the focus |
-| `tabs(label, selected, d) { tab("A") { … }; … }` | tab headers and the selected one's content (which fades in by TAB_PANEL's transition); the shoulder buttons switch |
+| `tabs(label, selected, d) { tab("A") { … }; … }` | tab headers and the selected one's content (which fades in by TAB_PANEL's transition); the shoulder buttons switch; the content is spaced by TAB_PANEL's `gap` |
 | `menu_bar(label) { menu("File") { menu_item("Open", "Ctrl+O"); menu("Recent") { … }; }; }` | drop-down menus; hovering moves between open menus and opens submenus; `menu_check` |
 | `dropdown(label, items, selected[, d])` | one of `items`, in a popup list under it |
 | `open_popup(label)`, `popup(label, d) { … }`, `close_popup`, `close_current_popup` | a popup at the pointer |
@@ -287,7 +288,9 @@ widget: the pointer on any of them hovers, presses and drags the widget.
   - Enter, Space or A accepts.
   - Escape or B closes the top popup, or is the program's `cancelled()`.
 - **Menus.** In a submenu, Left closes it and goes back to its item;
-  Right on a submenu's item opens it.
+  Right on a submenu's item opens it. Otherwise, in a menu bar's menu,
+  Left and Right open the menu next to it (wrapping around), as desktop
+  menus do.
 - **Keys and a game's own bindings.** A game that maps keys itself (Q and E
   for tabs, say) should leave them alone while `wants_keyboard()`, when a
   text field is taking them.

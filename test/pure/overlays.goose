@@ -134,6 +134,15 @@ fn main() {
     print("right: open ", open_popups(), "; focus in the submenu: ", imgui::is_focused(find("level1.map")));
     nav(imgui::NavInput { left: true, .. });
     print("left: open ", open_popups(), "; back on Recent: ", imgui::is_focused(find("Recent")));
+    // Left again, in the bar's menu itself: the menu before it, wrapping
+    // around to View; then right, past the end, back to File.
+    nav(imgui::NavInput { left: true, .. });
+    step();
+    texts();
+    print("left: open ", open_popups(), "; focus on Grid: ", imgui::is_focused(find("Grid")));
+    nav(imgui::NavInput { right: true, .. });
+    step();
+    print("right: open ", open_popups(), "; focus on New: ", imgui::is_focused(find("New")));
     nav(imgui::NavInput { cancel: true, .. });
     click_at(at(find("View")));
     click_at(at(find("Grid")));

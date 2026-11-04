@@ -408,7 +408,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[TAB.index] = tab;
     classes[TAB_PANEL.index] = style_set(Style { bg: p.surface, border: p.line, border_width: 1.0,
                                                  radius: float4 { 0.0, p.radius, p.radius, p.radius },
-                                                 padding: radii(16.0) }, tween(p.transition * 1.5));
+                                                 padding: radii(16.0), gap: 12.0 }, tween(p.transition * 1.5));
 
     classes[MENU_BAR.index] = style_set(Style { bg: p.raised, padding: pad4(4.0, 2.0), gap: 2.0,
                                                 border: p.line });

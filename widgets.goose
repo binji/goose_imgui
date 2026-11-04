@@ -276,7 +276,9 @@ fn tab<F>(label: const u8[:]) {
     if on {
         push_parent(ctx.body, false);
         let m = class_transition(TAB_PANEL);
-        box(sub_id(i, "content"), column().grow().enter(fade_in(m))) { F(); };
+        // Spaced by TAB_PANEL's gap: the panel's style, its content's spacing.
+        let g = class_style(TAB_PANEL).normal.gap;
+        box(sub_id(i, "content"), column().grow().gap(g).enter(fade_in(m))) { F(); };
         close_node();
     }
 }
