@@ -279,7 +279,8 @@ damping)`, with or without `delay(seconds)`.
 | `modal(label, open, d) { … }` | centered over a backdrop while `open`; inert below; cancel sets `open` false |
 | `tooltip(it, s)`, `tooltip(it) { … }` | under a widget the pointer rests on, or the focus is on |
 | `drag_source(it, kind, payload) -> bool`, `drop_target(it, kind) -> Drop`, `drag_ghost(d) { … }` | drag and drop: a widget's payload (an `i64`) carried to a target that takes its `kind`, picked up by dragging it (or accepting it with the keys, carried by navigation, put down by accepting); `Drop { over, dropped, payload }`; the ghost drawn under the pointer, never in its way. Escape puts it back. `dragging(kind)`, `drag_payload()` |
-| `text_input(label, buf, d, max_len, placeholder) -> TextEdit` | one line, edited in place: a `u8[>..]` or a `u8[..N]` |
+| `text_input(label, buf, d, max_len, placeholder) -> TextEdit` | one line, edited in place: a `u8[>..]` or a `u8[..N]`. Its caret is solid while typing, for half a second after it moves and on taking the focus, then blinks, fading |
+| `set_caret_blink(on)` | a caret that never blinks, for players who find blinking distracting |
 
 A label's `##` and what follows it are part of the ID but not shown:
 `"Play##dlc"`.
@@ -454,7 +455,7 @@ The tests are in three groups:
     program's own type, clearing, text reused, long text kept whole;
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
   - `text_input`: typing, caret and selection, words, cut and paste,
-    limits.
+    limits, the caret held solid while typing and then blinking.
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
   ring, the UI scale, exits drawn after their node has gone, rich text's

@@ -19,7 +19,6 @@ item here, by its title, at each workaround.
     - A soft text shadow. `text_shadow` is a hard copy; the glyphs'
       distance field could be drawn wider and faded to blur it.
     - Multi-line editing.
-    - A blinking caret that pauses while typing (now it resets on each edit).
     - IME composition.
     - Measurements cached by text, font and size, if the benchmark shows a
       need.

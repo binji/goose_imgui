@@ -14,3 +14,9 @@ submitted: true
 code: "ABCDEFGH" (8)
 code: "ABCDEFH"
 code: "ABCDEFH" (7 bytes)
+caret typed at 1.0
+caret after 0.4 s 1.0, 0.6 1.0, 0.95 0.38, 1.15 0.0, 1.55 1.0
+caret after a key 1.0
+caret not blinking, 1.15 s on 1.0
+caret blinking again, then 0.0
+caret on tabbing to the code field 1.0 (focused true)

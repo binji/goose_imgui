@@ -1,6 +1,7 @@
 // The text field, driven by made-up input, no GPU: focusing it by a click,
 // typing, moving the caret by character and by word, selecting with Shift,
-// select all, Backspace and Delete, cut and paste, max_len, Enter.
+// select all, Backspace and Delete, cut and paste, max_len, Enter; the
+// caret solid while typing and on taking the focus, then blinking.
 import std;
 import vec;
 import gfx;
@@ -39,6 +40,17 @@ fn click(label: const u8[:]) {
     run(imgui::Input { pointer: imgui::Pointer { pos: p, down: true, pressed: true, clicks: 1, .. }, .. });
     run(imgui::Input { pointer: imgui::Pointer { pos: p, released: true, .. }, .. });
 }
+// How much of the focused field's caret shows.
+fn caret() -> f64 {
+    for n in imgui::nodes {
+        if n.d.vis.class == imgui::CARET {
+            let o: f64 = n.d.vis.opacity;
+            return round(o * 100.0) / 100.0;
+        }
+    }
+    -1.0
+}
+fn idle(seconds: f64) { for k in (seconds * 60.0 + 0.5) as i64 { step(); } }
 fn show(what: const u8[:]) {
     let st = imgui::state_of(imgui::id("name").v);
     print(what, ": \"", name, "\" caret ", st.caret, " anchor ", st.anchor);
@@ -87,4 +99,37 @@ fn main() {
     print("code: \"", fixed, "\"");
     typed("é");
     print("code: \"", fixed, "\" (", fixed.len, " bytes)");
+
+    // The caret: solid as it is typed at, and for a moment after; then
+    // on, fading out, off, fading in; solid again on a key; held solid
+    // when blinking is off; solid on taking the focus back.
+    typed("Z");
+    print("caret typed at ", caret());
+    idle(0.4);
+    var seen: u8[>..] = [];
+    format(seen, "after 0.4 s ", caret());
+    idle(0.2);
+    format(seen, ", 0.6 ", caret());
+    idle(0.35);
+    format(seen, ", 0.95 ", caret());
+    idle(0.2);
+    format(seen, ", 1.15 ", caret());
+    idle(0.4);
+    format(seen, ", 1.55 ", caret());
+    print("caret ", seen);
+    key(imgui::KEY_LEFT);
+    print("caret after a key ", caret());
+    imgui::set_caret_blink(false);
+    idle(1.15);
+    print("caret not blinking, 1.15 s on ", caret());
+    imgui::set_caret_blink(true);
+    step();
+    print("caret blinking again, then ", caret());
+    // Tab to the other field, after the caret has gone off here: it shows
+    // there at once.
+    click("name");
+    idle(1.15);
+    run(imgui::Input { nav: imgui::NavInput { next: true, .. }, .. });
+    step();
+    print("caret on tabbing to the code field ", caret(), " (focused ", imgui::is_focused(imgui::id("code")), ")");
 }

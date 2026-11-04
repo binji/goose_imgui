@@ -19,6 +19,27 @@ import gfx2d;
 
 struct TextEdit { changed: bool = false, submitted: bool = false, active: bool = false }
 
+// The caret: solid for CARET_HOLD seconds after it is placed, moved, or
+// the text changes, or the field takes the focus, so it is there while
+// typing; then blinking, on for half of CARET_PERIOD and off for half,
+// fading over CARET_FADE at each turn.
+let CARET_HOLD = 0.5;
+let CARET_PERIOD = 1.0;
+let CARET_FADE = 0.12;
+var caret_blinks = true;
+// A caret that never blinks, for players who find blinking distracting.
+fn set_caret_blink(on: bool) { caret_blinks = on; }
+
+// How much of the caret shows, `idle` seconds after it last moved.
+fn caret_alpha(idle: f64) -> f64 {
+    if !caret_blinks || idle < CARET_HOLD { return 1.0; }
+    let t = (idle - CARET_HOLD) % CARET_PERIOD;
+    let half = CARET_PERIOD * 0.5;
+    let k = if t < half { 1.0 - clamp((t - (half - CARET_FADE)) / CARET_FADE, 0.0, 1.0) }
+            else { clamp((t - (CARET_PERIOD - CARET_FADE)) / CARET_FADE, 0.0, 1.0) };
+    k * k * (3.0 - 2.0 * k)
+}
+
 // Copied or cut this frame, for the clipboard: limited, as last_misuse is.
 var copied: u8[..4096] = [];
 
@@ -82,6 +103,9 @@ fn text_input<A>(label: const u8[:], buf: A&, d: Desc = row(), max_len: i64 = 25
     var e = TextEdit { active: it.focused, .. };
     var caret = clamp(st.caret as i64, 0, buf.len);
     var anchor = clamp(st.anchor as i64, 0, buf.len);
+    // Taking the focus, the caret shows at once; `open` is whether it had it.
+    if it.focused && !st.open { st.value = clock as f32; }
+    st.open = it.focused;
     let up = inherited[inherited.len - 1];
     let cs = class_style(INPUT).normal;
     let style = gfx2d::TextStyle { font: if cs.font.id != 0 { cs.font } else { up.font },
@@ -194,9 +218,9 @@ fn text_input<A>(label: const u8[:], buf: A&, d: Desc = row(), max_len: i64 = 25
             text(buf, column().offset(-scroll_x, 0).height(line));
         }
         if it.focused {
-            let blink = ((clock - st.value as f64) * 1.6) % 2.0 < 1.25;
             let cw = class_style(CARET).normal.min_size.x;
-            panel(column().skin(CARET).absolute(caret_x - scroll_x, 0).size(cw, line).opacity(if blink { 1.0 } else { 0.0 }));
+            panel(column().skin(CARET).absolute(caret_x - scroll_x, 0).size(cw, line)
+                  .opacity(caret_alpha(clock - st.value as f64)));
         }
     };
     e
