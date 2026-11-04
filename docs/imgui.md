@@ -144,6 +144,9 @@ How children share space:
 | `spacer()`, `spacer(d)` | empty space; by default it grows |
 | `text(s)`, `text(s, d)`, `text(s, CLASS)` | text in the inherited ink, font and size, or its Desc's |
 | `textf(d) { out => format(out, …); }` | text formatted straight into the frame's text, without a `str` first |
+| `rich(s)`, `rich(s, d)`, `rich(s, CLASS)` | text in several styles, with images on its lines, from BBCode-like markup: `"Deal [dmg]20[/] damage, [kw]Burn[/kw] 3 [img=coin]"`. `[name]…[/]` (or `[/name]`) is a span, and spans nest; `[img=name]` an image; `[[` a `[`. It wraps, justifies and sizes as `text` does; lines break at spaces only, so a word in two styles stays whole |
+| `add_span(name, Span { ink, font, text_size, text_look, underline })` | a span's style, by name: what it sets of the text's ink, font, size and look (`add_text_look`'s, over the text's own), and an underline |
+| `add_inline(name, texture, src, scale = 1, rise = 0)` | an image for `[img=name]`: `src` of the texture, `scale` times the text's size tall, centered on the text and raised by `rise` times its size |
 | `image(texture, d, fit_mode)`, `image(texture, src, d, fit_mode)` | an image, or a sprite from a sheet; fitted by `gfx2d::FIT_CONTAIN`, `COVER` or `STRETCH` |
 | `icon(ICON_CHECK …)`, `icon(kind, d)` | line icons in the ink: check, chevrons, close, plus, minus |
 
@@ -432,6 +435,8 @@ The tests are in three groups:
   - `overlays`: menus, submenus, tabs, dropdowns, tooltips, modals;
   - `motion`: easing, tweens, springs at two frame rates, presence, enter,
     glide, exits (in a list, alone, nested, coming back);
+  - `rich`: markup, measuring as plain text does, wrapping, a word in two
+    styles kept whole, images, `[[`, newlines, an exit;
   - `notices`: stacking and expiring, a queue's limit, a queue of the
     program's own type, clearing, text reused, long text kept whole;
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
@@ -439,7 +444,8 @@ The tests are in three groups:
     limits.
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
-  ring, the UI scale, exits drawn after their node has gone (`draw`); typing through gfx's injected input
+  ring, the UI scale, exits drawn after their node has gone, rich text's
+  spans, image and underline (`draw`); typing through gfx's injected input
   (`typing`); canvases: placement, size, clipping, opacity, culling, the
   pointer (`canvas`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless

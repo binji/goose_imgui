@@ -369,6 +369,27 @@ isn't known yet while the block runs, and charts want to fill their box.
 What the commands reach is kept per node, so culling counts drawing that
 spills past the box.
 
+## Rich text
+
+- `rich(s)` reads BBCode-like markup (`[dmg]20[/]`, `[img=coin]`) rather
+  than taking spans from code: tooltips and cards are data, often
+  translated, and the styling has to travel with the string. Brackets, not
+  braces, so it doesn't read as a format string.
+- Spans and images are registered by name, as classes are. A span sets
+  only what it changes, over the text's own style.
+- A rich text is its own kind of node, its pieces in a side table for the
+  frame, as canvas commands are: a word (or the part of one in one style),
+  spaces, a newline or an image, each measured once as it is recorded. So
+  plain `text` costs nothing more, and a rich text is measured by
+  gfx2d a piece at a time, which drops kerning across a change of style.
+- gfx2d breaks lines of one style; rich text breaks its own, at spaces
+  only, a run of pieces with no space between them staying whole. A line
+  is as tall as its tallest piece, with every piece on one baseline, so an
+  unstyled rich text measures exactly as `text` does.
+- Drawn in three passes over its lines, all shadows, then all outlines,
+  then glyphs, images and underlines, so that one piece's shadow doesn't
+  fall over the glyphs before it.
+
 ## Widgets (first set)
 
 | | |
@@ -401,6 +422,7 @@ spills past the box.
 | `motion.goose` | `Motion`, easing, springs, `animate`, `presence` |
 | `exit.goose` | exits: copies of what has left, drawn as they play |
 | `notice.goose` | notices: queues of what the program posted once |
+| `rich.goose` | rich text: markup read into pieces, broken into lines |
 | `style.goose` | `Style`, `StyleSet`, the class registry, themes |
 | `draw.goose` | the draw walk |
 | `widgets.goose` | buttons, toggles, sliders and the rest |

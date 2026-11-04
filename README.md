@@ -75,6 +75,7 @@ fn main() {
 | `drag.goose` | drag and drop |
 | `exit.goose` | exit transitions, played on copies of what has left |
 | `notice.goose` | notices: toasts, banners, damage numbers, posted once |
+| `rich.goose` | rich text: spans and images in a line, from markup |
 | `canvas.goose` | canvases: drawing of the program's own inside the layout |
 | `context.goose`, `id.goose` | the state kept between frames; IDs |
 | `docs/` | `imgui.md`, the reference; `design.md`, the plan and its reasoning; `future_work.md`, what is next |

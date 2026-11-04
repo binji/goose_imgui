@@ -158,6 +158,8 @@ fn draw_self(i: i32, alpha: f32) {
     }
     if n.kind == NODE_TEXT {
         draw_text(i, a);
+    } else if n.kind == NODE_RICH {
+        draw_rich(i, a);
     } else if n.kind == NODE_ICON {
         draw_icon(n.icon, b, faded(n.style.ink, a));
     } else if n.kind == NODE_IMAGE && n.image.id != 0 {

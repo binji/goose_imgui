@@ -4,7 +4,9 @@
 // their new places. The energy
 // is an orb filled to its level (a canvas clipped to a circle); the enemy's
 // health has a trail that shows what a card took; End turn is a slanted
-// button. Drag a card onto the enemy to play it, or click it.
+// button. The rules are rich text: numbers in color, a keyword
+// underlined, an icon on the line. Drag a card onto the enemy to play it,
+// or click it.
 //
 //   goose examples/cards.goose [-- --frames 90 --screenshot cards.png]
 import std;
@@ -22,7 +24,9 @@ let COSTS = [1, 2, 1, 1, 1];
 let DAMAGE = [6, 12, 0, 6, 0];
 let BLOCK = [0, 0, 5, 0, 0];
 let HEAL = [0, 0, 0, 0, 6];
-let RULES = ["Deal 6 damage.", "Deal 12 damage.", "Gain 5 block.", "Deal 6 damage.", "Heal 6."];
+// Rich text: the numbers in spans, keywords underlined, icons on the line.
+let RULES = ["Deal [dmg]6[/] damage.", "Deal [dmg]12[/] damage. [kw]Burns[/kw].", "Gain [blk]5[/] [img=shield].",
+             "Deal [dmg]6[/] damage.", "Heal [heal]6[/] [img=heart]."];
 let COLORS = [0xC8484F, 0xE2702C, 0x3D7DE0, 0xC8484F, 0x2EAE6A];
 let MAX_ENERGY = 3;
 
@@ -105,6 +109,28 @@ fn orb(level: f64, t: f64) {
     };
 }
 
+// The rules' spans, and their icons: a heart and a shield, drawn once into
+// a texture (so after the window is open).
+fn rule_spans() {
+    imgui::add_span("dmg", imgui::Span { ink: rgb(0xFFD36A), text_size: 16, .. });
+    imgui::add_span("blk", imgui::Span { ink: rgb(0x9CC8FF), text_size: 16, .. });
+    imgui::add_span("heal", imgui::Span { ink: rgb(0x9CF0B8), text_size: 16, .. });
+    imgui::add_span("kw", imgui::Span { underline: true, .. });
+}
+fn rule_icons() {
+    let tex = gfx::render_target(64, 32, gfx::RGBA8);
+    gfx2d::draw_into(tex, gfx2d::TRANSPARENT) {
+        let red = rgb(0xF0606A);
+        gfx2d::circle(10, 11, 7, red);
+        gfx2d::circle(22, 11, 7, red);
+        gfx2d::triangle(3.5, 14, 28.5, 14, 16, 28, red);
+        let blue = rgb(0x9CC8FF);
+        gfx2d::polygon([f2(36, 4), f2(60, 4), f2(60, 14), f2(48, 29), f2(36, 14)], blue);
+    };
+    imgui::add_inline("heart", tex, gfx2d::rect_of(0, 0, 32, 32), 1.2);
+    imgui::add_inline("shield", tex, gfx2d::rect_of(32, 0, 32, 32), 1.2);
+}
+
 // A card's face: its name, its picture, its rules, its cost in a diamond
 // (a square turned).
 fn card_face(c: i64) {
@@ -113,7 +139,7 @@ fn card_face(c: i64) {
                  .bg(gfx2d::lighten(rgb(COLORS[c]), 0.12), gfx2d::darken(rgb(COLORS[c]), 0.45))) {
         imgui::text(NAMES[c], imgui::column().text_size(17).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.7)));
         imgui::panel(imgui::column().size(70, 60).radius(6).bg(rgba(0xFFFFFF, 0.18)));
-        imgui::text(RULES[c], imgui::column().text_size(13).ink(rgb(INK)).wrap().grow_w().justify(imgui::CENTER));
+        imgui::rich(RULES[c], imgui::column().text_size(13).ink(rgb(INK)).wrap().grow_w().justify(imgui::CENTER));
     };
     imgui::box(imgui::stack().size(30, 30).place(imgui::START, imgui::START).offset(-8, -8)) {
         imgui::panel(imgui::column().size(26, 26).radius(4).bg(rgb(0xF0A030)).border(2, rgb(0x2A1E14))
@@ -127,12 +153,15 @@ fn main() {
     new_turn();
     parse_args();
     imgui::theme_game();
+    rule_spans();
+    var icons_ready = false;
     let red = bar(rgb(0xD8404A));
     let green = bar(rgb(0x3CC070));
     let trail = bar(rgba(INK, 0.7));
     let track = bar(rgba(0x000000, 0.5));
     let shown = imgui::tween(0.5, imgui::EASE_IN_OUT_CUBIC).delay(0.3);
     run("imgui: cards", 1100, 680) {
+        if !icons_ready { rule_icons(); icons_ready = true; }
         let t = imgui::time();
         let ss = gfx::screen_size();
         gfx2d::frame(rgb(0x1B1420)) {

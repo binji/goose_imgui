@@ -122,7 +122,7 @@ fn fit_node(i: i32, a: i64) {
     let n .= nodes[i];
     var content: f32 = 0.0;
     var least: f32 = 0.0;
-    if n.kind == NODE_TEXT {
+    if n.kind == NODE_TEXT || n.kind == NODE_RICH {
         if a == 0 {
             content = n.natural.x;
             least = if n.d.lay.wrap { n.word } else { n.natural.x };
@@ -523,8 +523,10 @@ fn resolve_grid(i: i32, a: i64, inner: f32) {
 // Pass 3: wrapped text's height at its width.
 fn measure_wrapped(i: i32) {
     let n .= nodes[i];
-    guard n.kind == NODE_TEXT;
-    if n.d.lay.wrap && n.rect.w + 0.5 < n.natural.x {
+    guard n.kind == NODE_TEXT || n.kind == NODE_RICH;
+    if n.kind == NODE_RICH && n.d.lay.wrap && n.rect.w + 0.5 < n.natural.x {
+        n.content.y = rich_height(i, n.rect.w);
+    } else if n.kind == NODE_TEXT && n.d.lay.wrap && n.rect.w + 0.5 < n.natural.x {
         var style = text_style_of(n);
         style.wrap_width = n.rect.w;
         n.content.y = gfx2d::measure_text(node_text(i), style).y;

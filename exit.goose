@@ -48,6 +48,8 @@ struct Leaver {
     cmd_count: i32 = 0,
     point: i32 = 0,
     point_count: i32 = 0,
+    piece: i32 = 0,
+    piece_count: i32 = 0,
 }
 
 var leavers: Leaver[>..] = [];
@@ -56,6 +58,7 @@ var leaver_text: u8[>..] = [];
 var leaver_looks: TextLook[>..] = [];
 var leaver_cmds: DrawCmd[>..] = [];
 var leaver_points: float2[>..] = [];
+var leaver_pieces: Piece[>..] = [];
 var exit_nodes: i32[>..<] = [];     // this frame's nodes with exits (finish_frame)
 var kept: Leaver[>..<] = [];        // copies drawn this frame, `node` their top in `nodes`
 
@@ -109,6 +112,7 @@ fn play_exits() {
     leaver_looks.clear();
     leaver_cmds.clear();
     leaver_points.clear();
+    leaver_pieces.clear();
     for i in exit_nodes {
         let n .= nodes[i];
         var r = Leaver { id: n.id, exit: desc_exit(n.d.mot), .. };
@@ -140,6 +144,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
     r.look = leaver_looks.len as i32;
     r.cmd = leaver_cmds.len as i32;
     r.point = leaver_points.len as i32;
+    r.piece = leaver_pieces.len as i32;
     for k in i..end {
         var n = nodes[k];
         // Linked again below, without what is not in the copy.
@@ -150,6 +155,17 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
         if n.kind == NODE_TEXT {
             n.text_off = leaver_text.len as i32 - r.text;
             leaver_text.append(text_arena[nodes[k].text_off..nodes[k].text_off + nodes[k].text_len]);
+        } else if n.kind == NODE_RICH {
+            // Its pieces, each word's and space's text with it.
+            n.text_off = leaver_pieces.len as i32 - r.piece;
+            for q in nodes[k].text_off..nodes[k].text_off + nodes[k].text_len {
+                var pc = pieces[q];
+                if pc.kind != PIECE_IMAGE {
+                    pc.off = leaver_text.len as i32 - r.text;
+                    leaver_text.append(text_arena[pieces[q].off..pieces[q].off + pieces[q].len]);
+                }
+                leaver_pieces.push(pc);
+            }
         }
         leaver_looks.push(node_looks[n.look as i64]);
         n.look = k - i;
@@ -191,6 +207,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
     r.text_len = leaver_text.len as i32 - r.text;
     r.cmd_count = leaver_cmds.len as i32 - r.cmd;
     r.point_count = leaver_points.len as i32 - r.point;
+    r.piece_count = leaver_pieces.len as i32 - r.piece;
     leavers.push(r);
 }
 
@@ -206,6 +223,12 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
     let pb = draw_points.len as i32 - r.point;
     let everywhere = gfx2d::Rect { -1.0e9, -1.0e9, 2.0e9, 2.0e9 };
     text_arena.append(leaver_text[r.text..r.text + r.text_len]);
+    let qb = pieces.len as i32 - r.piece;
+    for q in r.piece..r.piece + r.piece_count {
+        var pc = leaver_pieces[q];
+        if pc.kind != PIECE_IMAGE { pc.off += r.text + tb; }
+        pieces.push(pc);
+    }
     for q in r.point..r.point + r.point_count { draw_points.push(leaver_points[q]); }
     for c in r.cmd..r.cmd + r.cmd_count {
         let cmd = leaver_cmds[c];
@@ -224,6 +247,7 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
         n.last = moved_link(n.last, base);
         n.next = moved_link(n.next, base);
         if n.kind == NODE_TEXT { n.text_off += r.text + tb; }
+        if n.kind == NODE_RICH { n.text_off += r.piece + qb; }
         node_looks.push(leaver_looks[(r.look + n.look) as i64]);
         n.look = lb + k;
         if n.cmd_count > 0 { n.cmd_first += r.cmd + cb; n.cmd_end += r.cmd + cb; }

@@ -3,7 +3,8 @@
 // that clips (a scroll pane's content past its edge); a motion offset and
 // scale; the focus ring, which shows only after navigation; a text's
 // outline and shadow; a radial meter; a box turned and skewed; what has
-// left drawn on, with its canvas, as its exit plays.
+// left drawn on, with its canvas, as its exit plays; rich text's spans, its
+// image and its underline.
 import std;
 import vec;
 import math;
@@ -208,4 +209,32 @@ fn main() {
     for k in 10 { render(none) {}; }
     print("exit: drawn after it left ", kept, ", fading ", fading, ", gone ", near(70, 50, 0xFFFFFF, 2),
           " ", near(30, 30, 0xFFFFFF, 2), ", playing ", imgui::exits_playing());
+
+    // Rich text: a red span, an image (a green square, drawn into a
+    // texture) and a blue underlined span, each where its line puts it.
+    let sq = gfx::render_target(8, 8, gfx::RGBA8);
+    gfx2d::draw_into(sq, gfx2d::rgb(0x20C040)) {};
+    imgui::add_span("red", imgui::Span { ink: gfx2d::rgb(0xFF0000), .. });
+    imgui::add_span("blu", imgui::Span { ink: gfx2d::rgb(0x0000FF), underline: true, .. });
+    imgui::add_inline("sq", sq, gfx2d::Rect { 0, 0, 8, 8 });
+    render(none) {
+        imgui::rich("[red]MMM[/] [img=sq] [blu]mmm[/]", imgui::column().text_size(32).ink(gfx2d::BLACK)
+                                                         .place(imgui::START, imgui::START).offset(10, 10));
+    };
+    var reds = 0;
+    var greens = 0;
+    var blues = 0;
+    var blue_row = 0;
+    for y in H {
+        var row = 0;
+        for x in W {
+            if close_to(x, y, 0xFF0000, 40) { reds++; }
+            if close_to(x, y, 0x20C040, 8) { greens++; }
+            if close_to(x, y, 0x0000FF, 40) { blues++; row++; }
+        }
+        blue_row = max(blue_row, row);
+    }
+    // The square is 32 tall at size 32; the underline runs the span's width.
+    print("rich: red span ", reds > 100, ", image ", greens > 32 * 28, " ", greens <= 32 * 32 + 64,
+          ", blue span ", blues > 100, ", underlined ", blue_row > 40);
 }

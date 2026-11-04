@@ -13,3 +13,4 @@ text shadow: none plain true, inherited true; turned off true
 radial meter: swept true, not yet true, past a quarter true
 turned: upright true, not across true; skewed: top right true, top left true, bottom left true
 exit: drawn after it left true, fading true, gone true true, playing 0
+rich: red span true, image true true, blue span true, underlined true

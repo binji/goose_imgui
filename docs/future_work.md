@@ -16,10 +16,10 @@ item here, by its title, at each workaround.
    - `prompt(action)` would draw the glyph for an action, from a table of
      images the program fills in for each device.
 2. **Text.**
-    - Rich text: spans in another color, font or size, and images (button
-      glyphs, coins) on the baseline, in wrapped text. Item tooltips and
-      upgrade cards are made of it. A little markup in the string would do:
-      `"Deal {accent}20{} damage"`, `"{img:3}"`.
+    - Hovering a span of rich text: a keyword ("Weak", "Burn") whose
+      tooltip says what it means. Each span's rectangles on its lines would
+      be kept for hit testing, and `rich` would return which span is under
+      the pointer: `[kw=burn]Burn[/]`.
     - Revealed a character at a time, for dialogue: `.reveal(n)` lays out
       all of the text and draws its first `n` characters, so the lines
       don't move as it types.

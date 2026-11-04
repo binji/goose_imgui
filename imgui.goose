@@ -48,6 +48,7 @@ import canvas;
 import drag;
 import exit;
 import notice;
+import rich;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -222,6 +223,8 @@ fn list_bounds() {
             let l = look_of(n);
             let o = l.shadow_offset;
             reach = max(reach, max(l.outline, 0.0) + max(abs(o.x), abs(o.y)) + 2.0);
+        } else if n.kind == NODE_RICH {
+            reach = max(reach, rich_reach(i) + 2.0);
         }
         var b = gfx2d::inflate(n.screen, reach * n.m.a);
         if n.cmd_count > 0 {
@@ -342,7 +345,7 @@ fn dump() {
         var p = n.parent;
         while p >= 0 { d++; p = nodes[p].parent; }
         for k in d { line.append("  "); }
-        line.append(match n.kind { NODE_TEXT => "text", NODE_IMAGE => "image", _ => if n.parent < 0 { "root" } else { "box" } });
+        line.append(match n.kind { NODE_TEXT => "text", NODE_RICH => "rich", NODE_IMAGE => "image", _ => if n.parent < 0 { "root" } else { "box" } });
         format(line, " ", round(n.rect.x), " ", round(n.rect.y), " ", round(n.rect.w), " ", round(n.rect.h));
         if n.kind == NODE_TEXT { format(line, " \"", node_text(i as i32), "\""); }
         print(line);

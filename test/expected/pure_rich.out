@@ -1,0 +1,23 @@
+plain and rich, the same text:
+  rich 164.1x19.4, natural 164.1x19.4, longest word 60.9
+    "Deal 20 damage to all" width 164.1 ascent 15.5 below 3.9
+  text natural 164.1x19.4
+wrapped at 150, a bigger span:
+  rich 150.0x77.4, natural 368.2x38.7, longest word 60.9
+    "Deal 20 damage" width 143.5 ascent 31.0 below 7.7
+    "to every foe, then" width 132.9 ascent 15.5 below 3.9
+    "Burn_ them." width 82.8 ascent 15.5 below 3.9
+a word in two styles kept whole at 40:
+  rich 40.0x58.1, natural 158.9x19.4, longest word 111.7
+    "aaaa|bbbb|cccc" width 111.7 ascent 15.5 below 3.9
+    "dd" width 19.6 ascent 15.5 below 3.9
+    "ee" width 18.7 ascent 15.5 below 3.9
+an image, [[, newlines:
+  rich 181.3x58.1, natural 181.3x58.1, longest word 43.3
+    "Costs 3 <img 32.0>|. [not a tag]" width 181.3 ascent 15.5 below 3.9
+    "next line" width 63.7 ascent 15.5 below 3.9
+    "" width 0.0 ascent 15.5 below 3.9
+leaving:
+  rich 81.9x19.4 (leaving), natural 81.9x19.4, longest word 40.3
+    "Gone soon" width 81.9 ascent 15.5 below 3.9
+  playing 1

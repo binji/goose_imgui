@@ -20,6 +20,7 @@ let NODE_BOX = 0;
 let NODE_TEXT = 1;
 let NODE_IMAGE = 2;
 let NODE_ICON = 3;
+let NODE_RICH = 4;          // rich text: its pieces in `pieces`, text_len of them from text_off
 
 struct Node {
     id: u64 = 0,
@@ -131,6 +132,7 @@ var inherited: Inherited[>..<] = [];
 fn begin_tree() {
     nodes.clear();
     text_arena.clear();
+    pieces.clear();
     tracks.clear();
     parents.clear();
     roots.clear();
