@@ -17,7 +17,9 @@ item here, by its title, at each workaround.
      images the program fills in for each device.
 2. **Text.**
     - A soft text shadow. `text_shadow` is a hard copy; the glyphs'
-      distance field could be drawn wider and faded to blur it.
+      distance field could be drawn wider and faded to blur it. That is
+      gfx2d's "No text glow, and no soft text shadow" (its future work,
+      item 14) first.
     - Multi-line editing.
     - IME composition.
     - Measurements cached by text, font and size, if the benchmark shows a
@@ -41,7 +43,8 @@ item here, by its title, at each workaround.
     could snap to whole numbers, so that pixels stay square.
 7. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
     blur their own content but only copy their backdrop. gfx2d needs to
-    blur the backdrop first, and then a Desc could have `backdrop_blur(s)`.
+    blur the backdrop first (its future work, item 16: "A layer can't blur
+    what is behind it"), and then a Desc could have `backdrop_blur(s)`.
 8. **Developer widgets:** tables with resizable columns, trees, color
     pickers, number fields with drag, plots (on a canvas).
 9. **Sizes from aspect ratios** (an image box as wide as its height says),
