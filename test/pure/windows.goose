@@ -13,6 +13,7 @@ import imgui from "../..";
 
 var log: u8[>..] = [];
 var show_log = true;
+var show_long = false;
 var chosen = 0;
 
 fn ui() {
@@ -32,6 +33,9 @@ fn ui() {
         if imgui::button("Clear") { log.append("clear;"); }
     };
     imgui::window("Info") { imgui::text("fits its text"); };
+    imgui::window("Long", show_long, imgui::column().size(200, 150).absolute(400, 300)) {
+        for k in 40 { imgui::id_scope(k) { imgui::text("item"); }; }
+    };
 }
 
 var pos = float2 { -100.0, -100.0 };
@@ -275,5 +279,19 @@ fn main() {
     for k in 12 { step(); }
     let n = imgui::nodes[imgui::roots[imgui::root_order[imgui::root_order.len - 1] as i64].node];
     print("shown: alpha ", n.alpha, " zoom ", n.zoom);
+    // The copy holds only what is drawn: of 40 rows, those in view.
+    show_long = true;
+    for k in 15 { step(); }
+    var live = 0;
+    for r in imgui::roots {
+        if r.kind == imgui::ROOT_WINDOW && r.popup == imgui::id("Long").v {
+            for m in imgui::nodes { if m.root == imgui::nodes[r.node].root && m.ghost == 0 { live++; } }
+        }
+    }
+    for l in imgui::leavers { if l.id == imgui::id("Long").v { print("long window: ", live, " nodes, ", l.node_count, " copied"); } }
+    show_long = false;
+    step();
+    print("hiding it: copies playing ", imgui::exits_playing());
+    for k in 15 { step(); }
     imgui::set_window_show(imgui::INSTANT);
 }

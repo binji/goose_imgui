@@ -145,9 +145,17 @@ fn play_exits() {
 
 // Nodes from `i` to the end of its subtree (before `limit`), copied into
 // the leaver_ arrays as a copy described by r.
+//
+// What isn't drawn isn't copied: a subtree outside its clip (rows scrolled
+// out of a pane) is left out, as the draw would skip it, so a copy costs
+// what is on the screen. `copy_map` takes each node of the subtree to its
+// place in the copy, -1 if it is left out.
+var copy_map: i32[>..<] = [];
 fn copy_out(var r: Leaver, i: i32, limit: i32) {
     var end = i + 1;
     while end < limit && nodes[end].parent >= i { end++; }
+    copy_map.clear();
+    var count: i32 = 0;
     r.node = leaver_nodes.len as i32;
     r.text = leaver_text.len as i32;
     r.look = leaver_looks.len as i32;
@@ -156,9 +164,15 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
     r.piece = leaver_pieces.len as i32;
     r.glyph = leaver_glyphs.len as i32;
     for k in i..end {
+        if k > i && (copy_map[(nodes[k].parent - i) as i64] < 0 || !overlaps(nodes[k].bounds, nodes[k].clip)) {
+            copy_map.push(-1);
+            continue;
+        }
+        copy_map.push(count);
+        count++;
         var n = nodes[k];
         // Linked again below, without what is not in the copy.
-        n.parent = if k == i { -1 } else { n.parent - i };
+        n.parent = if k == i { -1 } else { copy_map[(n.parent - i) as i64] };
         n.first = -1;
         n.last = -1;
         n.next = -1;
@@ -178,7 +192,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
             }
         }
         leaver_looks.push(node_looks[n.look as i64]);
-        n.look = k - i;
+        n.look = count - 1;
         if n.d.vis.filter != 0 {
             leaver_filters.push(node_filters[(n.d.vis.filter - 1) as i64]);
             n.d.vis.filter = leaver_filters.len as u32;
@@ -206,7 +220,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
                     },
                     _ => {},
                 }
-                let owner = if cmd.owner >= i && cmd.owner < end { cmd.owner - i } else { -1 };
+                let owner = if cmd.owner >= i && cmd.owner < end { copy_map[(cmd.owner - i) as i64] } else { -1 };
                 let ce = if cmd.end > 0 { cmd.end - n.cmd_first + c0 } else { 0 };
                 leaver_cmds.push(DrawCmd { owner, op, ce });
             }
@@ -224,7 +238,7 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
             leaver_nodes[pp as i64].last = at - r.node;
         }
     }
-    r.node_count = end - i;
+    r.node_count = count;
     r.text_len = leaver_text.len as i32 - r.text;
     r.cmd_count = leaver_cmds.len as i32 - r.cmd;
     r.point_count = leaver_points.len as i32 - r.point;

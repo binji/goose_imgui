@@ -272,7 +272,12 @@ steps, so they move the same at any frame rate.
   are added after layout and the hit list, so they take no space and no
   input, and are kept by copying them again each frame until their exit is
   over. Only what has an exit is copied, so a frame without exits pays a
-  test per node. The Exit itself is kept out of the Desc, in a table, as
+  test per node. And only what is drawn: a subtree wholly outside its clip
+  (rows scrolled out of a pane) is left out of the copy, as the draw would
+  skip it, so a copy costs what is on the screen. A window's copy, taken
+  every frame while windows have exits, cost 0.05 to 0.1 µs a node before
+  this: a 250-row list in one, 3,767 nodes, 0.15 to 0.35 ms a frame. Now
+  it is 20 to 40 µs, about what a 50-row list costs (11 µs). The Exit itself is kept out of the Desc, in a table, as
   text effects are: it would add 36 bytes to every Desc copied, and cost
   about 5% of a frame.
 - Notices are the program's events shown for a while, in queues the
