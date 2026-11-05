@@ -1,12 +1,13 @@
 // A card battler's table: a hand of cards fanned (each turned, and hit where
 // it is drawn), the one under the pointer rising to the front; played, a
 // card flies up out of the hand (an exit), and the rest glide and turn to
-// their new places. The energy
-// is an orb filled to its level (a canvas clipped to a circle); the enemy's
-// health has a trail that shows what a card took; End turn is a slanted
-// button. The rules are rich text: numbers in color, a keyword
-// underlined (rest the pointer on it for what it means), an icon on the
-// line. Drag a card onto the enemy to play it, or click it.
+// their new places. The energy is an orb filled to its level (a canvas
+// clipped to a circle); the enemy's health has a trail that shows what a
+// card took. Color filters flash the enemy white when it is struck, and
+// drain a card that can't be paid for of its color. End turn is a slanted
+// button. The rules are rich text: numbers in color, a keyword underlined
+// (rest the pointer on it for what it means), an icon on the line. Drag a
+// card onto the enemy to play it, or click it.
 //
 //   goose examples/cards.goose [-- --frames 90 --screenshot cards.png]
 import std;
@@ -40,6 +41,7 @@ var player_hp: f64 = 60.0;
 var armor = 0;
 var hits: Hit[>..] = [];
 var next_hit = 0;
+var struck_at = -1.0e9;             // when a card last hit the enemy: it flashes
 
 fn rgb(c: i64) -> gfx2d::Color { gfx2d::rgb(c) }
 fn rgba(c: i64, a: f64) -> gfx2d::Color { gfx2d::rgba(c, a) }
@@ -58,6 +60,7 @@ fn play(slot: i64, t: f64) {
     if DAMAGE[c] > 0 {
         enemy_hp -= DAMAGE[c];
         hits.push(Hit { next_hit, DAMAGE[c], t });
+        struck_at = t;
         next_hit++;
         if enemy_hp <= 0.0 { enemy_hp = 60.0; }
     }
@@ -183,7 +186,9 @@ fn main() {
                 imgui::box("enemy", if on_enemy.over { ed.border(2, rgba(0xFFE08A, 0.8)).bg(rgba(0xFFE08A, 0.08)) } else { ed }) {
                     imgui::text("CINDER WARDEN", imgui::column().text_size(18).letter_spacing(6).ink(rgb(INK))
                                                    .text_shadow(rgba(SHADE, 0.8), 0, 2));
-                    imgui::canvas("body", imgui::column().size(140, 140)) { size =>
+                    // Struck, its body flashes white and fades back (a color filter).
+                    let flash = max(1.0 - (t - struck_at) / 0.25, 0.0);
+                    imgui::canvas("body", imgui::column().size(140, 140).filter(gfx2d::flash(gfx2d::WHITE, flash * 0.8))) { size =>
                         let c = size * 0.5;
                         let bob = sin(t * 2.0) * 4.0;
                         // A shadow under it: a thick line with round ends.
@@ -260,7 +265,9 @@ fn main() {
                         // exit (the card under the pointer has).
                         let fly = if carried { imgui::Exit { .. } } else { imgui::slide_out(0, -160, imgui::tween(0.35)) };
                         let it = imgui::box(c, spot(s).exit(fly)) {
-                            imgui::box(imgui::stack().grow().offset(0, -up).opacity(if carried { 0.2 } else if can { 1.0 } else { 0.55 })) {
+                            // One that can't be paid for is drained of color.
+                            let drained = if can { gfx2d::COLOR_IDENTITY } else { gfx2d::mul(gfx2d::grayscale(0.85), gfx2d::brightness(0.7)) };
+                            imgui::box(imgui::stack().grow().offset(0, -up).opacity(if carried { 0.2 } else { 1.0 }).filter(drained)) {
                                 card_face(c);
                             };
                         };

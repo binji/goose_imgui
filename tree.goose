@@ -146,6 +146,8 @@ fn begin_tree() {
     inherited.clear();
     frame_fx.clear();
     frame_exits.clear();
+    frame_filters.clear();
+    node_filters.clear();
     node_looks.clear();
     node_looks.push(TextLook { .. });
     let base = resolve_style(LABEL, LookState { .. });
@@ -169,6 +171,7 @@ fn open_root(kind: i64, popup: u64, a: Anchor, d: Desc) -> i32 {
     let st = apply_overrides(resolve_style(d.vis.class, d.vis.state), d.vis, d.lay);
     var nd = d;
     nd.lay.padding = st.padding;
+    nd.vis = node_filter(nd.vis);
     let look = resolve_look(st, d.vis, inherited[inherited.len - 1].look);
     nodes.push(Node { id: rid, kind: NODE_BOX, root: roots.len as i16, d: nd, style: st, look: look, .. });
     roots.push(Root { node: i, kind: kind as u8, popup: popup, anchor: a, level: popup_level(popup) });
@@ -208,6 +211,7 @@ fn add_node(kind: i64, id: u64, var d: Desc) -> i32 {
     if st.font.id == 0 { st.font = up.font; }
     if st.text_size <= 0.0 { st.text_size = up.size; }
     let i = nodes.len as i32;
+    d.vis = node_filter(d.vis);
     nodes.push(Node { id: nid, parent: p, kind: kind as u8, named: named, root: nodes[p].root, d: d,
                       style: st, scope: current_scope(), look: resolve_look(st, d.vis, up.look), .. });
     let last = nodes[p].last;

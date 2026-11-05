@@ -289,6 +289,10 @@ steps, so they move the same at any frame rate.
 - Opacity is multiplied into colors, which is cheap. `.isolate()` draws a
   subtree through a gfx2d layer instead, so overlaps within it don't show
   through each other. That costs a pass.
+- A color filter (`.filter(m)`) is that layer's color matrix. The matrix is
+  80 bytes, so a Desc holds where it is in a table, as it does its text
+  effects and exit; the node it is recorded in moves it into the frame's
+  `node_filters`, which an exit's copy carries along with the node.
 - Time comes from the `dt` passed to the frame. Tests pass a fixed one.
 
 ## Input

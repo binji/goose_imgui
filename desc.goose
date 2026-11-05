@@ -112,6 +112,9 @@ struct LookDesc {
     opacity: f32 = 1.0,
     clips: bool = false,                // children clipped to the node's (rounded) box
     isolated: bool = false,             // drawn into a layer, composited at its opacity
+    filter: u32 = 0,                    // a color filter: 0 none, else where in a table (desc_filter); a
+                                        // recorded node's, where in node_filters, plus 1
+    filter_frame: u32 = 0,              // the frame it was set in, if in that frame's table
     state: LookState = LookState { .. },
 }
 
@@ -215,6 +218,30 @@ fn desc_exit(m: MotionDesc) -> Exit {
         return Exit { .. };
     }
     frame_exits[(m.exit - 1) as i64]
+}
+
+// And its color filter: few nodes have one, and it is 80 bytes.
+var frame_filters: gfx2d::ColorMatrix[>..<] = [];
+var lasting_filters: gfx2d::ColorMatrix[>..<] = [];
+// This frame's nodes' filters: a node's d.vis.filter is where in here, plus 1.
+var node_filters: gfx2d::ColorMatrix[>..<] = [];
+
+fn desc_filter(v: LookDesc) -> gfx2d::ColorMatrix {
+    if v.filter == 0 { return gfx2d::COLOR_IDENTITY; }
+    if v.filter & FX_LASTING != 0 { return lasting_filters[((v.filter & ~FX_LASTING) - 1) as i64]; }
+    if v.filter_frame != frame_index as u32 || v.filter > frame_filters.len {
+        misuse("a Desc's filter was set in an earlier frame: set it in the frame that uses the Desc, or outside any frame");
+        return gfx2d::COLOR_IDENTITY;
+    }
+    frame_filters[(v.filter - 1) as i64]
+}
+// A Desc's filter, as the node recorded with it keeps it: in node_filters.
+fn node_filter(var v: LookDesc) -> LookDesc {
+    if v.filter != 0 {
+        node_filters.push(desc_filter(v));
+        v.filter = node_filters.len as u32;
+    }
+    v
 }
 
 // --- starting points ------------------------------------------------------------------
@@ -417,6 +444,26 @@ fn reveal(d: Desc, chars: f64) -> Desc {
 fn opacity(var d: Desc, o: f64) -> Desc { d.vis.opacity = o as f32; d }
 fn clip(var d: Desc) -> Desc { d.vis.clips = true; d }
 fn isolate(var d: Desc) -> Desc { d.vis.isolated = true; d }
+// Its colors, and its subtree's, run through a color matrix: gfx2d's
+// grayscale(1) for a locked panel, flash(c, t) for a card that is hit,
+// sepia, hue_rotate, saturate, brightness, contrast, tint_matrix, or
+// several by gfx2d::mul. Drawn into a layer, as isolate() is. Not
+// inherited: the subtree is in the layer.
+fn filter(var d: Desc, m: gfx2d::ColorMatrix) -> Desc {
+    if gfx2d::is_identity(m) { d.vis.filter = 0; return d; }
+    if in_frame {
+        frame_filters.push(m);
+        d.vis.filter = frame_filters.len as u32;
+        d.vis.filter_frame = frame_index as u32;
+    } else {
+        var k = 0;
+        while k < lasting_filters.len && lasting_filters[k] != m { k++; }
+        if k == lasting_filters.len { lasting_filters.push(m); }
+        d.vis.filter = (k + 1) as u32 | FX_LASTING;
+    }
+    d
+}
+fn no_filter(var d: Desc) -> Desc { d.vis.filter = 0; d }
 fn look(var d: Desc, s: LookState) -> Desc { d.vis.state = s; d }
 
 // --- motion setters -------------------------------------------------------------------

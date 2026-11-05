@@ -62,6 +62,7 @@ var leaver_cmds: DrawCmd[>..] = [];
 var leaver_points: float2[>..] = [];
 var leaver_pieces: Piece[>..] = [];
 var leaver_glyphs: Glyph[>..] = [];
+var leaver_filters: gfx2d::ColorMatrix[>..] = [];  // a copied node's d.vis.filter is where in here, plus 1
 var exit_nodes: i32[>..<] = [];     // this frame's nodes with exits (finish_frame)
 var kept: Leaver[>..<] = [];        // copies drawn this frame, `node` their top in `nodes`
 
@@ -117,6 +118,7 @@ fn play_exits() {
     leaver_points.clear();
     leaver_pieces.clear();
     leaver_glyphs.clear();
+    leaver_filters.clear();
     for i in exit_nodes {
         let n .= nodes[i];
         var r = Leaver { id: n.id, exit: desc_exit(n.d.mot), .. };
@@ -174,6 +176,10 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
         }
         leaver_looks.push(node_looks[n.look as i64]);
         n.look = k - i;
+        if n.d.vis.filter != 0 {
+            leaver_filters.push(node_filters[(n.d.vis.filter - 1) as i64]);
+            n.d.vis.filter = leaver_filters.len as u32;
+        }
         if (n.kind == NODE_TEXT || n.kind == NODE_RICH) && has_glyphs(n) {
             // Its characters' effects, as they were.
             let g0 = leaver_glyphs.len as i32 - r.glyph;
@@ -280,6 +286,10 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
         }
         node_looks.push(leaver_looks[(r.look + n.look) as i64]);
         n.look = lb + k;
+        if n.d.vis.filter != 0 {
+            node_filters.push(leaver_filters[(n.d.vis.filter - 1) as i64]);
+            n.d.vis.filter = node_filters.len as u32;
+        }
         if n.cmd_count > 0 { n.cmd_first += r.cmd + cb; n.cmd_end += r.cmd + cb; }
         n.ring = false;
         n.bounds = everywhere;

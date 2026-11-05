@@ -2,10 +2,10 @@
 // gradient; opacity, multiplied in and through a layer; clipping by a box
 // that clips (a scroll pane's content past its edge); a motion offset and
 // scale; the focus ring, which shows only after navigation; a text's
-// outline and shadow, hard and soft, and its glow; a radial meter; a box turned and skewed; what has
-// left drawn on, with its canvas, as its exit plays; rich text's spans, its
-// image and its underline; text revealed in part, each character where it
-// is in the whole.
+// outline and shadow, hard and soft, and its glow; a radial meter; a box
+// turned and skewed; what has left drawn on, with its canvas, as its exit
+// plays; rich text's spans, its image and its underline; text revealed in
+// part, each character where it is in the whole; a color filter.
 import std;
 import vec;
 import math;
@@ -335,6 +335,36 @@ fn main() {
     imgui::set_text_motion(1.0);
     print("text effects: one character moved ", moved_mid < plain_mid / 4, " ", below > plain_mid / 2,
           ", the others in place ", ends_same, "; a rainbow colored ", colored > 100, "; held by set_text_motion(0) ", held);
+
+    // A filter: a red panel and a blue child, in grayscale (red's Rec. 709
+    // luminance, 0.2126, is 0x36); at half opacity, over white; from a
+    // Desc made outside any frame, in two frames; a flash; kept by an exit.
+    fn filtered(d: imgui::Desc, show: bool = true) {
+        if show {
+            imgui::box("f", d.absolute(20, 20).size(100, 100).bg(gfx2d::rgb(0xFF0000))
+                            .exit(imgui::fade_out(imgui::tween(0.5, imgui::EASE_LINEAR)))) {
+                imgui::panel(imgui::column().absolute(60, 60).size(30, 30).bg(gfx2d::rgb(0x0000FF)));
+            };
+        }
+    }
+    render(none) { filtered(imgui::column().filter(gfx2d::grayscale(1))); };
+    let gray = near(40, 40, 0x363636, 4);
+    let child = close_to(95, 95, 0x121212, 4);  // blue: 0.0722
+    render(none) { filtered(imgui::column().filter(gfx2d::grayscale(1)).opacity(0.5)); };
+    let half = near(40, 40, 0x9A9A9A, 4);
+    let kept = imgui::column().filter(gfx2d::grayscale(1));
+    render(none) { filtered(kept); };
+    render(none) { filtered(kept); };
+    let lasting = near(40, 40, 0x363636, 4);
+    render(none) { filtered(imgui::column().filter(gfx2d::flash(gfx2d::WHITE, 1.0))); };
+    let flashed = near(40, 40, 0xFFFFFF, 4) && !close_to(40, 40, 0xFF0000, 40);
+    render(none) { filtered(imgui::column().filter(gfx2d::grayscale(1))); };
+    render(none) { filtered(imgui::column().filter(gfx2d::grayscale(1)), false); };
+    let c = at(40, 40);
+    let leaving_gray = ((c >> 16) & 255) == (c & 255) && !close_to(40, 40, 0xFFFFFF, 4);
+    for k in 40 { render(none) { filtered(imgui::column(), false); }; }
+    print("filter: grayscale ", gray, ", its child too ", child, "; half opaque ", half, "; a lasting Desc ", lasting,
+          "; a flash ", flashed, "; leaving, still gray ", leaving_gray);
 }
 
 // Dark pixels in the box x0..x1, y0..y1.

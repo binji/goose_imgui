@@ -74,7 +74,10 @@ recursive fn draw_tree(i: i32, alpha: f32) {
 }
 
 fn draw_body(i: i32, a: f32) {
-    if nodes[i].d.vis.isolated {
+    let f = nodes[i].d.vis.filter;
+    if f != 0 {
+        gfx2d::layer(gfx2d::LayerDesc { opacity: a, color_matrix: node_filters[(f - 1) as i64] }) { draw_inner(i, 1.0); };
+    } else if nodes[i].d.vis.isolated {
         gfx2d::layer(a) { draw_inner(i, 1.0); };
     } else {
         draw_inner(i, a);

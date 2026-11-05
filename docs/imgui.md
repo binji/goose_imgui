@@ -179,6 +179,7 @@ A Desc with text effects set during a frame is good for that frame only.
 One made outside any frame, and kept, is good for any frame.
 | `opacity(o)` | multiplied into its colors and its subtree's |
 | `isolate()` | the subtree drawn into a gfx2d layer and composited at its opacity, so overlaps inside it don't show through (a pass more) |
+| `filter(m)`, `no_filter()` | the subtree's colors run through a gfx2d `ColorMatrix`: `grayscale(1)` for something locked, `flash(c, t)` for something hit, `sepia`, `hue_rotate`, `saturate`, `brightness`, `contrast`, `tint_matrix`, or several by `gfx2d::mul`. Drawn into a layer, as `isolate()` is; kept by an exit's copy. Set every frame to animate it |
 | `clip()` | children clipped to its rounded box |
 | `look(LookState)` | the state amounts its class's styles are mixed by: hover, press, focus, checked (0 to 1), disabled |
 
