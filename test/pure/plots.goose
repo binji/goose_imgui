@@ -53,7 +53,7 @@ fn type_text(s: const u8[:]) {
     for c in s { inp.text.push(c); }
     imgui::frame(inp, 1.0 / 60.0) { ui(); };
     var e = imgui::Input { pointer: imgui::Pointer { pos: at, .. }, viewport: float2 { 640.0, 640.0 }, .. };
-    e.keys.push(imgui::EditKey { key: imgui::KEY_ENTER as u8, .. });
+    e.keys.push(imgui::EditKey { key: imgui::KEY_ENTER, .. });
     e.nav.accept = true;
     imgui::frame(e, 1.0 / 60.0) { ui(); };
     step();
@@ -92,9 +92,9 @@ fn text_at(s: const u8[:]) -> float2 {
 
 fn main() {
     // A rolling buffer: the newest at the end, no more than kept.
-    for k in 6 { imgui::push_sample(samples, (k * 3) as f64, 4); }
+    for k in 6 { imgui::push_sample(samples, k * 3, 4); }
     print("samples: ", samples[0], " ", samples[1], " ", samples[2], " ", samples[3], " (", samples.len, ")");
-    for k in 5 { imgui::push_sample(bars, (k + 1) as f64, 10); }
+    for k in 5 { imgui::push_sample(bars, k + 1, 10); }
     step();
     step();
     // Fitted, the scale is the values' range; fixed, the Plot's.

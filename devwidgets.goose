@@ -253,7 +253,7 @@ fn format_fixed(out: u8[>..]&, v: f64, decimals: i64) {
     let n = round(abs(v) * scale);
     if n >= 9.0e18 { format(out, v); return; }
     let whole = (n / scale) as! i64;
-    let frac = (n - whole as f64 * scale) as! i64;
+    let frac = (n - whole * scale) as! i64;
     if v < 0.0 && n > 0.0 { out.push('-'); }
     format(out, whole);
     if d > 0 {
@@ -434,19 +434,19 @@ fn input_number_of(label: const u8[:], v: f64&, o: Drag, d: Desc, whole: bool) -
 
 // A vector's parts, each a number field tagged X, Y, Z or W in its color.
 fn drag_vec(label: const u8[:], v: float2&, o: Drag = Drag { .. }, d: Desc = row()) -> bool {
-    var a: f64[4] = [v.x as f64, v.y as f64, 0.0, 0.0];
+    var a: f64[4] = [v.x, v.y, 0.0, 0.0];
     let changed = drag_parts(label, a, 2, o, d);
     v = float2 { a[0] as f32, a[1] as f32 };
     changed
 }
 fn drag_vec(label: const u8[:], v: float3&, o: Drag = Drag { .. }, d: Desc = row()) -> bool {
-    var a: f64[4] = [v.x as f64, v.y as f64, v.z as f64, 0.0];
+    var a: f64[4] = [v.x, v.y, v.z, 0.0];
     let changed = drag_parts(label, a, 3, o, d);
     v = float3 { a[0] as f32, a[1] as f32, a[2] as f32 };
     changed
 }
 fn drag_vec(label: const u8[:], v: float4&, o: Drag = Drag { .. }, d: Desc = row()) -> bool {
-    var a: f64[4] = [v.x as f64, v.y as f64, v.z as f64, v.w as f64];
+    var a: f64[4] = [v.x, v.y, v.z, v.w];
     let changed = drag_parts(label, a, 4, o, d);
     v = float4 { a[0] as f32, a[1] as f32, a[2] as f32, a[3] as f32 };
     changed

@@ -50,7 +50,7 @@ fn push_sample(buf: f32[>..]&, v: f64, keep: i64) {
 var plot_values: f64[>..<] = [];
 fn as_f64(values: const f32[:]) -> const f64[:] {
     plot_values.clear();
-    for v in values { plot_values.push(v as f64); }
+    for v in values { plot_values.push(v); }
     plot_values[..]
 }
 
@@ -338,12 +338,12 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
         clamp(p / max(if a == 0 { r.w } else { r.h }, 1.0), 0.0, 1.0)
     }
     if sv.held { h.y = frac(sv, 0) as f32; h.z = 1.0 - frac(sv, 1) as f32; }
-    if sv.nav.x != 0 { h.y = clamp(h.y + sv.nav.x * 0.02, 0.0, 1.0) as f32; }
-    if sv.nav.y != 0 { h.z = clamp(h.z - sv.nav.y * 0.02, 0.0, 1.0) as f32; }
+    if sv.nav.x != 0 { h.y = clamp(h.y + sv.nav.x * 0.02, 0.0, 1.0); }
+    if sv.nav.y != 0 { h.z = clamp(h.z - sv.nav.y * 0.02, 0.0, 1.0); }
     if hb.held { h.x = min(frac(hb, 1), 0.9999) as f32; }
-    if hb.nav.y != 0 { h.x = clamp(h.x + hb.nav.y * 0.01, 0.0, 0.9999) as f32; }
+    if hb.nav.y != 0 { h.x = clamp(h.x + hb.nav.y * 0.01, 0.0, 0.9999); }
     if alpha && ab.held { h.w = 1.0 - frac(ab, 1) as f32; }
-    if alpha && ab.nav.y != 0 { h.w = clamp(h.w - ab.nav.y * 0.02, 0.0, 1.0) as f32; }
+    if alpha && ab.nav.y != 0 { h.w = clamp(h.w - ab.nav.y * 0.02, 0.0, 1.0); }
     let still = int2 { 0, 0 };
     let moved = sv.held || hb.held || (alpha && ab.held) || sv.nav != still || hb.nav != still || (alpha && ab.nav != still);
     if moved { c = hsv_color(h); }

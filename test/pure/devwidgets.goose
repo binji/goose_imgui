@@ -76,7 +76,7 @@ fn type_text(s: const u8[:], enter: bool) {
     imgui::frame(inp, 1.0 / 60.0) { ui(); };
     if enter {
         var e = imgui::Input { pointer: imgui::Pointer { pos: at, .. }, viewport: float2 { 640.0, 640.0 }, .. };
-        e.keys.push(imgui::EditKey { key: imgui::KEY_ENTER as u8, .. });
+        e.keys.push(imgui::EditKey { key: imgui::KEY_ENTER, .. });
         e.nav.accept = true;
         imgui::frame(e, 1.0 / 60.0) { ui(); };
     }
