@@ -144,6 +144,10 @@ fn main() {
     type_text("16");
     print("typed R: ", show(color));
     click_at(text_at(show(color)));
+    // While it is typed in, its field is the text input alone.
+    var fields = 0;
+    for n in imgui::nodes { if n.id == imgui::sub_id(imgui::id("pick"), "hex").v { fields++; } }
+    print("typing the hex: its field recorded too: ", fields > 0, ", editing ", imgui::number_editing != 0);
     type_text("#102030");
     print("typed hex: ", show(color), " ", hsv_of("pick"));
 

@@ -407,7 +407,8 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
 // The color's hex, typed in as a number field is.
 fn hex_field(i: Id, c: gfx2d::Color&, alpha: bool, d: Desc) {
     if number_editing == i.v {
-        guard typing(i, d, state_of(i.v).rect.w);
+        // (A bare guard would only skip the rest of this if's block.)
+        guard typing(i, d, state_of(i.v).rect.w) else { return; }
         let v, ok = parse_hex(number_text[..], c.a);
         if ok { c = if alpha { v } else { gfx2d::with_alpha(v, c.a) }; }
         return;

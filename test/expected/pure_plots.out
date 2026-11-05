@@ -11,6 +11,7 @@ to black: #000000FF h 0.5 s 0.5 v 0.0
 back up: #00FFFFFF h 0.5 s 1.0 v 1.0
 alpha three quarters down: #00FFFF40
 typed R: #10FFFF40
+typing the hex: its field recorded too: false, editing true
 typed hex: #10203040 h 0.58 s 0.67 v 0.19
 tint: #FF880080, open 0
 swatch clicked: open 1, picker shown: true
