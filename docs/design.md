@@ -584,6 +584,11 @@ spills past the box.
   `active` becomes the title's ID and the press is moved to where the
   pointer is, so the window, now floating, follows the same drag, and a
   release over a dock space docks it again.
+- A tab bar is a drop target with no square of its own: the squares are
+  tested first, and the bar under the pointer after. The space's top edge
+  square sits below the tab bars, so it doesn't cover the middle of the
+  top leaf's bar. Where a dropped tab goes is found from the tabs' rects
+  last frame, as hits are.
 - **A floating dock** is a window of imgui's (its ID from the window it
   was made on) whose body is a dock space of its own, with a different
   ID, as a window root and the box in it can't share one. Nothing in the

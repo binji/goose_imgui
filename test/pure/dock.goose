@@ -6,7 +6,8 @@
 // shown, let go off them (floating still) and on one (docked beside it,
 // the area it takes shown first); a target by the space's outer edge; a
 // tab bar too full, its list; a tab bar hidden and shown again; a tab's
-// close button; the last window of a leaf undocked, the leaf gone.
+// close button; the last window of a leaf undocked, the leaf gone; a
+// window dropped on a tab bar, in as a tab where it was let go.
 import std;
 import vec;
 import math;
@@ -241,4 +242,26 @@ fn main() {
     step();
     print("C undocked:");
     all();
+    // Q by its title onto B's tab bar, before B's tab: the leaf previewed,
+    // then Q a tab there, first, and shown.
+    let qr2 = rect("Q");
+    press(float2 { qr2.x + 40.0, qr2.y + 8.0 });
+    move_to(mid(rect("B")));
+    move_to(tab("B") - float2 { 4.0, 0.0 });
+    print("Q on B's tab bar: previewed ", previewed(), ", before tab ", imgui::dock_bar.index);
+    release();
+    step();
+    print("Q let go there: tabs ", tabs_of("B"), "; shown Q ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("Q").v);
+    // E undocked, then onto the bar past the last tab: after them all.
+    imgui::undock_window("E");
+    step();
+    step();
+    let er2 = rect("E");
+    press(float2 { er2.x + 40.0, er2.y + 8.0 });
+    move_to(mid(rect("B")));
+    let br = imgui::rect_of(imgui::sub_id(imgui::id("B"), "tab"));
+    move_to(float2 { br.x + br.w + 20.0, br.y + br.h * 0.5 });
+    release();
+    step();
+    print("E past the last tab: tabs ", tabs_of("B"));
 }

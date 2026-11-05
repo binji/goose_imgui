@@ -489,8 +489,10 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
   a tab with what is there; each side, half of the leaf, beside it) and,
   if the space is split, four by its outer edges (a quarter of the whole
   space, on that side). The area a target would give is shown while the
-  pointer is on it; let go there, the window docks. Let go anywhere else,
-  it floats on. An empty leaf has only the middle.
+  pointer is on it; let go there, the window docks. A leaf's tab bar is a
+  target too: let go on it, the window goes in as a tab where it was let
+  go, between the tabs either side (a line shows where). Let go anywhere
+  else, it floats on. An empty leaf has only the middle.
 - **Floating docks:** dragged over another floating window, a window
   shows a cross of targets on it too. Let go on one, the two go in a
   floating dock where the other was: a window of imgui's, titled by the
@@ -794,7 +796,8 @@ The tests are in three groups:
     window; the handle between two leaves; a tab dragged out, floating,
     still held; a floating window dragged over a leaf, its targets shown,
     let go off them and on one (the area shown first), docked; a target by
-    the space's outer edge; a tab's close button, and the window opened
+    the space's outer edge; windows let go on a tab bar, before its tab and
+    past them all; a tab's close button, and the window opened
     again in its place; a full tab bar's list; a tab bar hidden and shown;
     a floating window dropped on another, the two in a floating dock that
     moves with them and is drawn under them, a tab dragged out of it; a

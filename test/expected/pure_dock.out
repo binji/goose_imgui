@@ -54,3 +54,6 @@ C undocked:
   B docked: 160.0 32.0 286.0 368.0
   C floating: 176.0 298.0 286.0 120.0
   D docked: 0.0 32.0 75.0 368.0
+Q on B's tab bar: previewed true, before tab 0
+Q let go there: tabs Q B ; shown Q true
+E past the last tab: tabs Q B E 

@@ -122,9 +122,20 @@ fn bar_height(n: i32) -> f32 { if dock_nodes[n].hide_tabs { 0.0 } else { tab_hei
 
 // --- changing the tree --------------------------------------------------------------------
 
-// Window w added to leaf n's tabs, and shown.
-fn dock_into_leaf(w: u64, n: i32) {
-    if dock_nodes[n].tabs.len < DOCK_TABS { dock_nodes[n].tabs.push(w); }
+// Window w added to leaf n's tabs, before the one at `at` (-1: after
+// them all), and shown.
+fn dock_into_leaf(w: u64, n: i32, at: i64 = -1) {
+    if dock_nodes[n].tabs.len < DOCK_TABS {
+        dock_nodes[n].tabs.push(w);
+        if at >= 0 {
+            var k = dock_nodes[n].tabs.len - 1;
+            while k > at {
+                dock_nodes[n].tabs[k] = dock_nodes[n].tabs[k - 1];
+                k--;
+            }
+            dock_nodes[n].tabs[k] = w;
+        }
+    }
     dock_nodes[n].selected = w;
     var ws = window_state(w);
     ws.dock = n;
@@ -151,9 +162,10 @@ fn move_dock_content(n: i32, m: i32) {
 }
 
 // Window w docked at node n: in it as a tab (DOCK_CENTER), or beside it on
-// `side`, taking `ratio` of its length. A window docked elsewhere leaves
-// there first.
-fn dock_into(w: u64, n: i32, side: i64, ratio: f64) {
+// `side`, taking `ratio` of its length. As a tab, it goes before the tab
+// at `at` (-1: after them all). A window docked elsewhere leaves there
+// first.
+fn dock_into(w: u64, n: i32, side: i64, ratio: f64, at: i64 = -1) {
     undock_id(w);
     guard n >= 0 && dock_nodes[n].used;
     let empty = dock_nodes[n].axis < 0 && dock_nodes[n].tabs.len == 0;
@@ -164,7 +176,7 @@ fn dock_into(w: u64, n: i32, side: i64, ratio: f64) {
             let p = dock_nodes[leaf];
             leaf = if p.ratio >= 0.5 { p.a } else { p.b };
         }
-        dock_into_leaf(w, leaf);
+        dock_into_leaf(w, leaf, if leaf == n { at } else { -1 });
         return;
     }
     // n becomes a split of what it held and a new leaf.
@@ -258,6 +270,8 @@ struct DockTarget {
     side: i64 = 0,
     ratio: f64 = 0.5,           // of the node it takes
     rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },    // the area it would take
+    index: i64 = -1,            // dropped on a tab bar: the tab it goes before (-1: after them all)
+    mark: f32 = 0.0,            // and where, along the bar
 }
 
 // The targets a window dragged over a dock space aims at: a cross of five
@@ -267,6 +281,9 @@ struct DockTarget {
 // leaf. Each is a square; `at` is its rect.
 struct DockAim { target: DockTarget = DockTarget { .. }, at: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 } }
 var dock_aims: DockAim[..9] = [];
+// The tab bar under the pointer, if any (its node: -1 if none): dropped
+// there, a window goes in as a tab, between the tabs it is dropped between.
+var dock_bar: DockTarget = DockTarget { .. };
 
 // The part of r a window docked on `side` of it, taking `ratio`, would take.
 fn side_rect(r: gfx2d::Rect, side: i64, ratio: f64) -> gfx2d::Rect {
@@ -320,6 +337,23 @@ fn space_aims(sp: u64, p: float2) -> bool {
     }
     var live = 0;
     for w in dock_nodes[n].tabs { if tab_live(w) { live++; } }
+    let leaf = dock_rect(n);
+    let bh = bar_height(n);
+    if live > 0 && bh > 0.0 && p.y < leaf.y + bh {
+        // On its tab bar: before the first tab whose middle is past p.
+        var at: i64 = -1;
+        var x = leaf.x + 4.0;
+        for w, k in dock_nodes[n].tabs {
+            if !tab_live(w) { continue; }
+            let r = state_of(sub_id(Id { w }, "tab").v).screen;
+            if at < 0 && p.x < r.x + r.w * 0.5 {
+                at = k;
+                x = r.x - 1.0;
+            }
+            if at < 0 { x = r.x + r.w + 1.0; }
+        }
+        dock_bar = DockTarget { node: n, side: DOCK_CENTER, ratio: 1.0, rect: leaf, index: at, mark: x, .. };
+    }
     add_cross(dock_rect(n), DockTarget { node: n, .. }, live > 0);
     if dock_nodes[root].axis >= 0 {
         let m = class_style(DOCK_TARGET).normal.min_size.x * 0.5 + 8.0;
@@ -329,7 +363,8 @@ fn space_aims(sp: u64, p: float2) -> bool {
         }
         edge(float2 { space.x + m, sc.y }, DOCK_LEFT);
         edge(float2 { space.x + space.w - m, sc.y }, DOCK_RIGHT);
-        edge(float2 { sc.x, space.y + m }, DOCK_TOP);
+        // (The top one below the tab bars, which are targets too.)
+        edge(float2 { sc.x, space.y + tab_height() + m }, DOCK_TOP);
         edge(float2 { sc.x, space.y + space.h - m }, DOCK_BOTTOM);
     }
     true
@@ -341,6 +376,7 @@ fn space_aims(sp: u64, p: float2) -> bool {
 // space under p; none if there is neither.
 fn find_dock_aims(p: float2, dragged: u64) {
     dock_aims.clear();
+    dock_bar = DockTarget { .. };
     var k = window_order.len - 1;
     while k >= 0 {
         let w = window_order[k];
@@ -367,7 +403,7 @@ fn find_dock_aims(p: float2, dragged: u64) {
 fn dock_target_at(p: float2, dragged: u64) -> DockTarget {
     find_dock_aims(p, dragged);
     for a in dock_aims { if inside(a.at, p) { return a.target; } }
-    DockTarget { .. }
+    dock_bar
 }
 
 // The targets of a window dragged to p, over everything; and the area the
@@ -377,12 +413,21 @@ fn dock_preview(p: float2, dragged: u64) {
     guard dock_aims.len > 0;
     var hit = -1;
     for a, k in dock_aims { if inside(a.at, p) { hit = k; } }
+    let bar = hit < 0 && dock_bar.node >= 0;
     open_root(ROOT_TOOLTIP, hash_combine(ROOT_ID, 0xD0C4), Anchor { kind: ANCHOR_POINT, at: float2 { viewport.x, viewport.y }, .. },
               column().size(viewport.w, viewport.h));
     roots[roots.len - 1].level = -1;
     if hit >= 0 {
         let r = dock_aims[hit].target.rect;
         panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h));
+    }
+    if bar {
+        // The leaf it would join, and where its tab would go.
+        let r = dock_bar.rect;
+        let th = tab_height();
+        panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h));
+        panel(column().skin(DOCK_TARGET_MARK).absolute(dock_bar.mark - 1.0 - viewport.x, r.y + 2.0 - viewport.y)
+                  .size(2.0, th - 4.0));
     }
     for a, k in dock_aims {
         let at = a.at;

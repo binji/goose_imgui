@@ -237,7 +237,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
                 // Recorded docked this frame, not skipping one (which would
                 // play its hiding).
                 windows.insert(wid.v, w);
-                dock_into(wid.v, t.node, t.side, t.ratio);
+                dock_into(wid.v, t.node, t.side, t.ratio, t.index);
                 docked_window(wid, open, d, flags) { F(); };
                 return;
             }
