@@ -14,8 +14,10 @@ D dragged past B: B D ; D under the pointer 8.0 in; B sliding true
 let go: B at D's place true, D after it true
 D back: D B 
 tab stops in B's bar: 1
-right: shown D true, focused true
-left: shown B true, focused true
+left: shown D true, focused true
+left from the end: A's tab focused true, D still shown true
+right from A's: D's tab focused true
+right: shown B true, focused true
 button in A: pressed;
 Tab from A's tab: A's button true
 Shift+Tab: A's tab true

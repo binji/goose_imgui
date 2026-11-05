@@ -136,8 +136,10 @@ fn main() {
     release();
     click_at(tab("B"));
     print("D back: ", tabs_of("B"));
-    // The keys: the shown tab (B) the bar's one stop; right from it, round
-    // from the end, D shown and focused; left, B again.
+    // The keys: the shown tab (B) the bar's one stop. Tabs D B: left from
+    // B, D shown and focused; left again, from the bar's end, on to A's
+    // bar, D still shown; right from A's, back to that bar's shown tab, D;
+    // right, B.
     var stops = 0;
     for f in imgui::focusables {
         if f.bits & imgui::NAV_SKIP != 0 { continue; }
@@ -145,11 +147,16 @@ fn main() {
     }
     print("tab stops in B's bar: ", stops);
     imgui::focus(imgui::sub_id(imgui::id("B"), "tab"), true);
-    nav(imgui::NavInput { right: true, .. });
-    print("right: shown D ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("D").v, ", focused ",
+    nav(imgui::NavInput { left: true, .. });
+    print("left: shown D ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("D").v, ", focused ",
           imgui::is_focused(imgui::sub_id(imgui::id("D"), "tab")));
     nav(imgui::NavInput { left: true, .. });
-    print("left: shown B ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("B").v, ", focused ",
+    print("left from the end: A's tab focused ", imgui::is_focused(imgui::sub_id(imgui::id("A"), "tab")), ", D still shown ",
+          imgui::dock_nodes[leaf_of("B")].selected == imgui::id("D").v);
+    nav(imgui::NavInput { right: true, .. });
+    print("right from A's: D's tab focused ", imgui::is_focused(imgui::sub_id(imgui::id("D"), "tab")));
+    nav(imgui::NavInput { right: true, .. });
+    print("right: shown B ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("B").v, ", focused ",
           imgui::is_focused(imgui::sub_id(imgui::id("B"), "tab")));
     imgui::blur();
     // A's button, docked.

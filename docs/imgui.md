@@ -515,9 +515,10 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
   follows the pointer, over the others, and once its edge is past the
   middle of the tab beside it, the two change places (the other sliding,
   with `set_tab_slide`). From the keys, the shown tab is the bar's one
-  stop (Tab reaches it); Left and Right show the tab beside it, round from
-  the ends, and the focus goes with it. Tab goes from a tab into its
-  window's widgets, and from the last of them to the next tab bar. A window that can
+  stop (Tab reaches it); Left and Right show the tab beside it, and the
+  focus goes with it; at the bar's ends, they go on that way, to the next
+  bar or widget. Tab goes from a tab into its window's widgets, and from
+  the last of them to the next tab bar. A window that can
   close has a close button on its tab; closed, it keeps its place, for
   when it is opened again. A window not recorded (closed, or not called
   for) has no tab. Tabs that don't fit are cut off, the one shown first,
@@ -644,7 +645,7 @@ fn slot(k: i64, item: Item, chosen: bool) -> bool {
 The parts inside a widget that have looks of their own (a toggle's
 track, a slider's thumb, the gem in an inventory slot) are hit as the
 widget: the pointer on any of them hovers, presses and drags the widget.
-| `with_bits(CAPTURE_X)` | left and right go to the widget while it is focused (`it.nav.x`) |
+| `with_bits(CAPTURE_X)` | left and right go to the widget while it is focused (`it.nav.x`); `CAPTURE_LEFT` or `CAPTURE_RIGHT`, only one of them (the other navigates): a widget with nothing more that way |
 | `interact(id, d) -> Interaction` | the interaction a widget recorded with `id` and `d` will have, asked before recording it so its look can follow |
 | `look_of(it)`, `checked_look(on)` | the look state of an interaction, or of on/off |
 | `id(label)`, `id(key)`, `sub_id(id, part)`, `id_scope(…) { … }` | IDs |
@@ -808,7 +809,7 @@ The tests are in three groups:
   - `dock`: a layout made in code, each body in its leaf; tabs, one shown,
     another clicked, one dragged past another, and again with a slide, under
     the pointer as it goes; the shown tab the bar's one stop, Left and Right
-    showing the tabs beside it; Tab from a tab into its window; a button in a docked
+    showing the tabs beside it, and going on to the next bar from the end; Tab from a tab into its window; a button in a docked
     window; the handle between two leaves; a tab dragged out, floating,
     still held; a floating window dragged over a leaf, its targets shown,
     let go off them and on one (the area shown first), docked; a target by

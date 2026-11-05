@@ -161,6 +161,8 @@ let OVERFLOW_X = 16384;     // its children are their content's width whatever i
                             // twin): a table whose columns are wider than it, clipped
 let SHRINKS = 32768;        // it can be narrower than its content: what doesn't fit is cut off, if it
                             // clips (CSS's min-width: 0). Its children are laid out as ever
+let CAPTURE_LEFT = 65536;   // when focused, left goes to the widget (CAPTURE_X: left and right)
+let CAPTURE_RIGHT = 131072; // right
 
 struct Desc {
     lay: LayoutDesc = LayoutDesc { .. },

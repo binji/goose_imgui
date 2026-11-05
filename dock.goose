@@ -524,8 +524,8 @@ fn dock_space_of(i: Id, d: Desc) {
             if over && tab_live(sel) { order.push(sel); }
             for w in n.tabs { if tab_live(w) && !(over && w == sel) { order.push(w); } }
             // Left or right on the shown tab, focused: the tab beside it
-            // shown, and focused, round from the ends. (In the bar's order,
-            // not as drawn: a full bar draws the shown one first.)
+            // shown, and focused. (In the bar's order, not as drawn: a full
+            // bar draws the shown one first.) At the ends, it isn't taken.
             if tab_live(sel) {
                 let it = interact(tab_id(sel), tab_desc(true));
                 if it.focused && it.nav.x != 0 {
@@ -536,7 +536,8 @@ fn dock_space_of(i: Id, d: Desc) {
                         if w == sel { at = live.len; }
                         live.push(w);
                     }
-                    let next = live[(at + it.nav.x + live.len) % live.len];
+                    let to = at + it.nav.x;
+                    let next = if to >= 0 && to < live.len { live[to] } else { sel };
                     if next != sel {
                         sel = next;
                         dock_nodes[k].selected = next;
@@ -633,11 +634,22 @@ fn tab_arrive(w: u64, left: f32) {
     let k = sub_id(tab_id(w), "slide").v;
     animate_lanes(k, lanes(left), INSTANT, lanes(left), true);
 }
-// The shown tab is the bar's one stop for navigation (left and right go to
-// the bar); the others are skipped.
+// The shown tab is the bar's one stop for navigation; the others are
+// skipped.
 fn tab_desc(on: bool) -> Desc {
     let d = clickable(row().skin(DOCK_TAB).align(CENTER)).look(checked_look(on));
-    if on { d.with_bits(CAPTURE_X) } else { d.nav_skip() }
+    if on { d } else { d.nav_skip() }
+}
+// Which of left and right the shown tab w in leaf n takes: those with a
+// tab that way; at the bar's ends, navigation goes on that way.
+fn tab_capture(w: u64, n: i32) -> u32 {
+    var bits: u32 = 0;
+    var seen = false;
+    for t in dock_nodes[n].tabs {
+        if !tab_live(t) { continue; }
+        if t == w { seen = true; } else if seen { bits |= CAPTURE_RIGHT; } else { bits |= CAPTURE_LEFT; }
+    }
+    bits
 }
 fn tab_dragging(w: u64) -> bool {
     let it = interact(tab_id(w), tab_desc(false));
@@ -652,6 +664,7 @@ fn dock_tab(w: u64, n: i32, on: bool, leaf: gfx2d::Rect, x: f32, dragged: bool) 
     let wid = Id { w };
     let tid = sub_id(wid, "tab");
     var td = tab_desc(on);
+    if on { td = td.with_bits(tab_capture(w, n)); }
     let it = interact(tid, td);
     let p = input.pointer.pos;
     if it.pressed {

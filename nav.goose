@@ -178,10 +178,12 @@ fn begin_nav() {
     var down = nav.down;
     var left = nav.left;
     var right = nav.right;
-    if f.bits & CAPTURE_X != 0 {
-        nav_captured.x = ((if right { 1 } else { 0 }) - (if left { 1 } else { 0 })) as i32;
-        left = false;
-        right = false;
+    let take_left = f.bits & (CAPTURE_X | CAPTURE_LEFT) != 0 && left;
+    let take_right = f.bits & (CAPTURE_X | CAPTURE_RIGHT) != 0 && right;
+    if take_left || take_right {
+        nav_captured.x = ((if take_right { 1 } else { 0 }) - (if take_left { 1 } else { 0 })) as i32;
+        if take_left { left = false; }
+        if take_right { right = false; }
     }
     if f.bits & CAPTURE_Y != 0 {
         nav_captured.y = ((if down { 1 } else { 0 }) - (if up { 1 } else { 0 })) as i32;
