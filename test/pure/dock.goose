@@ -54,6 +54,7 @@ fn move_to(p: float2) {
     at = p;
     run_frame(imgui::Pointer { pos: at, down: true, .. });
 }
+fn step_down() { run_frame(imgui::Pointer { pos: at, down: true, .. }); }
 fn release() { run_frame(imgui::Pointer { pos: at, released: true, .. }); step(); }
 fn mid(r: gfx2d::Rect) -> float2 { float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 } }
 fn rect(name: const u8[:]) -> gfx2d::Rect { imgui::rect_of(imgui::id(name)) }
@@ -107,6 +108,30 @@ fn main() {
     move_to(tab("D") + float2 { 30.0, 0.0 });
     release();
     print("B dragged past D: ", tabs_of("B"), "; B still docked ", imgui::is_docked("B"));
+    // With a slide: D dragged past B, under the pointer as it goes; B
+    // sliding to D's place, and there once it has.
+    imgui::set_tab_slide(imgui::tween(0.2));
+    let first = imgui::state_of(imgui::sub_id(imgui::id("D"), "tab").v).screen.x;
+    let b_was = imgui::state_of(imgui::sub_id(imgui::id("B"), "tab").v).screen.x;
+    press(tab("D"));
+    move_to(tab("B") + float2 { 30.0, 0.0 });
+    step_down();
+    let dx = imgui::state_of(imgui::sub_id(imgui::id("D"), "tab").v).screen.x;
+    let bx = imgui::state_of(imgui::sub_id(imgui::id("B"), "tab").v).screen.x;
+    print("D dragged past B: ", tabs_of("B"), "; D under the pointer ", round(at.x - dx), " in; B sliding ",
+          bx < b_was && bx > first);
+    release();
+    for k in 20 { step(); }
+    let bx2 = imgui::state_of(imgui::sub_id(imgui::id("B"), "tab").v).screen.x;
+    let dx2 = imgui::state_of(imgui::sub_id(imgui::id("D"), "tab").v).screen.x;
+    print("let go: B at D's place ", bx2 == first, ", D after it ", dx2 > bx2);
+    imgui::set_tab_slide(imgui::INSTANT);
+    // Back as they were.
+    press(tab("D"));
+    move_to(float2 { first, tab("D").y });
+    release();
+    click_at(tab("B"));
+    print("D back: ", tabs_of("B"));
     // A's button, docked.
     var bid = imgui::Id { 0 };
     for n, i in imgui::nodes { if n.kind == imgui::NODE_TEXT && imgui::node_text(i as i32) == "Press" { bid = imgui::Id { imgui::nodes[n.parent].id }; } }

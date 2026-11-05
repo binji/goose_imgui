@@ -584,6 +584,14 @@ spills past the box.
   `active` becomes the title's ID and the press is moved to where the
   pointer is, so the window, now floating, follows the same drag, and a
   release over a dock space docks it again.
+- **A tab dragged along its bar** is recorded last, at the pointer, out
+  of the flow, so it is drawn over the others, with an empty box of its
+  width in its place. Where each tab is along the bar is worked out from
+  the order and last frame's widths, not taken from last frame's rects,
+  which would be a frame behind just after two change places and have
+  them change back. Sliding is the tab's place along the bar, animated
+  and drawn as an offset, rather than `.glide`, which would have the tabs
+  trail the bar when a handle moves it.
 - A tab bar is a drop target with no square of its own: the squares are
   tested first, and the bar under the pointer after. The space's top edge
   square sits below the tab bars, so it doesn't cover the middle of the

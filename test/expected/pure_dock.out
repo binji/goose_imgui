@@ -10,6 +10,9 @@ B's tab:
   D docked: not shown
 tabs: B D 
 B dragged past D: D B ; B still docked true
+D dragged past B: B D ; D under the pointer 8.0 in; B sliding true
+let go: B at D's place true, D after it true
+D back: D B 
 button in A: pressed;
 handle right 60:
   A docked: 0.0 32.0 209.0 368.0

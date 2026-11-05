@@ -489,19 +489,36 @@ fn dock_space_of(i: Id, d: Desc) {
             if n.hide_tabs { continue; }
             // Tabs past the bar's end: a button lists them all, and the
             // one shown goes first, so that it shows.
+            let gap = class_style(DOCK_TAB_BAR).normal.gap;
             var wide: f32 = 0.0;
-            for w in n.tabs { if tab_live(w) { wide += state_of(sub_id(Id { w }, "tab").v).rect.w + 2.0; } }
+            for w in n.tabs { if tab_live(w) { wide += tab_width(w) + gap; } }
             let list_w = th * 0.9;
             let over = wide > r.w - 8.0;
+            var order: u64[..8] = [];
+            if over && tab_live(sel) { order.push(sel); }
+            for w in n.tabs { if tab_live(w) && !(over && w == sel) { order.push(w); } }
+            // A tab dragged along the bar: drawn over the others, after them,
+            // a gap where it goes. (Not while the bar is full: the one shown
+            // goes first there.)
+            var dragged: u64 = 0;
+            if !over { for w in order { if tab_dragging(w) { dragged = w; } } }
             box(row().skin(DOCK_TAB_BAR).absolute(r.x - o.x, r.y - o.y).size(r.w, th).clip().align(END)
                     .padding(4, 0, if over { list_w + 4.0 } else { 4.0 }, 0)) {
                 // The tabs cut off before the list's button, not under it.
-                box(row().grow().align(END).clip().with_bits(SHRINKS).gap(class_style(DOCK_TAB_BAR).normal.gap)) {
-                    if over && tab_live(sel) { dock_tab(sel, k, true, r); }
-                    for w in n.tabs {
-                        if !tab_live(w) || (over && w == sel) { continue; }
-                        dock_tab(w, k, sel == w, r);
+                box(row().grow().align(END).clip().with_bits(SHRINKS).gap(gap)) {
+                    var x: f32 = 0.0;
+                    var dragged_at: f32 = 0.0;
+                    for w in order {
+                        let tw = tab_width(w);
+                        if w == dragged {
+                            panel(row().size(tw, th));
+                            dragged_at = x;
+                        } else {
+                            dock_tab(w, k, sel == w, r, x, false);
+                        }
+                        x += tw + gap;
                     }
+                    if dragged != 0 { dock_tab(dragged, k, sel == dragged, r, dragged_at, true); }
                 };
             };
             if over { tab_list(i, k, gfx2d::Rect { r.x + r.w - list_w - 2.0 - o.x, r.y - o.y, list_w, th }); }
@@ -509,15 +526,37 @@ fn dock_space_of(i: Id, d: Desc) {
     };
 }
 
-// Window w's tab in leaf n: clicked, it is shown; dragged out of the tab
-// bar, it floats, still held by the pointer as if by its title.
-fn dock_tab(w: u64, n: i32, on: bool, leaf: gfx2d::Rect) {
+// How tabs slide to their places when one is dragged past them, and the
+// dragged one when it is let go (INSTANT: they jump).
+var tab_slide = INSTANT;
+fn set_tab_slide(m: Motion) { tab_slide = m; }
+
+fn tab_id(w: u64) -> Id { sub_id(Id { w }, "tab") }
+// Its width, last frame.
+fn tab_width(w: u64) -> f32 { state_of(tab_id(w).v).rect.w }
+fn tab_desc(on: bool) -> Desc { clickable(row().skin(DOCK_TAB).align(CENTER)).nav_skip().look(checked_look(on)) }
+fn tab_dragging(w: u64) -> bool {
+    let it = interact(tab_id(w), tab_desc(false));
+    it.held && it.dragging
+}
+
+// Window w's tab in leaf n, `x` along its bar: clicked, it is shown;
+// dragged along the bar (`dragged`), it follows the pointer, and passes
+// the tabs beside it; dragged out of the bar, it floats, still held by the
+// pointer as if by its title.
+fn dock_tab(w: u64, n: i32, on: bool, leaf: gfx2d::Rect, x: f32, dragged: bool) {
     let wid = Id { w };
     let tid = sub_id(wid, "tab");
-    let td = clickable(row().skin(DOCK_TAB).align(CENTER)).nav_skip().look(checked_look(on));
+    var td = tab_desc(on);
     let it = interact(tid, td);
-    if it.pressed { dock_nodes[n].selected = w; }
     let p = input.pointer.pos;
+    if it.pressed {
+        dock_nodes[n].selected = w;
+        // Where on it it was pressed.
+        var ts = state_of(tid.v);
+        ts.num = p.x - ts.screen.x;
+        put_state(tid.v, ts);
+    }
     if it.held && it.dragging && (p.y < leaf.y - 4.0 || p.y > leaf.y + tab_height() + 8.0 || p.x < leaf.x || p.x > leaf.x + leaf.w) {
         // Out: floating, as big as the leaf was, its title under the pointer.
         undock_id(w);
@@ -533,7 +572,18 @@ fn dock_tab(w: u64, n: i32, on: bool, leaf: gfx2d::Rect) {
         // Its window has its own title bar now, close button and all.
         return;
     }
-    if it.held && it.dragging { reorder_tab(w, n, p.x); }
+    // Where it is drawn along the bar: under the pointer, dragged; else
+    // sliding to its place, from where it was.
+    let slide = sub_id(tid, "slide");
+    if dragged {
+        let row_w = leaf.w - 8.0;
+        let left = clamp(p.x - state_of(tid.v).num as f32 - (leaf.x + 4.0), 0.0, max(row_w - tab_width(w), 0.0));
+        animate(slide, left, INSTANT);
+        reorder_tab(w, n, left);
+        td = td.absolute(left, 0);
+    } else {
+        td = td.offset(animate(slide, x, tab_slide) - x, 0);
+    }
     let ws = window_state(w);
     box(tid, td) {
         text(ws.title[..]);
@@ -551,26 +601,29 @@ fn dock_tab(w: u64, n: i32, on: bool, leaf: gfx2d::Rect) {
     };
 }
 
-// A tab held and dragged along its bar, past the middle of the live tab
-// beside it: the two change places.
-fn reorder_tab(w: u64, n: i32, x: f32) {
+// A tab held and dragged along its bar, its left at `left`, past the
+// middle of the live tab beside it: the two change places. Where the tabs
+// are is worked out from their order now and their widths, not taken
+// from last frame, which would have them change back the frame after.
+fn reorder_tab(w: u64, n: i32, left: f32) {
     let tabs = dock_nodes[n].tabs;
+    let gap = class_style(DOCK_TAB_BAR).normal.gap;
+    var xs: f32[..8] = [];
+    var x: f32 = 0.0;
     var at = -1;
-    for t, k in tabs { if t == w { at = k; } }
+    for t, k in tabs {
+        xs.push(x);
+        if tab_live(t) { x += tab_width(t) + gap; }
+        if t == w { at = k; }
+    }
     guard at >= 0;
     var before = at - 1;
     while before >= 0 && !tab_live(tabs[before]) { before--; }
     var after = at + 1;
     while after < tabs.len && !tab_live(tabs[after]) { after++; }
     var to = -1;
-    if before >= 0 {
-        let r = state_of(sub_id(Id { tabs[before] }, "tab").v).rect;
-        if x < r.x + r.w * 0.5 { to = before; }
-    }
-    if to < 0 && after < tabs.len {
-        let r = state_of(sub_id(Id { tabs[after] }, "tab").v).rect;
-        if x > r.x + r.w * 0.5 { to = after; }
-    }
+    if before >= 0 && left < xs[before] + tab_width(tabs[before]) * 0.5 { to = before; }
+    if to < 0 && after < tabs.len && left + tab_width(w) > xs[after] + tab_width(tabs[after]) * 0.5 { to = after; }
     guard to >= 0;
     dock_nodes[n].tabs[at] = tabs[to];
     dock_nodes[n].tabs[to] = w;

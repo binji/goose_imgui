@@ -504,8 +504,10 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
 - **Undocking:** a tab dragged out of its tab bar floats its window, as
   big as its leaf was, still held by the pointer as if by its title. A
   leaf left with no windows goes, its sibling taking its place.
-- **Tabs:** clicked, the window is shown; dragged along the bar, past the
-  middle of the tab beside it, the two change places. A window that can
+- **Tabs:** clicked, the window is shown; dragged along the bar, it
+  follows the pointer, over the others, and once its edge is past the
+  middle of the tab beside it, the two change places (the other sliding,
+  with `set_tab_slide`). A window that can
   close has a close button on its tab; closed, it keeps its place, for
   when it is opened again. A window not recorded (closed, or not called
   for) has no tab. Tabs that don't fit are cut off, the one shown first,
@@ -521,6 +523,7 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
 | `dock_window(title, space, side[, ratio])` | window `title` docked in `space` (both labels at the top level), on `DOCK_LEFT`, `DOCK_RIGHT`, `DOCK_TOP` or `DOCK_BOTTOM` of all that is there, taking `ratio` of it; `DOCK_CENTER`, a tab in its biggest leaf. Into an empty space, it fills it, whatever its side. For a layout to start with |
 | `dock_window_with(title, other, side[, ratio])` | docked by window `other`: a tab with it, or beside it in its leaf; if `other` floats, the two in a floating dock where it is (`set_window_rect` it first to say where) |
 | `undock_window(title)`, `is_docked(title)` | floating again (where its leaf was, as big, if it never floated) |
+| `set_tab_slide(m)` | tabs slide to their places by `m` (a tween or a spring) as a dragged tab passes them, and the dragged one when it is let go; `INSTANT`, the default, jumps |
 
 ## Logs and consoles
 
@@ -792,7 +795,8 @@ The tests are in three groups:
     after; a pane no less than its least; a split in a pane; the split
     resized, its panes keeping their fractions;
   - `dock`: a layout made in code, each body in its leaf; tabs, one shown,
-    another clicked, one dragged past another; a button in a docked
+    another clicked, one dragged past another, and again with a slide, under
+    the pointer as it goes; a button in a docked
     window; the handle between two leaves; a tab dragged out, floating,
     still held; a floating window dragged over a leaf, its targets shown,
     let go off them and on one (the area shown first), docked; a target by
