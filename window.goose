@@ -218,6 +218,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     // On a dock target, the area it would take (drawn there, if the dock
     // preview is the window).
     var aimed = false;
+    var into_tab = false;
     var aim = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 };
     if has_title {
         let tb = interaction_for(title_id.v, bar_d);
@@ -229,6 +230,12 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         if tb.held && tb.dragging && !w.host {
             let t = dock_preview(input.pointer.pos, wid.v);
             if t.node >= 0 || t.window != 0 { aimed = true; aim = t.rect; }
+            // On a tab bar: into its tab there, fading as its tab shows.
+            if t.bar && dock_guest_frame == frame_index {
+                let r = t.rect;
+                aim = gfx2d::Rect { r.x + 4.0 + t.left, r.y, t.width, tab_height() };
+                into_tab = true;
+            }
         }
         // Only after a drag: a click on a title over another window's
         // target doesn't dock it.
@@ -245,6 +252,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
                 // play its hiding).
                 windows.insert(wid.v, w);
                 dock_into(wid.v, t.node, t.side, t.ratio, t.index);
+                if t.bar { tab_arrive(wid.v, t.left); }
                 docked_window(wid, open, d, flags) { F(); };
                 return;
             }
@@ -343,6 +351,8 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
             fd.dim.w.lo = 0.0;
             fd.dim.h.lo = 0.0;
         }
+        let gone = animate(sub_id(wid, "dock tab"), if into_tab { 1.0 } else { 0.0 }, dock_preview_motion) as f32;
+        if gone > 0.0001 { fd = fd.opacity(1.0 - gone).isolate(); }
     }
     let root = open_root(ROOT_WINDOW, wid.v, Anchor { kind: ANCHOR_POINT, at: at, .. }, fd);
     id_stack.push(wid.v);

@@ -491,13 +491,15 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
   space, on that side). The area a target would give is shown while the
   pointer is on it; let go there, the window docks. A leaf's tab bar is a
   target too: let go on it, the window goes in as a tab where it was let
-  go, between the tabs either side (a line shows where). Let go anywhere
+  go, between the tabs either side: while it is over the bar, its tab is
+  shown there, the others making room (sliding, with `set_tab_slide`;
+  not in a bar too full for its tabs). Let go anywhere
   else, it floats on. An empty leaf has only the middle. A leaf holds at
   most 8 windows; a full one has no middle, and its tab bar is no target.
 - **The preview:** `set_dock_preview(true[, m])` shows where a window
   would go by drawing the window itself there, at that size, rather than
   an outline; it moves there and back by `m`. Nothing else moves until it
-  is let go.
+  is let go. Over a tab bar, it shrinks into its tab there and fades out.
 - **Floating docks:** dragged over another floating window, a window
   shows a cross of targets on it too. Let go on one, the two go in a
   floating dock where the other was: a window of imgui's, titled by the
@@ -807,7 +809,7 @@ The tests are in three groups:
     still held; a floating window dragged over a leaf, its targets shown,
     let go off them and on one (the area shown first), docked; a target by
     the space's outer edge; windows let go on a tab bar, before its tab and
-    past them all; a tab's close button, and the window opened
+    past them all, the tabs making room for them; a tab's close button, and the window opened
     again in its place; a full tab bar's list; a tab bar hidden and shown;
     a floating window dropped on another, the two in a floating dock that
     moves with them and is drawn under them, a tab dragged out of it; a

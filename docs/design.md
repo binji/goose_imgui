@@ -603,8 +603,14 @@ spills past the box.
 - A tab bar is a drop target with no square of its own: the squares are
   tested first, and the bar under the pointer after. The space's top edge
   square sits below the tab bars, so it doesn't cover the middle of the
-  top leaf's bar. Where a dropped tab goes is found from the tabs' rects
-  last frame, as hits are.
+  top leaf's bar. Where a dropped tab goes is found from the tabs' widths
+  and order, without the room made for it (which would move the tabs as it
+  opened, and change where it goes). The window over the bar is a
+  "guest" of the bar for a frame (`dock_guest`): the dock space, recorded
+  before or after the window, lays out an empty box of its tab's width
+  where it goes, and draws its tab there over the others, as it does a
+  tab dragged along the bar. Its width is its tab's last width, if it
+  was ever docked; else its title measured.
 - **A floating dock** is a window of imgui's (its ID from the window it
   was made on) whose body is a dock space of its own, with a different
   ID, as a window root and the box in it can't share one. Nothing in the

@@ -269,8 +269,10 @@ struct DockTarget {
     side: i64 = 0,
     ratio: f64 = 0.5,           // of the node it takes
     rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },    // the area it would take
-    index: i64 = -1,            // dropped on a tab bar: the tab it goes before (-1: after them all)
-    mark: f32 = 0.0,            // and where, along the bar
+    bar: bool = false,          // a tab bar: in as a tab,
+    index: i64 = -1,            // before this tab (-1: after them all);
+    left: f32 = 0.0,            // its tab this far along the bar,
+    width: f32 = 0.0,           // and as wide
 }
 
 // The targets a window dragged over a dock space aims at: a cross of five
@@ -283,6 +285,11 @@ var dock_aims: DockAim[..9] = [];
 // The tab bar under the pointer, if any (its node: -1 if none): dropped
 // there, a window goes in as a tab, between the tabs it is dropped between.
 var dock_bar: DockTarget = DockTarget { .. };
+// The window dragged over a tab bar (its tab its target, with the frame it
+// was): its tab drawn where it would go, the others making room.
+var dock_guest: DockTarget = DockTarget { .. };
+var dock_guest_window: u64 = 0;
+var dock_guest_frame: i64 = -1;
 
 // The part of r a window docked on `side` of it, taking `ratio`, would take.
 fn side_rect(r: gfx2d::Rect, side: i64, ratio: f64) -> gfx2d::Rect {
@@ -325,7 +332,7 @@ fn add_cross(r: gfx2d::Rect, t: DockTarget, sides: bool, middle: bool = true) {
 }
 
 // Space sp's targets for a window dragged to p, if p is over it.
-fn space_aims(sp: u64, p: float2) -> bool {
+fn space_aims(sp: u64, p: float2, dragged: u64) -> bool {
     let root = dock_root(sp);
     guard dock_shown(root) else { return false; }
     let space = dock_rect(root);
@@ -342,19 +349,24 @@ fn space_aims(sp: u64, p: float2) -> bool {
     // A full leaf takes no more tabs.
     let room = dock_nodes[n].tabs.len < DOCK_TABS;
     if room && live > 0 && bh > 0.0 && p.y < leaf.y + bh {
-        // On its tab bar: before the first tab whose middle is past p.
+        // On its tab bar: before the first tab whose middle is past p,
+        // where the tabs are without the room made for it (which would
+        // move them as it opened).
+        let o = leaf.x + 4.0;
+        let gap = class_style(DOCK_TAB_BAR).normal.gap;
         var at: i64 = -1;
-        var x = leaf.x + 4.0;
+        var x: f32 = 0.0;
+        var left: f32 = 0.0;
         for w, k in dock_nodes[n].tabs {
             if !tab_live(w) { continue; }
-            let r = state_of(sub_id(Id { w }, "tab").v).screen;
-            if at < 0 && p.x < r.x + r.w * 0.5 {
-                at = k;
-                x = r.x - 1.0;
-            }
-            if at < 0 { x = r.x + r.w + 1.0; }
+            let tw = tab_width(w);
+            if at < 0 && p.x - o < x + tw * 0.5 { at = k; }
+            if at < 0 { left = x + tw + gap; }
+            x += tw + gap;
         }
-        dock_bar = DockTarget { node: n, side: DOCK_CENTER, ratio: 1.0, rect: leaf, index: at, mark: x, .. };
+        let gw = guest_width(dragged);
+        dock_bar = DockTarget { node: n, side: DOCK_CENTER, ratio: 1.0, rect: leaf, bar: true, index: at,
+                                left: left, width: gw, .. };
     }
     add_cross(dock_rect(n), DockTarget { node: n, .. }, live > 0, room);
     if dock_nodes[root].axis >= 0 {
@@ -389,7 +401,7 @@ fn find_dock_aims(p: float2, dragged: u64) {
         let st = state_of(w);
         if st.seen < frame_index - 1 || !inside(st.screen, p) { continue; }
         if ws.host {
-            space_aims(host_space(w), p);
+            space_aims(host_space(w), p, dragged);
             return;
         }
         add_cross(st.screen, DockTarget { window: w, .. }, true);
@@ -397,7 +409,7 @@ fn find_dock_aims(p: float2, dragged: u64) {
     }
     for sp in dock_spaces {
         if space_host.contains(sp) { continue; }
-        if space_aims(sp, p) { return; }
+        if space_aims(sp, p, dragged) { return; }
     }
 }
 
@@ -435,12 +447,12 @@ fn dock_preview(p: float2, dragged: u64) -> DockTarget {
         panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h));
     }
     if bar {
-        // The leaf it would join, and where its tab would go.
+        // The leaf it would join; its tabs make room for its tab.
         let r = dock_bar.rect;
-        let th = tab_height();
         if outline { panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h)); }
-        panel(column().skin(DOCK_TARGET_MARK).absolute(dock_bar.mark - 1.0 - viewport.x, r.y + 2.0 - viewport.y)
-                  .size(2.0, th - 4.0));
+        dock_guest = dock_bar;
+        dock_guest_window = dragged;
+        dock_guest_frame = frame_index;
     }
     for a, k in dock_aims {
         let at = a.at;
@@ -516,14 +528,26 @@ fn dock_space_of(i: Id, d: Desc) {
             // goes first there.)
             var dragged: u64 = 0;
             if !over { for w in order { if tab_dragging(w) { dragged = w; } } }
+            // A window dragged over the bar: room for its tab where it
+            // would go.
+            var guest = !over && dock_guest_frame >= frame_index - 1 && dock_guest.node == k;
+            for w in n.tabs { if w == dock_guest_window { guest = false; } }
+            let before = if guest && dock_guest.index >= 0 && dock_guest.index < n.tabs.len { n.tabs[dock_guest.index] } else { 0 };
             box(row().skin(DOCK_TAB_BAR).absolute(r.x - o.x, r.y - o.y).size(r.w, th).clip().align(END)
                     .padding(4, 0, if over { list_w + 4.0 } else { 4.0 }, 0)) {
                 // The tabs cut off before the list's button, not under it.
                 box(row().grow().align(END).clip().with_bits(SHRINKS).gap(gap)) {
                     var x: f32 = 0.0;
                     var dragged_at: f32 = 0.0;
+                    var guest_at: f32 = -1.0;
                     for w in order {
                         let tw = tab_width(w);
+                        if guest && w == before {
+                            panel(row().size(dock_guest.width, th));
+                            guest_at = x;
+                            x += dock_guest.width + gap;
+                            guest = false;
+                        }
                         if w == dragged {
                             panel(row().size(tw, th));
                             dragged_at = x;
@@ -532,6 +556,12 @@ fn dock_space_of(i: Id, d: Desc) {
                         }
                         x += tw + gap;
                     }
+                    if guest {
+                        panel(row().size(dock_guest.width, th));
+                        guest_at = x;
+                    }
+                    // Over the others, which slide out of its way.
+                    if guest_at >= 0.0 { guest_tab(dock_guest_window, dock_guest.width, guest_at); }
                     if dragged != 0 { dock_tab(dragged, k, sel == dragged, r, dragged_at, true); }
                 };
             };
@@ -548,6 +578,35 @@ fn set_tab_slide(m: Motion) { tab_slide = m; }
 fn tab_id(w: u64) -> Id { sub_id(Id { w }, "tab") }
 // Its width, last frame.
 fn tab_width(w: u64) -> f32 { state_of(tab_id(w).v).rect.w }
+// How wide window w's tab is: as it was, if it had one; else as its
+// title measures.
+fn guest_width(w: u64) -> f32 {
+    let tw = tab_width(w);
+    if tw > 0.0 { return tw; }
+    let ts = class_style(DOCK_TAB).normal;
+    let body = class_style(DOCKED).normal;
+    let ws = window_state(w);
+    var wide = gfx2d::measure_text(ws.title[..], gfx2d::TextStyle { font: body.font, size: body.text_size, .. }).x +
+               ts.padding.x + ts.padding.z;
+    if ws.closable { wide += ts.gap + max(class_style(WINDOW_BUTTON).normal.min_size.x, body.text_size); }
+    wide
+}
+// Window w's tab, `width` wide, `x` along a bar it is dragged over, where
+// it would go: over the tabs sliding out of its way, not taking the
+// pointer.
+fn guest_tab(w: u64, width: f32, x: f32) {
+    let ws = window_state(w);
+    box(sub_id(Id { w }, "guest"), row().skin(DOCK_TAB).align(CENTER).look(checked_look(true)).absolute(x, 0).size(width, tab_height())
+            .clip()) {
+        text(ws.title[..]);
+    };
+}
+// Where a tab dropped into a bar `left` along it starts from, sliding
+// to its place.
+fn tab_arrive(w: u64, left: f32) {
+    let k = sub_id(tab_id(w), "slide").v;
+    animate_lanes(k, lanes(left), INSTANT, lanes(left), true);
+}
 fn tab_desc(on: bool) -> Desc { clickable(row().skin(DOCK_TAB).align(CENTER)).nav_skip().look(checked_look(on)) }
 fn tab_dragging(w: u64) -> bool {
     let it = interact(tab_id(w), tab_desc(false));

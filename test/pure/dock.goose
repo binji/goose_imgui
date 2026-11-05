@@ -272,8 +272,12 @@ fn main() {
     let qr2 = rect("Q");
     press(float2 { qr2.x + 40.0, qr2.y + 8.0 });
     move_to(mid(rect("B")));
+    let b_at = imgui::state_of(imgui::sub_id(imgui::id("B"), "tab").v).screen.x;
     move_to(tab("B") - float2 { 4.0, 0.0 });
-    print("Q on B's tab bar: previewed ", previewed(), ", before tab ", imgui::dock_bar.index);
+    step_down();
+    let b_now = imgui::state_of(imgui::sub_id(imgui::id("B"), "tab").v).screen.x;
+    print("Q on B's tab bar: previewed ", previewed(), ", before tab ", imgui::dock_bar.index, "; B's tab moved over for it ",
+          round(b_now - b_at) == round(imgui::dock_bar.width + 2.0));
     release();
     step();
     print("Q let go there: tabs ", tabs_of("B"), "; shown Q ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("Q").v);
@@ -312,5 +316,21 @@ fn main() {
     print("off it: ", round(off.w), " by ", round(off.h), ", as before ", round(off.w) == round(er3.w) && round(off.h) == round(er3.h));
     release();
     print("let go off it: docked ", imgui::is_docked("E"));
+    // On B's tab bar: the tabs making room for E's tab, E going into it
+    // (and fading); let go, it is a tab there.
+    let er4 = rect("E");
+    press(float2 { er4.x + 40.0, er4.y + 8.0 });
+    move_to(mid(rect("B")));
+    let qt = imgui::rect_of(imgui::sub_id(imgui::id("Q"), "tab"));
+    move_to(float2 { qt.x + qt.w + 2.0, qt.y + qt.h * 0.5 });
+    for k in 3 { step_down(); }
+    let et = rect("E");
+    print("E on B's tab bar: drawn as its tab ", round(et.h) == round(imgui::tab_height()), " by ",
+          round(et.w) == round(imgui::dock_bar.width), "; in the room made for it ",
+          round(et.x) == round(imgui::dock_bar.rect.x + 4.0 + imgui::dock_bar.left), "; its tab shown there ",
+          imgui::state_of(imgui::sub_id(imgui::id("E"), "guest").v).seen == imgui::frame_index);
+    release();
+    step();
+    print("let go: tabs ", tabs_of("B"));
     imgui::set_dock_preview(false);
 }
