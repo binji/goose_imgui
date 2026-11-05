@@ -34,11 +34,17 @@ This document is the plan and the reasoning behind it.
    and backed out of with B or Escape. Focus is trapped in modals and
    menus, and scrolls into view.
 
-**Non-goals for now:** docking, multiple OS windows, tables, trees,
-plotting and the other developer-tool widgets. These are in
-[future_work.md](future_work.md). Goose already has `ui` (Nuklear) for
-developer UIs. Custom drawing inside the layout (charts, meters) came
-after the first set: see [Canvases](#canvases).
+**Next: developer tools.** Movable windows, docking, trees, tables, number
+fields, color pickers, plots and a log, so that a game's debug overlays and
+its editors are made with the same library as its menus, in its own
+themes. Goose's `ui` (Nuklear) covers some of this, but it draws and lays
+out on its own and can't use gfx2d's looks. [future_work.md](future_work.md)
+ranks the widgets by how often a developer's program needs them.
+
+**Non-goals:** windows of the OS's own (gfx has one window), and the tools
+a program can build from canvases (node graphs, gizmos, code editors).
+Custom drawing inside the layout (charts, meters) came after the first set:
+see [Canvases](#canvases).
 
 ## The frame
 
