@@ -3,7 +3,7 @@
 // click and the keys, its open nodes kept while hidden; number fields
 // dragged (finer with Shift), clamped, stepped by the keys and buttons,
 // typed in (Enter keeps, Escape doesn't, a click elsewhere keeps); a
-// vector's parts.
+// vector's parts; trees and headers rolling open and closed.
 import std;
 import vec;
 import math;
@@ -212,4 +212,37 @@ fn main() {
     for k in 200 { step(); }
     click_at(mid(imgui::rect_of(imgui::sub_id(find("World"), "arrow"))));
     print("opened after 200 frames: sword ", shown("Sword"));
+
+    // Rolling: Player closed, then opened, the Camera row below it moving
+    // down a little each frame, its children recorded with their IDs as
+    // they roll; closed, they stay until rolled away.
+    imgui::set_tree_roll(imgui::tween(0.2, imgui::EASE_LINEAR));
+    let sword_id = find("Sword");
+    click_at(mid(imgui::rect_of(imgui::sub_id(find("Player"), "arrow"))));
+    for k in 15 { step(); }
+    let player_arrow = mid(imgui::rect_of(imgui::sub_id(find("Player"), "arrow")));
+    print("rolled up: sword ", shown("Sword"), ", camera at ", round(text_rect("Camera").y));
+    click_at(player_arrow);
+    print("rolling down:");
+    for k in 4 {
+        step();
+        print("  camera at ", round(text_rect("Camera").y), ", sword ", shown("Sword"), ", same ID: ", find("Sword").v == sword_id.v);
+    }
+    for k in 12 { step(); }
+    print("down: camera at ", round(text_rect("Camera").y));
+    click_at(player_arrow);
+    print("rolling up:");
+    for k in 4 {
+        step();
+        print("  camera at ", round(text_rect("Camera").y), ", sword ", shown("Sword"));
+    }
+    for k in 12 { step(); }
+    print("up: camera at ", round(text_rect("Camera").y), ", sword ", shown("Sword"));
+    // A header the same way: Settings closed, the Hidden header below it rising.
+    click_at(at_text("Settings"));
+    step();
+    print("header rolling up: hidden at ", round(text_rect("Hidden").y), ", speed field shown ", field(0).w > 0.0);
+    for k in 15 { step(); }
+    print("header up: hidden at ", round(text_rect("Hidden").y), ", speed field shown ", field(0).w > 0.0);
+    imgui::set_tree_roll(imgui::INSTANT);
 }

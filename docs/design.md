@@ -506,6 +506,14 @@ spills past the box.
   by all of them, as only one has the keyboard at a time. A click that
   didn't drag starts it, as in Blender, rather than a double click or
   Ctrl-click: easier to find, and a drag is never mistaken for it.
+- **Rolling** a header or tree node open and closed (`set_tree_roll`) is
+  a window's roll without the window's trouble: its content, at its whole
+  height, is in a clipping box as tall as has rolled out. That box has no
+  ID, so the content's IDs (and its widgets' state) don't change as it
+  rolls, and it has `OVERFLOW_Y`, which lays out its children as a scroll
+  pane does, at their content's height whatever its own. So the content's
+  whole height is measured even as it starts to open the first time, and
+  read the next frame, when it matters.
 - `Input.mods` is new: the modifiers held, not only those pressed with a
   key, which a drag needs.
 

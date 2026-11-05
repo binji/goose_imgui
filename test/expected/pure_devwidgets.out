@@ -28,3 +28,18 @@ left: sword false
 left again: on world true
 world closed: player false
 opened after 200 frames: sword true
+rolled up: sword false, camera at 316.0
+rolling down:
+  camera at 329.0, sword true, same ID: true
+  camera at 333.0, sword true, same ID: true
+  camera at 337.0, sword true, same ID: true
+  camera at 341.0, sword true, same ID: true
+down: camera at 367.0
+rolling up:
+  camera at 354.0, sword true
+  camera at 350.0, sword true
+  camera at 345.0, sword true
+  camera at 341.0, sword true
+up: camera at 316.0, sword false
+header rolling up: hidden at 183.0, speed field shown true
+header up: hidden at 53.0, speed field shown false

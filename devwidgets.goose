@@ -111,12 +111,38 @@ fn collapsing<F>(label: const u8[:], d: Desc = column(), open_at_first: bool = f
         icon(if open { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT }, column().opacity(0.7));
         text(label_text(label), column().grow_w());
     };
-    if open {
+    let t = open_amount(i, open);
+    if t > 0.0 {
         var bd = d.grow_w();
         if bd.lay.spacing == float2_0 { bd = bd.gap(class_style(WINDOW_BODY).normal.gap); }
-        box(sub_id(i, "body"), bd) { F(); };
+        let body = sub_id(i, "body");
+        rolled(body, t) { box(body, bd) { F(); }; };
     }
     open
+}
+
+// How headers and tree nodes roll open and closed: INSTANT (the default)
+// not at all; a tween or spring, what is under them rolling down from
+// them and back up, cut off at its bottom edge, the rows below following.
+var tree_roll = INSTANT;
+fn set_tree_roll(m: Motion) { tree_roll = m; }
+
+// How far open a header or tree node is, from 0 to 1.
+fn open_amount(i: Id, open: bool) -> f32 {
+    if is_instant(tree_roll) { return if open { 1.0 } else { 0.0 }; }
+    let t = clamp(animate(sub_id(i, "roll"), if open { 1.0 } else { 0.0 }, tree_roll), 0.0, 1.0) as f32;
+    if t < 0.0005 { 0.0 } else if t > 0.9995 { 1.0 } else { t }
+}
+// The block (a header's or node's content, as `body`), in a box as tall as
+// `t` of it while it rolls: the box has no ID, so the content's IDs and
+// state are as they are when it is still, and it lays the content out at
+// its whole height, which it reads the next frame.
+fn rolled<F>(body: Id, t: f32) {
+    if t >= 1.0 {
+        F();
+        return;
+    }
+    box(column().grow_w().height(t * state_of(body.v).rect.h).clip().with_bits(OVERFLOW_Y)) { F(); };
 }
 
 // The tree nodes open around the one being recorded, for Left on a closed
@@ -146,10 +172,12 @@ fn tree_node<F>(label: const u8[:], selected: bool = false, open_at_first: bool 
         box(arrow_id, ad) { icon(if open { ICON_CHEVRON_DOWN } else { ICON_CHEVRON_RIGHT }, column().opacity(0.7)); };
         text(label_text(label));
     };
-    if open {
+    let t = open_amount(i, open);
+    if t > 0.0 {
         tree_path.push(i.v);
         defer tree_path.pop();
-        box(sub_id(i, "children"), column().skin(TREE).grow_w()) { F(); };
+        let kids = sub_id(i, "children");
+        rolled(kids, t) { box(kids, column().skin(TREE).grow_w()) { F(); }; };
     }
     it
 }

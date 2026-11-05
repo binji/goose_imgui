@@ -393,6 +393,7 @@ let it = imgui::tree_node("Enemies", chosen == -1) {
 | `collapsing(label[, d][, open_at_first]) { … } -> bool` | a header that shows its block while open: clicked, or Right and Left while focused. True while open |
 | `tree_node(label[, selected][, open_at_first]) { … } -> Interaction` | an arrow and a label, its children (the block) indented under it while it is open. The arrow or a double click opens and closes it; Right opens it, Left closes it or goes up to its parent. Its row's interaction is the result: `activated` to select it, or for `tooltip` and `context_menu` |
 | `tree_leaf(label[, selected]) -> Interaction` | a node with no children, lined up with its siblings' labels |
+| `set_tree_roll(m)` | headers and tree nodes roll open and closed by `m` (a tween or a spring), their content cut off at its bottom edge and the rows below following; `INSTANT`, the default, doesn't roll. The content keeps its IDs and is recorded until it has rolled away |
 | `is_open_node(label)`, `set_open(label, on)`, `set_open(id, on)` | a header's or tree node's open state, in the scope it is recorded in. It lasts as long as the program, so a node inside a closed one keeps its own |
 | `drag_number(label, v[, Drag][, d]) -> bool` | `f64`, `f32`, `i64`, `i32`. Dragged sideways (finer with Shift, coarser with Alt), Left and Right by its step while focused; a click without a drag, or Enter, types in it: Enter or a click elsewhere keeps what was typed (clamped), Escape doesn't. True the frame it changes |
 | `input_number(label, v[, Drag][, d]) -> bool` | the same between − and + buttons, which step it |
@@ -463,6 +464,7 @@ fn slot(k: i64, item: Item, chosen: bool) -> bool {
 |---|---|
 | `clickable(d)`, `.hit()`, `.focusable()` | take the pointer, take the focus |
 | `.blocks()`, `.nav_skip()`, `.disabled(on)`, `.keep()` | stop the pointer; leave out of navigation; disable; keep state without a label |
+| `.with_bits(OVERFLOW_Y)` | its children are their content's height whatever its own, as in a scroll pane, but it doesn't scroll or take the pointer: with `.clip()`, a reveal |
 | `.passthrough()` | let the pointer through the box and its subtree, though they have backgrounds, for a HUD over a game; what in it takes the pointer (and its parts) and what `blocks()` still do |
 
 The parts inside a widget that have looks of their own (a toggle's
@@ -617,7 +619,8 @@ The tests are in three groups:
     click and the keys, Left going up to the parent, open nodes kept while
     hidden; number fields dragged (finer with Shift), clamped, stepped by
     the keys and the buttons, typed in (Enter keeps, Escape doesn't, a
-    click elsewhere keeps), a vector's parts;
+    click elsewhere keeps), a vector's parts; trees and headers rolling
+    open and closed;
   - `events`: UI events for sounds: a hover once and only by moving, a
     press, an activation, a denial, focus shown by navigation, slider
     ticks with and without steps, tabs, popups opening and closing, back.

@@ -154,6 +154,8 @@ let KEEP = 256;             // keeps state between frames though nothing else as
 let DISABLED = 512;
 let CLICK_ON_PRESS = 1024;  // clicked when pressed, not when released over it
 let PASSTHROUGH = 2048;     // it and its subtree let the pointer through, but for what takes it
+let OVERFLOW_Y = 4096;      // its children are their content's height whatever its own (as in a scroll
+                            // pane, but it doesn't scroll or take the pointer): clipped, a roll's reveal
 
 struct Desc {
     lay: LayoutDesc = LayoutDesc { .. },
