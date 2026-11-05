@@ -307,11 +307,12 @@ fn list_hits() {
                 }
             }
             if n.d.bits & FOCUSABLE != 0 {
-                focusables.push(Focusable { n.id, n.screen, n.scope, level, n.d.bits });
+                focusables.push(Focusable { n.id, n.screen, n.scope, level, n.d.bits, k });
             }
         }
         for h in first_hit..hits.len { hits[h].window = win; }
     }
+    order_focusables();
 }
 
 // How far an enter transition is, `t` seconds after its node appeared.

@@ -827,6 +827,8 @@ fn docked_window<F>(wid: Id, open: bool&, d: Desc, flags: i64) {
     if dock_nodes[n].hide_tabs && interaction_for(show_id.v, show_d).activated { dock_nodes[n].hide_tabs = false; }
     let root = open_root(ROOT_WINDOW, wid.v, Anchor { kind: ANCHOR_POINT, at: float2 { r.x, r.y + th }, .. },
                          column().skin(DOCKED).keep().size(r.w, max(r.h - th, 0.0)));
+    // Its widgets follow its tab in Tab order.
+    roots[roots.len - 1].after = tab_id(wid.v).v;
     id_stack.push(wid.v);
     nodes[root].scoped = true;
     var bd = d;

@@ -600,6 +600,12 @@ spills past the box.
   it is toward the target and the target's rect are animated apart, so
   that dragging freely follows the pointer exactly, and moving from one
   target to another moves between their rects.
+- **Tab order** is the order widgets are drawn in, root by root, but a
+  root can follow a widget (`Root.after`): its focusables are put right
+  after that widget's, if it is focusable that frame. A docked window
+  follows its tab, so Tab goes from the tab into the window rather than
+  through every tab bar first; with its tab bar hidden, the window keeps
+  its place in draw order.
 - A tab bar is a drop target with no square of its own: the squares are
   tested first, and the bar under the pointer after. The space's top edge
   square sits below the tab bars, so it doesn't cover the middle of the

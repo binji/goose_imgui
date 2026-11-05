@@ -96,7 +96,9 @@ let ANCHOR_CENTER = 4;          // centered in the viewport
 struct Anchor { kind: u8 = 0, at: float2 = float2 { 0.0, 0.0 },
                 rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 }, node: i32 = -1 }
 
-struct Root { node: i32 = 0, kind: u8 = 0, popup: u64 = 0, anchor: Anchor = Anchor { .. }, level: i32 = 0 }
+// `after`: a widget its focusable widgets follow in Tab order, if it is
+// focusable (a docked window's, its tab); 0: in draw order.
+struct Root { node: i32 = 0, kind: u8 = 0, popup: u64 = 0, anchor: Anchor = Anchor { .. }, level: i32 = 0, after: u64 = 0 }
 
 var nodes: Node[>..] = [];
 var text_arena: u8[>..] = [];

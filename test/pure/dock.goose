@@ -157,6 +157,13 @@ fn main() {
     for n, i in imgui::nodes { if n.kind == imgui::NODE_TEXT && imgui::node_text(i as i32) == "Press" { bid = imgui::Id { imgui::nodes[n.parent].id }; } }
     click_at(mid(imgui::rect_of(bid)));
     print("button in A: ", log);
+    // Tab from A's tab: to the button in A, not to the next tab bar.
+    imgui::focus(imgui::sub_id(imgui::id("A"), "tab"), true);
+    nav(imgui::NavInput { next: true, .. });
+    print("Tab from A's tab: A's button ", imgui::is_focused(bid));
+    nav(imgui::NavInput { prev: true, .. });
+    print("Shift+Tab: A's tab ", imgui::is_focused(imgui::sub_id(imgui::id("A"), "tab")));
+    imgui::blur();
     // The handle between A and the rest, 60 right.
     let ar = rect("A");
     press(float2 { ar.x + ar.w + 2.0, ar.y + 200.0 });

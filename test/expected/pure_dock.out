@@ -17,6 +17,8 @@ tab stops in B's bar: 1
 right: shown D true, focused true
 left: shown B true, focused true
 button in A: pressed;
+Tab from A's tab: A's button true
+Shift+Tab: A's tab true
 handle right 60:
   A docked: 0.0 32.0 209.0 368.0
   B docked: 214.0 32.0 386.0 245.0

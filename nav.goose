@@ -21,9 +21,36 @@ import gfx2d;
 let NAV_TRAP = 1;
 let NAV_WRAP = 2;
 
-struct Focusable { id: u64, rect: gfx2d::Rect, scope: u64, level: i32, bits: u32 }
+struct Focusable { id: u64, rect: gfx2d::Rect, scope: u64, level: i32, bits: u32, root: i32 }
 
 var focusables: Focusable[>..<] = [];       // last frame's, in order
+var focus_drawn: Focusable[>..<] = [];      // as drawn, while they are put in order
+
+// The focusables in Tab order: as drawn, but a root's that follows a
+// widget (Root.after) right after that widget's, if it is there.
+fn order_focusables() {
+    var any = false;
+    for r in roots { if r.after != 0 { any = true; } }
+    guard any;
+    focus_drawn.clear();
+    for f in focusables { focus_drawn.push(f); }
+    focusables.clear();
+    for f in focus_drawn { if !follows(f.root) { put_focusable(f); } }
+}
+// Root k's focusables go after another's.
+fn follows(k: i32) -> bool {
+    let a = roots[k as i64].after;
+    guard a != 0 else { return false; }
+    for f in focus_drawn { if f.id == a { return true; } }
+    false
+}
+recursive fn put_focusable(f: Focusable) {
+    focusables.push(f);
+    for r, k in roots {
+        if r.after != f.id { continue; }
+        for g in focus_drawn { if g.root == k as i32 { put_focusable(g); } }
+    }
+}
 var scope_flags = dictionary<u64, u32> {};   // last frame's scopes
 var next_scope_flags = dictionary<u64, u32> {};
 var scope_stack: u64[>..<] = [];
