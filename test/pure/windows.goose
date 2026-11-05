@@ -214,12 +214,14 @@ fn main() {
     imgui::raise_window("Log");
     step();
     let arrow2 = imgui::rect_of(imgui::sub_id(imgui::id("Log"), "collapse"));
+    let clear_id = find("Clear");
     click_at(mid(arrow2));
+    // Its widgets keep their IDs as it rolls, and so their state.
     print("rolling up:");
     for k in 4 {
         step();
         let r = imgui::window_rect("Log");
-        print("  height ", round(r.h), "; clear shown: ", shown("Clear"));
+        print("  height ", round(r.h), "; clear shown: ", shown("Clear"), ", same ID: ", find("Clear").v == clear_id.v);
     }
     for k in 12 { step(); }
     show("Log");

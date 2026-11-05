@@ -273,8 +273,10 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         bd = bd.grow();
         if bd.vis.class.index == 0 { bd = bd.skin(WINDOW_BODY); }
         if rolling {
-            // At its whole height, in a box as tall as has rolled out.
-            box(sub_id(wid, "rolled"), column().grow_w().height(roll * body_full).clip()) {
+            // At its whole height, in a box as tall as has rolled out. The
+            // box has no ID: one would scope the body's, and its widgets
+            // would lose their state as it rolls.
+            box(column().grow_w().height(roll * body_full).clip()) {
                 window_body(flags, bd.grow_w().height(body_full)) { F(); };
             };
         } else {
