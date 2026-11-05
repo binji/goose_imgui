@@ -4,8 +4,9 @@
 // fading and zooming as they hide and show, raised by a click. A tree of
 // the scene's entities (right-click one for its menu), and an inspector of
 // the one selected: property rows, number fields to drag or type in,
-// collapsing headers, a color for each; a plot of frame times and a
-// histogram of them.
+// collapsing headers, a color for each; a table of them, sorted by its
+// headers, its rows selected by clicks (Ctrl and Shift for more); a plot
+// of frame times and a histogram of them.
 //
 //   goose examples/windows.goose [-- --theme dev-light|light|dark|game]
 import std;
@@ -20,6 +21,9 @@ var show_tweaks = true;
 var show_stats = true;
 var show_scene = true;
 var show_inspector = true;
+var show_entities = true;
+var picked: bool[7] = [false; 7];
+var order: i64[7] = [0, 1, 2, 3, 4, 5, 6];
 var speed: f64 = 1.0;
 var spin: f64 = 0.4;
 var count: i64 = 7;
@@ -63,6 +67,52 @@ fn entity_row(k: i64) {
     };
 }
 
+// The entities in `order`, sorted by column c: name, radius or hidden.
+fn sort_entities(c: i64, descending: bool) {
+    fn before(a: i64, b: i64) -> bool {
+        let less = match c {
+            0 => compare(names[a], names[b]) < 0,
+            1 => radii[a] < radii[b],
+            _ => !hidden[a] && hidden[b],
+        };
+        let more = match c {
+            0 => compare(names[b], names[a]) < 0,
+            1 => radii[b] < radii[a],
+            _ => !hidden[b] && hidden[a],
+        };
+        if descending { more } else { less }
+    }
+    for k in 1..7 {
+        var j = k;
+        while j > 0 && before(order[j], order[j - 1]) {
+            let t = order[j];
+            order[j] = order[j - 1];
+            order[j - 1] = t;
+            j--;
+        }
+    }
+}
+
+fn entities() {
+    imgui::window("Entities", show_entities, imgui::column().size(330, 210).absolute(250, 360)) {
+        let t = imgui::table("ents", ["Name", "Radius", "Color", "Hidden"], 7, picked, imgui::Table { .. },
+                             imgui::column().grow()) { k, c =>
+            let e = order[k];
+            match c {
+                0 => { imgui::text(names[e]); },
+                1 => { imgui::textf(imgui::column()) { out => imgui::format_fixed(out, radii[e], 1); }; },
+                2 => { imgui::color_swatch("swatch", colors[e], imgui::column().size(14, 14)); },
+                _ => { imgui::checkbox("", hidden[e]); },
+            }
+        };
+        if t.clicked >= 0 {
+            imgui::select_row("ents", picked, t.clicked);
+            chosen = order[t.clicked];
+        }
+        if t.sort >= 0 { sort_entities(t.sort, t.descending); }
+    };
+}
+
 fn ui() {
     imgui::box(imgui::column().grow()) {
         imgui::menu_bar("bar") {
@@ -71,6 +121,7 @@ fn ui() {
                 imgui::menu_check("Stats", show_stats);
                 imgui::menu_check("Scene", show_scene);
                 imgui::menu_check("Inspector", show_inspector);
+                imgui::menu_check("Entities", show_entities);
             };
         };
         scene();
@@ -100,6 +151,7 @@ fn ui() {
             imgui::tree_node("Props") { entity_row(4); entity_row(5); };
         };
     };
+    entities();
     imgui::window("Inspector", show_inspector, imgui::column().size(280, 290).absolute(664, 44)) {
         imgui::text(names[chosen], imgui::TITLE);
         imgui::collapsing("Transform", imgui::column(), true) {

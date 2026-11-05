@@ -514,6 +514,29 @@ spills past the box.
   pane does, at their content's height whatever its own. So the content's
   whole height is measured even as it starts to open the first time, and
   read the next frame, when it matters.
+- **A row list** records only what is in view, so it has to know what
+  that is before layout. Its rows are all one height, so where row k is
+  needs no measuring: each is placed absolutely at k times the step, in a
+  box as tall as all of them, so a scroll pane scrolls it, and shows its
+  scrollbar, as if every row were there. After layout, the part of the
+  list its clip showed is kept in its state (the `ROW_LIST` bit asks for
+  it), with the offset of the pane it is in. The next frame the pane may
+  have scrolled (the wheel eases it), so the range moves by the
+  difference, and a row more each way covers the rest. 10,000 rows of
+  text in a pane (AOT, on the benchmark's machine): 10,004 nodes, 1.77 ms
+  to record and 1.54 ms to lay out a frame; in a row list, 75 nodes,
+  0.02 ms and 0.01 ms.
+- **Selection** is the program's: a `bool` for each row, in its own array,
+  which `select_row` changes as a desktop list does. imgui keeps only each
+  list's anchor for Shift.
+- **A table** is a header row and a scroll pane holding a row list, each
+  row a row of cells of the columns' widths. The widths are kept in the
+  headers' state; a column never dragged has none, and shares what the
+  others leave, so a table fits its box until a column is resized. Its
+  columns mustn't make it wider (they are sized from its width, and would
+  hold it there), so it has `OVERFLOW_X`: its children are as wide as
+  their content, and it clips them. Sorting is the program's, as the rows
+  are: the table keeps the column and the way, and says when they change.
 - **Plots** are canvases: a plot is the values drawn, and the readout
   under the pointer is drawn too, not a tooltip, so it follows the
   pointer at once. `f32` values are copied into a scratch `f64` array, so
@@ -646,6 +669,7 @@ spills past the box.
 | `window.goose` | windows: their own roots, kept state and order |
 | `devwidgets.goose` | property rows, collapsing headers, trees, number fields |
 | `plots.goose` | plots, sparklines, color swatches, pickers and fields |
+| `table.goose` | row lists (only the rows in view), selection, tables |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

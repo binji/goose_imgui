@@ -1,0 +1,18 @@
+at the top:
+  11 lines recorded, 0 to 10; content 20000.0
+scrolled by the wheel: 240.0
+  12 lines recorded, 11 to 22; content 20000.0
+at the end: 19800.0
+  11 lines recorded, 989 to 999; content 20000.0
+widths: 119.0 119.0 119.0 
+the first dragged 40 wider: 159.0 99.0 99.0 
+cursor on an edge: true
+sorted: by 0, descending false; top row ant
+again: by 0, descending true; top row jay
+legs: by 1, descending false
+clicked cat: 2 
+ctrl fox: 2 5 
+ctrl cat again: 5 
+shift bee (from cat, the anchor): 1 2 
+eel alone: 4 
+rows shown selected: 1

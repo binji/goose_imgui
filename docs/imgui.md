@@ -71,7 +71,9 @@ The examples each show one part:
   theme: moved, resized, collapsed, closed and raised; a tree of the
   scene's entities, each with a context menu; an inspector of the one
   selected, of property rows, number fields, colors and collapsing
-  headers; a plot of frame times, a histogram and a sparkline;
+  headers; a table of the entities, sorted by its headers, rows selected
+  with Ctrl and Shift; a plot of frame times, a histogram and a
+  sparkline;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
   character at a time, each letter popping in, with spans that wave, glow,
   shake, shiver (an effect of the program's own) and cycle their hue.
@@ -247,6 +249,9 @@ The classes are:
   the grips are);
 - HEADER, TREE_ROW (checked: selected), TREE (its left padding is the
   indent), NUMBER, PROPERTIES (its gap), PROPERTY_LABEL;
+- TABLE, TABLE_HEADER, TABLE_HEAD (a column's header; checked: sorted
+  by), TABLE_ROW (its `min_size.y` the rows' height; checked: selected),
+  TABLE_ROW_ALT (every other row), TABLE_CELL (its padding);
 - PLOT (its ink and text size the scale's and readout's), PLOT_LINE (its
   bg the line's color, its `min_size.x` the line's width), PLOT_BAR (hover:
   the bar under the pointer), SWATCH, PICKER (its gap, and its square's
@@ -409,6 +414,29 @@ let it = imgui::tree_node("Enemies", chosen == -1) {
 `Input.mods` holds the `MOD_SHIFT`, `MOD_CTRL` and `MOD_ALT` held this
 frame (from gfx in `input_from_gfx`).
 
+## Long lists and tables
+
+```goose
+imgui::scroll("log", imgui::column().grow()) {
+    imgui::row_list("lines", lines.len, 18) { k => imgui::text(lines[k]); };
+};
+let t = imgui::table("ents", ["Name", "HP", "Team"], ents.len, picked) { k, c =>
+    let e = ents[order[k]];
+    if c == 0 { imgui::text(e.name); } else if c == 1 { imgui::textf(imgui::column()) { out => format(out, e.hp); }; }
+    else { imgui::text(e.team); }
+};
+if t.clicked >= 0 { imgui::select_row("ents", picked, t.clicked); }
+if t.sorted { sort_ents(t.sort, t.descending); }
+```
+
+| | |
+|---|---|
+| `row_list(label, count, row_height[, d]) { k => … } -> first, last` | `count` rows `row_height` high (and `d`'s gap apart), only those in view recorded (with a row more each way): the block records row k, under an ID scope of its own. The list is as tall as all of them, so the scroll pane it is in scrolls it as if they were there. What was in view is kept from last frame's layout, moved by how far its pane has scrolled since. Returns the rows recorded |
+| `select_row(list, selected, k)` | row k clicked (or accepted), in the program's `bool` for each row: alone; with Ctrl, toggled; with Shift, the rows from the last one clicked (with Ctrl too, added to the rest) |
+| `table(label, headers, count[, selected][, Table][, d]) { k, c => … } -> TableInfo` | a header, and `count` rows of a cell for each column, recorded by the block (row k, column c) only while in view, under the header, which stays as they scroll. A column is as wide as its header's right edge was dragged to, or a share of what the others leave (no less than `Table.least`); columns past the table's edge are cut off. A header clicked sorts by it, again the other way; the program sorts its rows. Rows in `selected` show selected; rows are striped. 8 rows high and as wide as there is room unless `d` says |
+| `Table { row_height, sortable, least }` | `row_height`: 0 for TABLE_ROW's `min_size.y` |
+| `TableInfo { clicked, double_clicked, hovered, sort, descending, sorted }` | the row clicked, double-clicked and under the pointer (-1: none); the column sorted by (-1: none) and which way; `sorted` the frame that changed |
+
 ## Plots and colors
 
 ```goose
@@ -490,7 +518,7 @@ fn slot(k: i64, item: Item, chosen: bool) -> bool {
 |---|---|
 | `clickable(d)`, `.hit()`, `.focusable()` | take the pointer, take the focus |
 | `.blocks()`, `.nav_skip()`, `.disabled(on)`, `.keep()` | stop the pointer; leave out of navigation; disable; keep state without a label |
-| `.with_bits(OVERFLOW_Y)` | its children are their content's height whatever its own, as in a scroll pane, but it doesn't scroll or take the pointer: with `.clip()`, a reveal |
+| `.with_bits(OVERFLOW_Y)`, `OVERFLOW_X` | its children are their content's height (or width) whatever its own, as in a scroll pane, but it doesn't scroll or take the pointer, and they don't make it bigger: with `.clip()`, a reveal, or a table's columns cut off at its edge |
 | `.passthrough()` | let the pointer through the box and its subtree, though they have backgrounds, for a HUD over a game; what in it takes the pointer (and its parts) and what `blocks()` still do |
 
 The parts inside a widget that have looks of their own (a toggle's
@@ -647,6 +675,11 @@ The tests are in three groups:
     the keys and the buttons, typed in (Enter keeps, Escape doesn't, a
     click elsewhere keeps), a vector's parts; trees and headers rolling
     open and closed;
+  - `table`: of 1,000 rows only those in view recorded, as the pane
+    scrolls by the wheel and to its end; rows selected by a click, Ctrl
+    and Shift; a table's columns sharing its width, one resized by its
+    edge, the rest sharing what is left; sorting by a header, and the other
+    way; a selected row shown so;
   - `plots`: a rolling buffer; a line plot's range, fitted or fixed, and
     the value under the pointer; a bar plot's bar under it; hex written
     and read; a picker's square, hue and alpha dragged, its hue kept

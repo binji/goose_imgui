@@ -38,7 +38,9 @@ fn pad_sum(n: Node&, a: i64) -> f32 {
     if a == 0 { n.d.lay.padding.x + n.d.lay.padding.z } else { n.d.lay.padding.y + n.d.lay.padding.w }
 }
 fn gap_of(n: Node&, a: i64) -> f32 { ax(n.d.lay.spacing, a) }
-fn scrolls(n: Node&, a: i64) -> bool { n.d.bits & (if a == 0 { SCROLLS_X } else { SCROLLS_Y | OVERFLOW_Y }) != 0 }
+fn scrolls(n: Node&, a: i64) -> bool {
+    n.d.bits & (if a == 0 { SCROLLS_X | OVERFLOW_X } else { SCROLLS_Y | OVERFLOW_Y }) != 0
+}
 fn in_flow(n: Node&) -> bool { !n.d.lay.absolute }
 // The axis a row or column lays its children along; -1 for a stack or grid.
 fn main_axis(n: Node&) -> i64 {

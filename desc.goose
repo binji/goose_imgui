@@ -156,6 +156,9 @@ let CLICK_ON_PRESS = 1024;  // clicked when pressed, not when released over it
 let PASSTHROUGH = 2048;     // it and its subtree let the pointer through, but for what takes it
 let OVERFLOW_Y = 4096;      // its children are their content's height whatever its own (as in a scroll
                             // pane, but it doesn't scroll or take the pointer): clipped, a roll's reveal
+let ROW_LIST = 8192;        // a row_list: after layout, keeps which part of it its clip showed
+let OVERFLOW_X = 16384;     // its children are their content's width whatever its own (OVERFLOW_Y's
+                            // twin): a table whose columns are wider than it, clipped
 
 struct Desc {
     lay: LayoutDesc = LayoutDesc { .. },

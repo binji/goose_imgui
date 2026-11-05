@@ -18,7 +18,9 @@ item here, by its title, at each workaround.
     `examples/windows.goose`), the dense theme `theme_dev()`, context
     menus, property rows, collapsing headers and trees, number fields
     (dragged, typed in, stepped; vectors), plots (lines, bars,
-    sparklines), and colors (a swatch, a picker, a field). Left of them:
+    sparklines), colors (a swatch, a picker, a field), row lists
+    recording only the rows in view, rows selected with Ctrl and Shift,
+    and tables (resized, sorted, striped, selected). Left of them:
     - a window raised when navigation moves the focus into it;
     - a context menu opened from the keyboard or a pad (Shift+F10, the
       menu key, a button);
@@ -26,25 +28,21 @@ item here, by its title, at each workaround.
       says which);
     - step buttons that repeat while held; a number field with a unit
       ("ms");
+    - tables: columns reordered and hidden, a column frozen as the rest
+      scroll across, a header's context menu, rows of more than one
+      height; Shift with the arrows extending a selection; a box dragged
+      out to select;
     - plots of several series, with a legend, axes marked along the
       bottom, zoomed and panned (as implot does); a picker's palette of
       recent colors.
 
     Common in tools:
-    1. Tables: a header, columns resized by dragging their edges, sorting by
-       a header's click (the program sorts, by the order handed back),
-       striped and selected rows, a header that stays as the rows scroll,
-       and only the rows in view recorded. Reordering and hiding columns
-       later.
-    2. A list clipper, recording only the rows of a long list that are in
-       view, and selecting several rows with Shift and Ctrl, in lists, trees
-       and tables.
-    3. A log and a console: lines that stay scrolled to the newest unless
+    1. A log and a console: lines that stay scrolled to the newest unless
        scrolled back, colored by level, filtered, copied; a command line
        with its history on Up and Down.
-    4. Splitters and side panels: panes resized by dragging the line
+    2. Splitters and side panels: panes resized by dragging the line
        between them.
-    5. Docking: windows dragged by their titles onto a dock space, to a
+    3. Docking: windows dragged by their titles onto a dock space, to a
        side of a pane (splitting it) or its middle (a tab with the others
        there), and dragged out again to float. The dock space is a tree of
        splits that lasts. It builds on windows, splitters, tabs, and drag
@@ -52,18 +50,18 @@ item here, by its title, at each workaround.
        it; an editor always does.
 
     Useful, less often:
-    6. Layouts saved and loaded: where the windows are, which are open,
+    4. Layouts saved and loaded: where the windows are, which are open,
        and the dock tree, in a file.
-    7. Multi-line text editing (under Text, below).
-    8. Small pieces: small and icon buttons, toolbars and a status bar, a
+    5. Multi-line text editing (under Text, below).
+    6. Small pieces: small and icon buttons, toolbars and a status bar, a
        label and its value, bullets, links, a spinner, vertical, angle
        and range sliders, a knob.
-    9. An image viewer: a texture panned and zoomed, with a pixel grid and
+    7. An image viewer: a texture panned and zoomed, with a pixel grid and
        the value under the pointer.
-    10. imgui's own tools: a window of its nodes, the one under the pointer
-        outlined, with counts and timings; a style editor.
-    11. A memory viewer in hex, and a profiler's timeline (an example on a
-        canvas more than a widget).
+    8. imgui's own tools: a window of its nodes, the one under the pointer
+       outlined, with counts and timings; a style editor.
+    9. A memory viewer in hex, and a profiler's timeline (an example on a
+       canvas more than a widget).
 
     Not planned: windows of the OS's own (gfx has one), a code editor,
     node graphs, gizmos for 3D, file dialogs, curve and gradient editors.

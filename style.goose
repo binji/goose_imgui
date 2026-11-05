@@ -134,7 +134,13 @@ let PLOT_LINE = StyleClass { 55 };      // a line plot's line (bg), its width (m
 let PLOT_BAR = StyleClass { 56 };       // a bar plot's bars (bg); hover: the one under the pointer
 let SWATCH = StyleClass { 57 };         // a color's swatch: its frame, size and radius
 let PICKER = StyleClass { 58 };         // a color picker: its gap, and its square's side (min_size.x)
-let CLASS_COUNT = 59;
+let TABLE = StyleClass { 59 };          // a table's frame
+let TABLE_HEADER = StyleClass { 60 };   // its header's row
+let TABLE_HEAD = StyleClass { 61 };     // a column's header: clicked to sort by it
+let TABLE_ROW = StyleClass { 62 };      // a row (checked: selected); its min_size.y the rows' height
+let TABLE_ROW_ALT = StyleClass { 63 };  // every other row, for stripes
+let TABLE_CELL = StyleClass { 64 };     // a cell: its padding
+let CLASS_COUNT = 65;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -594,6 +600,23 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     sw.active.zoom = 1.0;
     classes[SWATCH.index] = sw;
     classes[PICKER.index] = style_set(Style { gap: 8.0 * sp, min_size: float2 { p.control * 9.0, 0.0 } });
+
+    classes[TABLE.index] = style_set(Style { bg: p.surface, border: p.line, border_width: 1.0, radius: r });
+    classes[TABLE_HEADER.index] = style_set(Style { bg: p.raised, radius: float4 { p.radius, p.radius, 0.0, 0.0 } });
+    var th = clickable(Style { padding: sp4(8.0, 5.0), gap: 4.0 * sp, ink: p.muted }, p.hover, p.pressed);
+    th.active.zoom = 1.0;
+    th.checked.ink = p.ink;
+    classes[TABLE_HEAD.index] = th;
+    var row_h = p.text_size * 1.5 + 4.0 * sp;
+    var trow = clickable(Style { min_size: float2 { 0.0, row_h } }, p.hover, p.pressed);
+    trow.active.zoom = 1.0;
+    trow.checked.bg = gfx2d::with_alpha(p.accent, 0.22);
+    trow.focused.ring_offset = -1.0;
+    classes[TABLE_ROW.index] = trow;
+    var alt = trow;
+    alt.normal.bg = gfx2d::with_alpha(p.ink, 0.035);
+    classes[TABLE_ROW_ALT.index] = alt;
+    classes[TABLE_CELL.index] = style_set(Style { padding: sp4(8.0, 0.0) });
     classes
 }
 

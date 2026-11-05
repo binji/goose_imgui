@@ -55,6 +55,7 @@ import pixel;
 import window;
 import devwidgets;
 import plots;
+import table;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -210,6 +211,7 @@ fn finish_frame() {
             st.rect = n.rect;
             st.screen = screen;
             st.shown = n.shown;
+            if n.d.bits & ROW_LIST != 0 { keep_row_view(i, st); }
             if n.d.bits & (SCROLLS_X | SCROLLS_Y) != 0 {
                 st.content = n.content;
                 st.view = float2 { inner_size(n, 0), inner_size(n, 1) };
