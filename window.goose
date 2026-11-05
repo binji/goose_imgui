@@ -281,7 +281,8 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
             if can_collapse {
                 box(collapse_id, button_d) { icon(if w.collapsed { ICON_CHEVRON_RIGHT } else { ICON_CHEVRON_DOWN }); };
             }
-            text(label_text(title), column().grow_w());
+            // Cut off, not pushing the buttons out, in a window too narrow for it.
+            box(row().grow_w().clip().with_bits(SHRINKS)) { text(label_text(title)); };
             if closable { box(close_id, button_d) { icon(ICON_CLOSE); }; }
         };
     }
@@ -289,7 +290,8 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         var bd = d;
         bd.dim = SizeDesc { .. };
         bd.lay.absolute = false;
-        bd = bd.grow();
+        // No wider than the window: what doesn't fit is cut off, not drawn past it.
+        bd = bd.grow().with_bits(SHRINKS);
         if bd.vis.class.index == 0 { bd = bd.skin(WINDOW_BODY); }
         if rolling {
             // At its whole height, in a box as tall as has rolled out. The

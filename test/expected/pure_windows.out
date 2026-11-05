@@ -21,6 +21,7 @@ resized:
   Log: 30.0 50.0 290.0 180.0
 as small as it goes:
   Log: 30.0 50.0 96.0 63.0
+  inside it: body true, title bar true, close button true
   Log: 30.0 50.0 246.0 163.0
 collapsed:
   Log: 30.0 50.0 246.0 31.0 collapsed
@@ -63,5 +64,5 @@ showing:
   Log alpha 0.08 zoom 0.91
   Log alpha 0.17 zoom 0.92
 shown: alpha 1.0 zoom 1.0
-long window: 58 nodes, 22 copied
+long window: 59 nodes, 23 copied
 hiding it: copies playing 1

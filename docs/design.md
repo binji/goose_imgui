@@ -467,6 +467,13 @@ spills past the box.
   it was among the windows. A window showing or hiding is isolated, so
   that its parts don't show through each other; at rest it isn't, as a
   layer costs a pass.
+- A box can't be narrower than its content's least width, so a window
+  made narrower than a long line or a row of fields would have had its
+  body (and its title) reach past its edges, the body's clip with them.
+  Both have `SHRINKS`: their least width is their padding's, so they are
+  as wide as the window, and what doesn't fit is cut off. It acts across
+  only: a title bar that could shrink down would lower the window's least
+  height, which is reckoned from it.
 - A window fits its content until it is resized, and then keeps its size.
   Its body is a scroll pane that grows, so a fitted window that the screen
   is too small for still scrolls.

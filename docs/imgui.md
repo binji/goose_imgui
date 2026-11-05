@@ -366,6 +366,8 @@ A window is a root of its own:
   title; its block isn't run while it is.
 - **Closed** by its cross, which sets `open` false; nothing is recorded
   while `open` is false.
+- **Clipped:** made narrower than what is in it, its body and title are
+  cut off at its edges (its buttons kept), not drawn past them.
 - **Scoped:** its title is its ID, and the IDs inside it are under it, so
   two windows can each have an "OK".
 - **Kept:** where it is, its size and whether it is collapsed last as long
@@ -519,6 +521,7 @@ fn slot(k: i64, item: Item, chosen: bool) -> bool {
 | `clickable(d)`, `.hit()`, `.focusable()` | take the pointer, take the focus |
 | `.blocks()`, `.nav_skip()`, `.disabled(on)`, `.keep()` | stop the pointer; leave out of navigation; disable; keep state without a label |
 | `.with_bits(OVERFLOW_Y)`, `OVERFLOW_X` | its children are their content's height (or width) whatever its own, as in a scroll pane, but it doesn't scroll or take the pointer, and they don't make it bigger: with `.clip()`, a reveal, or a table's columns cut off at its edge |
+| `.with_bits(SHRINKS)` | it can be narrower than its content (CSS's `min-width: 0`), its children laid out as ever: with `.clip()`, what doesn't fit is cut off. A window's body and title have it |
 | `.passthrough()` | let the pointer through the box and its subtree, though they have backgrounds, for a HUD over a game; what in it takes the pointer (and its parts) and what `blocks()` still do |
 
 The parts inside a widget that have looks of their own (a toggle's
@@ -665,6 +668,7 @@ The tests are in three groups:
     limits, the caret held solid while typing and then blinking;
   - `windows`: where windows start, moved and kept on the screen, resized
     by edges and corners down to their least size, raised by a press,
+    what is in one cut off at its edges when it is made too narrow,
     collapsed and opened, closed and opened again in front, a press over
     two windows reaching the front one only, a context menu, rolling up
     and down, hiding (a copy in its place, taking no input) and showing;

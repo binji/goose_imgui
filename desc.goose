@@ -159,6 +159,8 @@ let OVERFLOW_Y = 4096;      // its children are their content's height whatever 
 let ROW_LIST = 8192;        // a row_list: after layout, keeps which part of it its clip showed
 let OVERFLOW_X = 16384;     // its children are their content's width whatever its own (OVERFLOW_Y's
                             // twin): a table whose columns are wider than it, clipped
+let SHRINKS = 32768;        // it can be narrower than its content: what doesn't fit is cut off, if it
+                            // clips (CSS's min-width: 0). Its children are laid out as ever
 
 struct Desc {
     lay: LayoutDesc = LayoutDesc { .. },

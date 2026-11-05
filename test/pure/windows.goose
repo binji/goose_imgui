@@ -30,6 +30,7 @@ fn ui() {
     };
     imgui::window("Log", show_log, imgui::column().size(220, 160).absolute(60, 50)) {
         imgui::text("line one");
+        imgui::text("a line far too long for the window to hold");
         if imgui::button("Clear") { log.append("clear;"); }
     };
     imgui::window("Info") { imgui::text("fits its text"); };
@@ -161,6 +162,13 @@ fn main() {
     drag(float2 { lr3.x + lr3.w - 1.0, lr3.y + lr3.h - 1.0 }, float2 { -400.0, -400.0 });
     print("as small as it goes:");
     show("Log");
+    // What is in it is cut off at its edges, not drawn past them.
+    let lw = imgui::window_rect("Log");
+    let body = imgui::rect_of(imgui::sub_id(imgui::id("Log"), "body"));
+    let bar = imgui::rect_of(imgui::sub_id(imgui::id("Log"), "title"));
+    let close = imgui::rect_of(imgui::sub_id(imgui::id("Log"), "close"));
+    print("  inside it: body ", body.x + body.w <= lw.x + lw.w + 0.5, ", title bar ", bar.x + bar.w <= lw.x + lw.w + 0.5,
+          ", close button ", close.x + close.w <= lw.x + lw.w + 0.5);
     let lr4 = imgui::window_rect("Log");
     drag(float2 { lr4.x + lr4.w - 1.0, lr4.y + lr4.h - 1.0 }, float2 { 150.0, 100.0 });
     show("Log");

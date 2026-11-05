@@ -173,7 +173,7 @@ fn fit_node(i: i32, a: i64) {
     let pads = pad_sum(n, a);
     content += pads;
     least += pads;
-    if scrolls(n, a) { least = pads; }
+    if scrolls(n, a) || (a == 0 && n.d.bits & SHRINKS != 0) { least = pads; }
     let s = dim_of(n, a);
     var fit: f32 = 0.0;
     if s.kind == SIZE_PX {
