@@ -1,5 +1,5 @@
 // Developer windows over a running scene, in the dense dev theme: dragged
-// by their titles, resized by their edges and corners, collapsed by their
+// by their titles, resized by their edges and corners, rolled up by their
 // arrows or a double click, closed (and opened again from the View menu),
 // raised by a click. Right-click an entity for its menu.
 //
@@ -81,6 +81,7 @@ fn main() {
     else if theme_name == "dark" { imgui::theme_dark(); }
     else if theme_name == "game" { imgui::theme_game(); }
     else { imgui::theme_dev(); }
+    imgui::set_window_roll(imgui::tween(0.18, imgui::EASE_OUT_CUBIC));
     run("imgui: windows", 960, 600) {
         let dt = frame_dt();
         if !paused { t += dt * speed; }

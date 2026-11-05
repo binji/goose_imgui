@@ -365,6 +365,7 @@ A window is a root of its own:
 | `WINDOW_NO_TITLE`, `WINDOW_NO_RESIZE`, `WINDOW_NO_MOVE`, `WINDOW_NO_COLLAPSE`, `WINDOW_NO_SCROLL` | flags, or-ed |
 | `window_rect(title)`, `set_window_rect(title, rect)` | where it was drawn; moved and sized by the program (a size of 0: its content's) |
 | `raise_window(title)`, `collapse_window(title, on)`, `is_window_collapsed(title)` | |
+| `set_window_roll(m)` | windows roll up into their title bars as they collapse, and down as they open, by `m` (a tween or a spring); `INSTANT`, the default, doesn't roll. The body keeps its height and is cut off at the bottom, its content still recorded until it has rolled away |
 | `cursor() -> i64` | the pointer's shape the UI wants, `CURSOR_DEFAULT` or a grip's `CURSOR_EW_RESIZE`, `NS`, `NWSE`, `NESW`, numbered as gfx's are. gfx v1 has no cursor shapes; a program on a gfx that does passes it on |
 
 ## Canvases
@@ -574,7 +575,8 @@ The tests are in three groups:
   - `windows`: where windows start, moved and kept on the screen, resized
     by edges and corners down to their least size, raised by a press,
     collapsed and opened, closed and opened again in front, a press over
-    two windows reaching the front one only, a context menu;
+    two windows reaching the front one only, a context menu, rolling up
+    and down;
   - `events`: UI events for sounds: a hover once and only by moving, a
     press, an activation, a denial, focus shown by navigation, slider
     ticks with and without steps, tabs, popups opening and closing, back.

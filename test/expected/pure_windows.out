@@ -40,3 +40,16 @@ chose: clear;delete 1; open: 0
 menu open: 1
 right click outside: 0
 menu drawn last: true
+rolling up:
+  height 130.0; clear shown: true
+  height 119.0; clear shown: true
+  height 108.0; clear shown: true
+  height 97.0; clear shown: true
+  Log: 30.0 50.0 246.0 31.0 collapsed
+  clear shown: false
+rolling down:
+  height 64.0
+  height 75.0
+  height 86.0
+  height 97.0
+  Log: 30.0 50.0 246.0 163.0

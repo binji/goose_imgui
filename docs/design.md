@@ -445,6 +445,14 @@ spills past the box.
   anything is recorded, so a move or a resize is drawn the frame it
   happens, not a frame late. The size goes in the frame's Desc, the place
   in its root's anchor.
+- Rolling up (`set_window_roll`) is an amount from 0 to 1 animated by the
+  window's ID, which starts where it is going, so a window first seen
+  collapsed doesn't roll. While it moves, the frame is the title bar's
+  height plus that much of the body's height when it was last open, and
+  the body, at that whole height, is in a clipping box as tall as has
+  rolled out: the content doesn't reflow or scroll as it goes. A spring's
+  overshoot is clamped, as the body can't be taller than itself. The grips
+  wait until it is open.
 - A window fits its content until it is resized, and then keeps its size.
   Its body is a scroll pane that grows, so a fitted window that the screen
   is too small for still scrolls.

@@ -2,7 +2,8 @@
 // their titles and kept on the screen, resized by their edges and corners
 // (and no smaller than they can be), raised by a press, collapsed and
 // opened, closed and opened again in front; a press over two windows
-// reaching only the front one; a context menu on a right click.
+// reaching only the front one; a context menu on a right click; rolling
+// up and down.
 import std;
 import vec;
 import math;
@@ -205,4 +206,31 @@ fn main() {
     right_click_at(at("alpha"));
     let last = imgui::roots[imgui::root_order[imgui::root_order.len - 1] as i64];
     print("menu drawn last: ", last.kind == imgui::ROOT_POPUP);
+    click_at(float2 { 600.0, 20.0 });
+
+    // Rolling up and down: the frame shrinks to its title bar over the
+    // tween, its content drawn (cut off) until it has gone; then back.
+    imgui::set_window_roll(imgui::tween(0.2, imgui::EASE_LINEAR));
+    imgui::raise_window("Log");
+    step();
+    let arrow2 = imgui::rect_of(imgui::sub_id(imgui::id("Log"), "collapse"));
+    click_at(mid(arrow2));
+    print("rolling up:");
+    for k in 4 {
+        step();
+        let r = imgui::window_rect("Log");
+        print("  height ", round(r.h), "; clear shown: ", shown("Clear"));
+    }
+    for k in 12 { step(); }
+    show("Log");
+    print("  clear shown: ", shown("Clear"));
+    click_at(mid(arrow2));
+    print("rolling down:");
+    for k in 4 {
+        step();
+        print("  height ", round(imgui::window_rect("Log").h));
+    }
+    for k in 12 { step(); }
+    show("Log");
+    imgui::set_window_roll(imgui::INSTANT);
 }
