@@ -77,12 +77,13 @@ fn main() {
 | `notice.goose` | notices: toasts, banners, damage numbers, posted once |
 | `rich.goose` | rich text: spans and images in a line, from markup |
 | `textfx.goose` | text effects: characters that shake, wave, pulse, change hue, pop in |
+| `pixel.goose` | pixel-art mode: whole pixels, a pixel font and theme |
 | `events.goose` | UI events, for a game's sounds: hovers, clicks, ticks, popups opening |
 | `canvas.goose` | canvases: drawing of the program's own inside the layout |
 | `context.goose`, `id.goose` | the state kept between frames; IDs |
 | `docs/` | `imgui.md`, the reference; `design.md`, the plan and its reasoning; `future_work.md`, what is next |
 | `bench/` | `bench.goose`, and the latest `results.md` |
-| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`, `stats`, `hud`, `wayfinding`, `cards`, `dialogue`: programs using the package (`common` and `scene` are what they share), each a root file |
+| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`, `stats`, `hud`, `wayfinding`, `cards`, `dialogue`, `pixel`: programs using the package (`common` and `scene` are what they share), each a root file |
 | `test/run_tests.py` | runs `test/pure/` (no GPU) and `test/headless/` (drawn and read back), comparing with `test/expected/` |
 
 All the modules are in `namespace imgui`.

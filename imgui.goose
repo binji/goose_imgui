@@ -51,6 +51,7 @@ import notice;
 import rich;
 import textfx;
 import events;
+import pixel;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -154,6 +155,7 @@ fn finish_frame() {
         let keeps = keeps_state(n);
         var st = if keeps { state_of(n.id) } else { WidgetState { .. } };
         let appearing = !st.laid || st.seen < frame_index - 1;
+        if pixel_art { n.rect = snap_rect(n.rect); }
         n.shown = n.rect;
         n.alpha = n.style.alpha;
         n.zoom = n.style.zoom * n.d.mot.zoom;
@@ -176,6 +178,10 @@ fn finish_frame() {
             let v = animate_lanes(hash_combine(n.id, 0x611DE), to, n.d.mot.glide, from, true);
             n.shown = gfx2d::Rect { v.x, v.y, v.z, v.w };
             n.shift += float2 { v.x - n.rect.x, v.y - n.rect.y };
+        }
+        if pixel_art {
+            n.shift = float2 { round(n.shift.x), round(n.shift.y) };
+            n.shown = snap_rect(n.shown);
         }
         // To the screen: under the parent's transform, then its own motion.
         let parent_m = if n.parent >= 0 { nodes[n.parent].m } else { gfx2d::IDENTITY };

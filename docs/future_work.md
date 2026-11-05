@@ -35,21 +35,19 @@ item here, by its title, at each workaround.
     (`set_scale`, `IMGUI_SCALE`). gfx could expose SDL's display content
     scale and its window size in points, and then imgui would start at the
     right size on a high-density screen without being told.
-6. **Pixel art.** Nine-slices take a filter; images should too. The scale
-    could snap to whole numbers, so that pixels stay square.
-7. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
+6. **Backdrop blur:** a panel that blurs what is behind it. gfx2d's layers
     blur their own content but only copy their backdrop. gfx2d needs to
     blur the backdrop first (its future work, item 16: "A layer can't blur
     what is behind it"), and then a Desc could have `backdrop_blur(s)`.
-8. **Developer widgets:** tables with resizable columns, trees, color
+7. **Developer widgets:** tables with resizable columns, trees, color
     pickers, number fields with drag, plots (on a canvas).
-9. **Sizes from aspect ratios** (an image box as wide as its height says),
+8. **Sizes from aspect ratios** (an image box as wide as its height says),
     and grid tracks of `minmax`.
-10. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
+9. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
     (a carousel of cards).
-11. **Accessibility:** the tree is all there, so an outline of it could be
+10. **Accessibility:** the tree is all there, so an outline of it could be
     given to a screen reader.
-12. **Several contexts:** the state is global, as gfx2d's is. Gathering it
+11. **Several contexts:** the state is global, as gfx2d's is. Gathering it
     into a `root struct` would allow, say, a UI in the world and a UI on
     the screen.
 

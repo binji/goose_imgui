@@ -18,11 +18,16 @@ fn draw() {
         misuse("draw: not inside a gfx2d frame");
         return;
     }
-    if ui_scale != 1.0 {
-        gfx2d::scale(ui_scale) { draw_roots(); };
+    // Pixel art: nothing antialiased, images nearest.
+    let aliased = gfx2d::state.aliased;
+    if pixel_art { gfx2d::set_antialias(false); }
+    let s = drawn_scale();
+    if s != 1.0 {
+        gfx2d::scale(s) { draw_roots(); };
     } else {
         draw_roots();
     }
+    gfx2d::set_antialias(!aliased);
 }
 // Each root, then the focus cursor over them all.
 fn draw_roots() {
@@ -169,7 +174,7 @@ fn draw_self(i: i32, alpha: f32) {
         let inner = gfx2d::Rect { b.x + n.d.lay.padding.x, b.y + n.d.lay.padding.y,
                                   b.w - pad_sum(n, 0), b.h - pad_sum(n, 1) };
         let ink = if n.d.vis.ov & OV_INK != 0 { n.style.ink } else { gfx2d::WHITE };
-        gfx2d::image(n.image, fitted(n.src, inner, n.fit_mode), n.src, faded(ink, a));
+        gfx2d::image(n.image, fitted(n.src, inner, n.fit_mode), n.src, faded(ink, a), n.filter);
     }
 }
 

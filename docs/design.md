@@ -338,6 +338,28 @@ lets it through a subtree. The widgets in that subtree still take it.
   panes to keep it in view. A closing popup gives focus back to the widget
   that opened it.
 
+## Pixel art
+
+- A pixel-art UI wants its own pixels square: a whole number of screen
+  pixels a unit, every box on whole units, nothing blended at edges, and
+  images sampled nearest. One switch, `set_pixel_art`, does all of it, as
+  the parts are useless apart: whole boxes at a fractional scale still
+  land between screen pixels.
+- Boxes are snapped after layout, each edge rounded, not each size: two
+  boxes that meet still meet. Motion's shifts are rounded too; a zoom is
+  not, so a scaled box can leave the grid.
+- Antialiasing is gfx2d's switch, set while imgui draws and put back
+  after. Images and nine-slices default to `FILTER_DEFAULT`, which gfx2d
+  turns into nearest when antialiasing is off, so a program's choice of
+  filter still wins.
+- `theme_pixel` is the built-in theme with every length scaled to the
+  font and rounded, rather than a second table of numbers: a class added
+  to the themes later gets a pixel look without being listed here. Text
+  sizes are made the font's own, since a bitmap font at 0.875 of its size
+  loses its pixels.
+- The built-in font is small capitals 3 x 5: enough for menus and HUDs in
+  any example or test without the program drawing one.
+
 ## UI events
 
 - Sounds are the program's: imgui keeps a list of events a frame, and
@@ -502,6 +524,7 @@ spills past the box.
 | `notice.goose` | notices: queues of what the program posted once |
 | `rich.goose` | rich text: markup read into pieces, broken into lines |
 | `textfx.goose` | text effects: each character's change, and the built-in effects |
+| `pixel.goose` | pixel-art mode: the scale, snapping, the pixel font and theme |
 | `events.goose` | UI events: each frame's list, for sounds |
 | `style.goose` | `Style`, `StyleSet`, the class registry, themes |
 | `draw.goose` | the draw walk |

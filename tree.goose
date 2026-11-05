@@ -45,6 +45,7 @@ struct Node {
     image: gfx::Texture = gfx::Texture { 0 },
     src: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },
     fit_mode: u8 = 1,                   // gfx2d::FIT_CONTAIN
+    filter: i8 = -1,                    // gfx2d::FILTER_DEFAULT
     icon: u8 = 0,
     // layout
     fit: float2 = float2 { 0.0, 0.0 },  // the size it would like
@@ -384,13 +385,16 @@ fn node_text(i: i32) -> const u8[:] {
 // --- images -------------------------------------------------------------------------------
 
 // A texture, its whole size unless the Desc sizes it; fitted into its box
-// by `fit_mode` (gfx2d::FIT_CONTAIN, COVER or STRETCH).
-fn image(t: gfx::Texture, d: Desc, fit_mode: i64 = gfx2d::FIT_CONTAIN) {
+// by `fit_mode` (gfx2d::FIT_CONTAIN, COVER or STRETCH), sampled by `filter`
+// (gfx2d::FILTER_LINEAR or NEAREST; FILTER_DEFAULT: nearest in pixel-art
+// mode, else linear).
+fn image(t: gfx::Texture, d: Desc, fit_mode: i64 = gfx2d::FIT_CONTAIN, filter: i64 = gfx2d::FILTER_DEFAULT) {
     let info = gfx::texture_info(t);
-    image(t, gfx2d::rect_of(0, 0, info.width, info.height), d, fit_mode);
+    image(t, gfx2d::rect_of(0, 0, info.width, info.height), d, fit_mode, filter);
 }
 // A part of one: a sprite from a sheet.
-fn image(t: gfx::Texture, src: gfx2d::Rect, d: Desc, fit_mode: i64 = gfx2d::FIT_CONTAIN) {
+fn image(t: gfx::Texture, src: gfx2d::Rect, d: Desc, fit_mode: i64 = gfx2d::FIT_CONTAIN,
+         filter: i64 = gfx2d::FILTER_DEFAULT) {
     let i = add_node(NODE_IMAGE, 0, d);
     if i < 0 { return; }
     let n .= nodes[i];
@@ -398,6 +402,7 @@ fn image(t: gfx::Texture, src: gfx2d::Rect, d: Desc, fit_mode: i64 = gfx2d::FIT_
     n.src = src;
     n.natural = float2 { src.w, src.h };
     n.fit_mode = fit_mode as u8;
+    n.filter = filter as i8;
 }
 
 // --- icons --------------------------------------------------------------------------------

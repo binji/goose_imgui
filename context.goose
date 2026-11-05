@@ -31,7 +31,8 @@ fn scale_from_env() -> f64 {
     if ok && s > 0.0 { s } else { 1.0 }
 }
 fn set_scale(s: f64) { if s > 0.0 { ui_scale = s; } }
-fn ui_scale_of() -> f64 { ui_scale }
+// The scale the UI is drawn at: set_scale's (whole in pixel-art mode).
+fn ui_scale_of() -> f64 { drawn_scale() }
 
 fn time() -> f64 { clock }
 fn dt() -> f64 { delta }

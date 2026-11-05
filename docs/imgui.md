@@ -65,6 +65,8 @@ The examples each show one part:
   list of key bindings, and a modal;
 - `stats`: a run's summary on canvases: a line chart with values on hover,
   bars that grow in, a gauge, a minimap, each filling a grid card;
+- `pixel`: a shop in pixel-art mode: the pixel font and theme, sprites
+  drawn nearest at twice their size, slots framed by a nine-slice;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
   character at a time, each letter popping in, with spans that wave, glow,
   shake, shiver (an effect of the program's own) and cycle their hue.
@@ -84,7 +86,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `input_from_gfx() -> Input` | gfx's mouse and keyboard, and the ordered events for typed text and the clipboard |
 | `nav_from_pad(input, PadState)` | a gamepad's held buttons and stick, as navigation, with repeat (gfx v1 has no gamepads; a program reading one passes what it holds) |
 | `set_viewport(rect)` | the UI's area; by default the screen, under the scales |
-| `set_scale(s)` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE` |
+| `set_scale(s)`, `ui_scale_of()` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE`. `ui_scale_of()` is the scale it is drawn at (whole in pixel-art mode) |
 | `edge_clamp(p, inset)`, `edge_clamp(p, rect)` | where to put a marker for p: p, if it is in the viewport inset by `inset` (or in `rect`); else where the line from the center to p leaves it. Also the angle to p, and whether it is in |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over something that takes it or has a background, not in a `passthrough()` box, or holds a press) or the keyboard (a text field has focus) this frame |
 | `cancelled()` | Escape or B pressed with no popup open to close: for the game's own "back" |
@@ -152,7 +154,7 @@ How children share space:
 | `[name=key]…[/]`, `rich(…) -> SpanHit` | a span the pointer can rest on: `rich` returns which key is under it (`h.is("burn")`), the one it was last on (`h.was("burn")`, to keep a tooltip's content as it fades), and `h.it`, an Interaction at that span for `tooltip(h.it) { … }`. The text doesn't take the pointer itself: a span is on when the widget the text is in (a card, a button) is the one under the pointer |
 | `add_span(name, Span { ink, font, text_size, text_look, underline })` | a span's style, by name: what it sets of the text's ink, font, size and look (`add_text_look`'s, over the text's own), and an underline |
 | `add_inline(name, texture, src, scale = 1, rise = 0)` | an image for `[img=name]`: `src` of the texture, `scale` times the text's size tall, centered on the text and raised by `rise` times its size |
-| `image(texture, d, fit_mode)`, `image(texture, src, d, fit_mode)` | an image, or a sprite from a sheet; fitted by `gfx2d::FIT_CONTAIN`, `COVER` or `STRETCH` |
+| `image(texture, d, fit_mode, filter)`, `image(texture, src, d, fit_mode, filter)` | an image, or a sprite from a sheet; fitted by `gfx2d::FIT_CONTAIN`, `COVER` or `STRETCH`; sampled by `gfx2d::FILTER_LINEAR` or `NEAREST` (by default nearest in pixel-art mode, else linear) |
 | `icon(ICON_CHECK …)`, `icon(kind, d)` | line icons in the ink: check, chevrons, close, plus, minus |
 
 ## Looks
@@ -196,7 +198,8 @@ A `Style` has:
   transparent shadow, is unset. An outline < 0, or a shadow moved by
   (0, 0), is none;
 - `slice` and `slice_tint`: a nine-slice from `add_nine_slice(texture, src,
-  insets)`;
+  insets, filter)` (the filter by default nearest in pixel-art mode, else
+  linear);
 - `alpha`, `offset` and `zoom`: a state's motion, such as a pressed button
   sinking;
 - `ring`, `ring_width` and `ring_offset`: the focus ring;
@@ -215,6 +218,7 @@ state by state.
 | Themes and classes | |
 |---|---|
 | `theme_light()`, `theme_dark()`, `theme_game()` | the built-in themes; the light one is in place from the start |
+| `theme_pixel()`, `theme_pixel(font, size[, palette])` | for pixel-art mode: every class's sizes scaled to the font and whole, corners square, shadows hard, borders and the ring a unit wide, a press moving a unit down, no easing between states; in `pixel_font()` at 6 by default |
 | `theme(Palette { … })` | every built-in class from a palette: surface, raised, hover, pressed, line, ink, muted, accent and their sizes |
 | `screen_color()` | the theme's color for the screen behind the UI, for a menu screen to clear to, so that it changes with the theme |
 | `class_style(C)`, `set_class(C, set)` | read and replace a class |
@@ -232,6 +236,38 @@ The classes are:
 - TAB_BAR, TAB, TAB_PANEL, MENU_BAR, MENU_HEADER, MENU, MENU_ITEM;
 - POPUP, MODAL, BACKDROP, TOOLTIP, NOTICE;
 - INPUT, CARET, SELECTION, DROPDOWN.
+
+## Pixel art
+
+In pixel-art mode the UI is drawn in whole pixels of its own, each a
+square of the screen's:
+
+```goose
+imgui::set_pixel_art(true);
+imgui::set_scale(3);                // three screen pixels a unit
+// once the window is open (the font is a texture):
+imgui::theme_pixel();
+```
+
+- The scale is rounded down to whole screen pixels a unit (at least one),
+  so 2.5 draws at 2.
+- Every box lands on whole units (its edges rounded), and motion's shifts
+  too, so text and images placed at fractions stay on the grid.
+- Nothing is antialiased, and images and nine-slices are drawn nearest
+  unless they ask otherwise.
+- Text should be in a bitmap font (`gfx2d::bitmap_font`), at its cell
+  height or a whole multiple of it; a vector font this small, unblended,
+  is hard to read. `pixel_font()` is a built-in one: small capitals 3 x 5
+  in cells of 4 x 6, its size 6, lower case drawn as upper. It is made the
+  first time it is asked for, once the window is open.
+- A design pixel is a unit: `image(sprite, column().size(16, 16))` is a
+  16-pixel sprite at the scale.
+
+| | |
+|---|---|
+| `set_pixel_art(on)`, `is_pixel_art()` | the mode |
+| `pixel_font() -> gfx2d::Font` | the built-in pixel font |
+| `theme_pixel(…)`, `pixel_palette()` | the theme for it, and its default colors |
 
 ## Motion
 
@@ -499,7 +535,9 @@ The tests are in three groups:
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
   ring, the UI scale, exits drawn after their node has gone, rich text's
   spans, image and underline, text revealed in part where it is in the
-  whole, text effects moving and coloring single characters (`draw`); typing through gfx's injected input
+  whole, text effects moving and coloring single characters, color
+  filters (`draw`); pixel-art mode: the scale, boxes on whole units, every
+  unit one color, the font and theme (`pixel`); typing through gfx's injected input
   (`typing`); canvases: placement, size, clipping, opacity, culling, the
   pointer (`canvas`).
 - **Expected output** is in `test/expected/<dir>_<name>.out`. A headless

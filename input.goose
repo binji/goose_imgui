@@ -361,7 +361,7 @@ fn push_key(inp: Input&, key: i64, shift: bool, word: bool) {
 fn input_from_gfx() -> Input {
     scan_codes();
     var inp = Input { from_gfx: true, .. };
-    let scale = max(gfx2d::current_scale() * ui_scale, 0.0001) as f32;
+    let scale = max(gfx2d::current_scale() * drawn_scale(), 0.0001) as f32;
     inp.pointer.pos = if gfx::mouse_in_window() || gfx::mouse_down(gfx::MOUSE_LEFT) {
         gfx::mouse_pos() / scale
     } else {

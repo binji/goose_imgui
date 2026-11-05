@@ -142,10 +142,11 @@ fn add_class(s: StyleSet) -> StyleClass {
 }
 
 // A nine-slice for Style.slice: the part `src` of `t`, its corners `insets`
-// (left, top, right, bottom) kept their size and the rest stretched.
+// (left, top, right, bottom) kept their size and the rest stretched;
+// sampled by `filter` (FILTER_DEFAULT: nearest in pixel-art mode, else linear).
 struct NineSlice { texture: gfx::Texture, src: gfx2d::Rect, insets: float4, filter: i32 }
 fn add_nine_slice(t: gfx::Texture, src: gfx2d::Rect, insets: float4,
-                  filter: i64 = gfx2d::FILTER_LINEAR) -> u16 {
+                  filter: i64 = gfx2d::FILTER_DEFAULT) -> u16 {
     if nine_slices.len == 0 { nine_slices.push(NineSlice { gfx::Texture { 0 }, gfx2d::Rect { .. }, float4_0, 0 }); }
     nine_slices.push(NineSlice { t, src, insets, filter as i32 });
     (nine_slices.len - 1) as u16
@@ -383,7 +384,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
                                               padding: pad4(p.padding.x, p.padding.y), ink: p.ink,
                                               min_size: float2 { 0.0, p.control + p.padding.y }, gap: 8.0 },
                                       p.hover, p.pressed);
-    classes[LABEL.index] = style_set(Style { ink: p.ink, text_size: p.text_size });
+    classes[LABEL.index] = style_set(Style { ink: p.ink, font: p.font, text_size: p.text_size });
     classes[TITLE.index] = style_set(Style { ink: p.ink, text_size: p.title_size });
     classes[MUTED.index] = style_set(Style { ink: p.muted, text_size: p.text_size * 0.875 });
 
