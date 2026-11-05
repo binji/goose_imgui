@@ -1,4 +1,6 @@
-// Developer windows over a running scene, in the dense dev theme: dragged
+// An editor of a running scene, in the dense dev theme: windows docked
+// around its viewport (drag a title over the dock to dock it, a tab out to
+// float it, the lines between them to resize), and windows floating:
 // by their titles, resized by their edges and corners, rolled up by their
 // arrows or a double click, closed (and opened again from the View menu),
 // fading and zooming as they hide and show, raised by a click. A tree of
@@ -158,9 +160,11 @@ fn ui() {
                 imgui::menu_check("Console", show_console);
             };
         };
-        scene();
+        // The windows dock here; the scene is in one of them.
+        imgui::dock_space("dock", imgui::column().grow());
     };
-    imgui::window("Tweaks", show_tweaks, imgui::column().size(250, 170).absolute(16, 44)) {
+    imgui::window("Viewport", imgui::column().padding(0), imgui::WINDOW_NO_SCROLL) { scene(); };
+    imgui::window("Tweaks", show_tweaks, imgui::column().size(230, 170).absolute(220, 60)) {
         imgui::properties() {
             imgui::property("Speed") { imgui::slider("", speed, 0, 4, 0.1, imgui::row()); };
             imgui::property("Spin") { imgui::drag_number("", spin, imgui::Drag { lo: 0, hi: 2, decimals: 2 }); };
@@ -169,7 +173,7 @@ fn ui() {
             imgui::property("Paused") { imgui::checkbox("", paused); };
         };
     };
-    imgui::window("Stats", show_stats, imgui::column().size(240, 230).absolute(390, 44)) {
+    imgui::window("Stats", show_stats, imgui::column().size(220, 210).absolute(470, 60)) {
         imgui::box(imgui::row().gap(8).align(imgui::CENTER)) {
             imgui::textf(imgui::column()) { out => format(out, "frame ", round(1000.0 / fps * 10.0) / 10.0, " ms"); };
             imgui::sparkline("spark", frame_ms, imgui::column().width(60));
@@ -211,6 +215,14 @@ fn ui() {
 fn main() {
     parse_args();
     imgui::log(log, "type help for the commands");
+    // An editor's layout to start with: the viewport in the middle, the
+    // scene's tree on the left, the inspector on the right, the console and
+    // the entities' table as tabs under the viewport. Tweaks and Stats float.
+    imgui::dock_window("Viewport", "dock", imgui::DOCK_CENTER);
+    imgui::dock_window("Scene", "dock", imgui::DOCK_LEFT, 0.2);
+    imgui::dock_window("Inspector", "dock", imgui::DOCK_RIGHT, 0.27);
+    imgui::dock_window_with("Console", "Viewport", imgui::DOCK_BOTTOM, 0.33);
+    imgui::dock_window_with("Entities", "Console", imgui::DOCK_CENTER);
     if theme_name == "dev-light" { imgui::theme_dev_light(); }
     else if theme_name == "light" { imgui::theme_light(); }
     else if theme_name == "dark" { imgui::theme_dark(); }

@@ -146,7 +146,13 @@ let LOG_DEBUG_LINE = StyleClass { 67 };
 let LOG_WARN_LINE = StyleClass { 68 };
 let LOG_ERROR_LINE = StyleClass { 69 };
 let LOG_INPUT_LINE = StyleClass { 70 }; // a console's command, echoed
-let CLASS_COUNT = 71;
+let SPLITTER = StyleClass { 71 };       // the handle between two panes: its min_size.x is its thickness
+let DOCK_SPACE = StyleClass { 72 };     // a dock space: what shows where no window is
+let DOCK_TAB_BAR = StyleClass { 73 };   // a dock leaf's row of tabs
+let DOCK_TAB = StyleClass { 74 };       // a docked window's tab (checked: shown); its min_size.y the bar's height
+let DOCKED = StyleClass { 75 };         // a docked window's frame
+let DOCK_PREVIEW = StyleClass { 76 };   // where a window dragged over a dock space would go
+let CLASS_COUNT = 77;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -631,6 +637,22 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[LOG_WARN_LINE.index] = style_set(Style { ink: gfx2d::rgb(0xD29922) });
     classes[LOG_ERROR_LINE.index] = style_set(Style { ink: gfx2d::rgb(0xE5534B) });
     classes[LOG_INPUT_LINE.index] = style_set(Style { ink: p.accent });
+    var sp_h = style_set(Style { bg: gfx2d::with_alpha(p.line, 0.7), min_size: float2 { 5.0, 5.0 } }, move);
+    sp_h.hover.bg = gfx2d::with_alpha(p.accent, 0.5);
+    sp_h.active.bg = p.accent;
+    classes[SPLITTER.index] = sp_h;
+    classes[DOCK_SPACE.index] = style_set(Style { bg: gfx2d::with_alpha(p.surface, 0.35) });
+    classes[DOCK_TAB_BAR.index] = style_set(Style { bg: p.raised, padding: sp4(4.0, 0.0), gap: 2.0 * sp });
+    let tab_h = p.text_size * 1.25 + 12.0 * sp;
+    var dt = clickable(Style { radius: float4 { p.radius, p.radius, 0.0, 0.0 }, padding: sp4(10.0, 4.0), gap: 6.0 * sp,
+                               ink: p.muted, min_size: float2 { 0.0, tab_h } }, p.hover, p.pressed);
+    dt.active.zoom = 1.0;
+    dt.checked.bg = p.surface;
+    dt.checked.ink = p.ink;
+    classes[DOCK_TAB.index] = dt;
+    classes[DOCKED.index] = style_set(Style { bg: p.surface, ink: p.ink, font: p.font, text_size: p.text_size });
+    classes[DOCK_PREVIEW.index] = style_set(Style { bg: gfx2d::with_alpha(p.accent, 0.25), border: p.accent,
+                                                    border_width: 2.0, radius: r });
     classes
 }
 

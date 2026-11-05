@@ -1,0 +1,34 @@
+docked:
+  A docked: 0.0 32.0 149.0 368.0
+  B docked: not shown
+  C docked: 154.0 314.0 446.0 87.0
+  D docked: 154.0 32.0 446.0 245.0
+B's tab:
+  A docked: 0.0 32.0 149.0 368.0
+  B docked: 154.0 32.0 446.0 245.0
+  C docked: 154.0 314.0 446.0 87.0
+  D docked: not shown
+button in A: pressed;
+handle right 60:
+  A docked: 0.0 32.0 209.0 368.0
+  B docked: 214.0 32.0 386.0 245.0
+  C docked: 214.0 314.0 386.0 87.0
+  D docked: not shown
+D's tab dragged out, held: true, active is D's title: true
+let go:
+  A docked: 0.0 32.0 209.0 368.0
+  B docked: 214.0 32.0 386.0 245.0
+  C docked: 214.0 314.0 386.0 87.0
+  D floating: 414.0 324.0 386.0 277.0
+over A's left edge, the drop shown: true
+docked left of A:
+  A docked: 107.0 32.0 102.0 368.0
+  B docked: 214.0 32.0 386.0 245.0
+  C docked: 214.0 314.0 386.0 87.0
+  D docked: 0.0 32.0 102.0 368.0
+D's close: open false
+C undocked:
+  A docked: 107.0 32.0 102.0 368.0
+  B docked: 214.0 32.0 386.0 368.0
+  C floating: 230.0 298.0 386.0 120.0
+  D docked: not shown

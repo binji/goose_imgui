@@ -57,6 +57,8 @@ import devwidgets;
 import plots;
 import table;
 import log;
+import split;
+import dock;
 
 // --- frames ---------------------------------------------------------------------------
 

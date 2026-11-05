@@ -1,0 +1,13 @@
+at first:
+  across: 150.0 220.0 220.0; down: 205.0 90.0
+first handle right 50:
+  across: 200.0 195.0 195.0; down: 205.0 90.0
+  cursor on a handle: true
+second handle right 60:
+  across: 200.0 255.0 135.0; down: 205.0 90.0
+down handle up 40:
+  across: 200.0 255.0 135.0; down: 165.0 130.0
+first handle far left:
+  across: 32.0 423.0 135.0; down: 165.0 130.0
+800 across:
+  across: 43.0 564.0 183.0; down: 165.0 130.0

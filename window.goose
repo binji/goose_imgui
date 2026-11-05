@@ -33,6 +33,10 @@ struct WindowState {
     grab: float2 = float2 { 0.0, 0.0 },         // where it was, and how big, when a drag began
     grab_size: float2 = float2 { 0.0, 0.0 },
     open_h: f32 = 0.0,                          // its height when last fully open: what a roll runs over
+    dock: i32 = -1,                             // the dock node it is in (dock.goose); -1: floating
+    called: i64 = -1,                           // the frame window() was last called for it
+    closable: bool = false,                     // it has a close button: so does its tab, docked
+    title: u8[..48] = [],                       // its title, for its tab
 }
 
 // A window's own state lives here, not in its ID's WidgetState, which is
@@ -173,6 +177,17 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     var w = window_state(wid.v);
     let last_st = state_of(wid.v);
     let last = last_st.rect;
+    w.called = frame_index;
+    w.closable = closable;
+    w.title.clear();
+    for c in label_text(title) { if w.title.len < w.title.cap { w.title.push(c); } }
+    windows.insert(wid.v, w);
+    // Docked, in a dock space being shown: its body in its node, if its tab
+    // is the one selected (dock.goose).
+    if w.dock >= 0 && dock_shown(w.dock) {
+        docked_window(wid, open, d, flags) { F(); };
+        return;
+    }
     if !known {
         let k = (window_order.len % 8) as f32;
         w.pos = if d.lay.absolute { d.lay.at } else { float2 { viewport.x + 24.0 + 28.0 * k, viewport.y + 24.0 + 28.0 * k } };
@@ -197,6 +212,20 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         let tb = interaction_for(title_id.v, bar_d);
         if tb.pressed { w.grab = w.pos; }
         if tb.held && tb.dragging && flags & WINDOW_NO_MOVE == 0 { w.pos = w.grab + tb.drag; }
+        // Dragged over a dock space: where it would go shown; let go
+        // there, docked.
+        if tb.held && tb.dragging { dock_preview(input.pointer.pos); }
+        if tb.released && last_st.laid {
+            let t = dock_target_at(input.pointer.pos);
+            if t.node >= 0 {
+                // Recorded docked this frame, not skipping one (which would
+                // play its hiding).
+                windows.insert(wid.v, w);
+                dock_into(wid.v, t.node, t.side, 0.5);
+                docked_window(wid, open, d, flags) { F(); };
+                return;
+            }
+        }
         if tb.double_clicked && can_collapse { w.collapsed = !w.collapsed; }
         if can_collapse && interaction_for(collapse_id.v, button_d).activated { w.collapsed = !w.collapsed; }
         if closable && interaction_for(close_id.v, button_d).activated { open = false; }
@@ -333,7 +362,15 @@ fn order_roots() {
     if roots.len == 0 { return; }
     root_order.push(0);
     front_window = 0;
+    // Docked windows first, in their dock spaces under every floating one;
+    // then the floating ones, back to front.
+    for r, k in roots {
+        if r.kind == ROOT_WINDOW && window_state(r.popup).dock >= 0 && dock_shown(window_state(r.popup).dock) {
+            root_order.push(k as i32);
+        }
+    }
     for wid in window_order {
+        if window_state(wid).dock >= 0 && dock_shown(window_state(wid).dock) { continue; }
         for r, k in roots {
             if r.kind == ROOT_WINDOW && r.popup == wid {
                 root_order.push(k as i32);

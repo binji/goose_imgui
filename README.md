@@ -25,9 +25,10 @@ menus, settings, inventories, HUDs and dialogs. It is drawn through
   with the arrows (or a d-pad, through `nav_from_pad`) and Tab. They are
   used with Enter or A and backed out of with Escape or B. Focus is kept
   inside modals and menus.
-- **Developer tools.** Windows that move, resize, collapse and close over
-  the game, context menus, and a dense theme for debug overlays and
-  editors; more are on the way (docs/future_work.md).
+- **Developer tools.** For debug overlays and editors, in a dense theme:
+  windows that move, resize, collapse and close over the game, or dock
+  into a dock space; property rows, trees, number fields, colors, plots,
+  tables, long lists, logs and consoles, splitters and context menus.
 
 **Status:** the first set of widgets, layout, themes and motion are done.
 [docs/imgui.md](docs/imgui.md) is the reference,
@@ -84,6 +85,10 @@ fn main() {
 | `events.goose` | UI events, for a game's sounds: hovers, clicks, ticks, popups opening |
 | `canvas.goose` | canvases: drawing of the program's own inside the layout |
 | `window.goose` | windows: moved, resized, collapsed, closed and raised |
+| `dock.goose`, `split.goose` | dock spaces; splitters |
+| `devwidgets.goose` | property rows, collapsing headers, trees, number fields |
+| `plots.goose` | plots, sparklines, colors |
+| `table.goose`, `log.goose` | row lists, selection, tables; logs and consoles |
 | `context.goose`, `id.goose` | the state kept between frames; IDs |
 | `docs/` | `imgui.md`, the reference; `design.md`, the plan and its reasoning; `future_work.md`, what is next |
 | `bench/` | `bench.goose`, and the latest `results.md` |

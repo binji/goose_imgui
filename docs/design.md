@@ -558,6 +558,34 @@ spills past the box.
   is at 0, which is no longer its end. While following, the view scrolls
   to the end as it was last frame, not past it, so that a turn of the
   wheel back leaves it short of the end, and that is what stops it.
+- **A split** sizes its panes itself rather than leaving them to grow:
+  a growing box starts from its content's size, so panes sharing what is
+  left would share it unevenly. Last frame's handles know the panes on
+  their sides, so before any pane is recorded the split reads their
+  fractions, gives each with one its length, and the rest equal shares
+  of what is left; the last of those grows, to take what rounding
+  leaves. A pane's fraction to start with is kept the first time it is
+  recorded, for the next frame's reading. A handle's drag is applied
+  then too, so a pane is its new size the frame it is dragged.
+- **Docking** keeps a tree of nodes for each dock space, in one array
+  that is never shrunk (unused nodes are taken again). A split node has
+  two children and a ratio; a leaf, its windows' IDs as tabs and the one
+  shown. A window's own state says which leaf it is in, and keeps its
+  title and whether it can close, for its tab, which the dock space draws
+  without the window's help.
+- A leaf's rect is its space's last-frame rect divided by the ratios of
+  the splits above it, so it is known before anything this frame is laid
+  out, whatever order the dock space and its windows are recorded in. A
+  docked window is then a window root at its leaf's rect, under the tab
+  bar, recorded where the program calls `window(…)`: its content is the
+  program's code, and needs no other place. Roots are ordered with the
+  docked windows first, so the floating ones are over them.
+- A tab dragged out undocks its window and hands the drag to its title:
+  `active` becomes the title's ID and the press is moved to where the
+  pointer is, so the window, now floating, follows the same drag, and a
+  release over a dock space docks it again.
+- A window docked by a drag is recorded docked the frame it is let go,
+  not a frame later: a frame with nothing recorded would play its hiding.
 - **Plots** are canvases: a plot is the values drawn, and the readout
   under the pointer is drawn too, not a tooltip, so it follows the
   pointer at once. `f32` values are copied into a scratch `f64` array, so
@@ -692,6 +720,8 @@ spills past the box.
 | `plots.goose` | plots, sparklines, color swatches, pickers and fields |
 | `table.goose` | row lists (only the rows in view), selection, tables |
 | `log.goose` | logs (a ring of lines), log views and consoles |
+| `split.goose` | splitters: panes and the handles between them |
+| `dock.goose` | dock spaces: a tree of splits whose leaves hold windows as tabs |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

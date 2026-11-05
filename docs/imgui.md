@@ -67,8 +67,9 @@ The examples each show one part:
   bars that grow in, a gauge, a minimap, each filling a grid card;
 - `pixel`: a shop in pixel-art mode: the pixel font and theme, sprites
   drawn nearest at twice their size, slots framed by a nine-slice;
-- `windows`: developer windows over a running scene, in the dense dev
-  theme: moved, resized, collapsed, closed and raised; a tree of the
+- `windows`: an editor of a running scene, in the dense dev theme: windows
+  docked around its viewport, and floating ones moved, resized,
+  collapsed, closed and raised; a tree of the
   scene's entities, each with a context menu; an inspector of the one
   selected, of property rows, number fields, colors and collapsing
   headers; a table of the entities, sorted by its headers, rows selected
@@ -253,6 +254,11 @@ The classes are:
 - TABLE, TABLE_HEADER, TABLE_HEAD (a column's header; checked: sorted
   by), TABLE_ROW (its `min_size.y` the rows' height; checked: selected),
   TABLE_ROW_ALT (every other row), TABLE_CELL (its padding);
+- SPLITTER (the handle between panes, and between dock leaves: its
+  `min_size.x` its thickness);
+- DOCK_SPACE (where no window is), DOCK_TAB_BAR, DOCK_TAB (checked: the
+  one shown; its `min_size.y` the tab bar's height), DOCKED (a docked
+  window's frame), DOCK_PREVIEW (where a dragged window would go);
 - LOG (the pane: its look, padding and text size), LOG_LINE,
   LOG_DEBUG_LINE, LOG_WARN_LINE, LOG_ERROR_LINE, LOG_INPUT_LINE (each
   level's ink);
@@ -442,6 +448,59 @@ if t.sorted { sort_ents(t.sort, t.descending); }
 | `table(label, headers, count[, selected][, Table][, d]) { k, c => … } -> TableInfo` | a header, and `count` rows of a cell for each column, recorded by the block (row k, column c) only while in view, under the header, which stays as they scroll. A column is as wide as its header's right edge was dragged to, or a share of what the others leave (no less than `Table.least`); columns past the table's edge are cut off. A header clicked sorts by it, again the other way; the program sorts its rows. Rows in `selected` show selected; rows are striped. 8 rows high and as wide as there is room unless `d` says |
 | `Table { row_height, sortable, least }` | `row_height`: 0 for TABLE_ROW's `min_size.y` |
 | `TableInfo { clicked, double_clicked, hovered, sort, descending, sorted }` | the row clicked, double-clicked and under the pointer (-1: none); the column sorted by (-1: none) and which way; `sorted` the frame that changed |
+
+## Splitters
+
+```goose
+imgui::split("main", imgui::ROW, imgui::row().grow()) {
+    imgui::pane("tree", 0.25) { scene_tree(); };
+    imgui::pane("view") { viewport(); };
+    imgui::pane("inspector", 0.3) { inspector(); };
+};
+```
+
+| | |
+|---|---|
+| `split(label, ROW or COLUMN[, d]) { pane(…) { … }; … }` | panes side by side (or one above another), a handle between each two; as big as there is room unless `d` says. A handle dragged moves the pane before it (the one after too, if that has a fraction, so the two keep their total), no pane less than 32 pixels |
+| `pane(label[, fraction][, d]) { … }` | `fraction` of the split's length to start with, then what it is dragged to, kept as a fraction, so it grows and shrinks with the split; 0: it shares what the others leave with the other panes that do (the last of which takes what rounding leaves, or the last pane, if none share). Its content is cut off at its edges. Its IDs are under the split's |
+
+## Docking
+
+```goose
+imgui::dock_space("dock", imgui::column().grow());
+imgui::window("Viewport", imgui::column(), imgui::WINDOW_NO_SCROLL) { viewport(); };
+imgui::window("Scene") { tree(); };
+// a layout to start with, once:
+imgui::dock_window("Viewport", "dock", imgui::DOCK_CENTER);
+imgui::dock_window("Scene", "dock", imgui::DOCK_LEFT, 0.2);
+imgui::dock_window_with("Console", "Viewport", imgui::DOCK_BOTTOM, 0.3);
+```
+
+A dock space is a tree of splits, whose leaves each hold windows as tabs:
+- **A window is recorded the same docked or not.** Docked, in a dock
+  space being shown, its body fills its leaf under the tab bar, while its
+  tab is the one shown; its title bar, grips and roll are its tab's and
+  the leaf's. If its dock space isn't recorded, it floats.
+- **Docking:** a floating window dragged by its title over a dock space
+  shows where it would go: by a leaf's edge (its outer quarter), half of
+  the leaf, beside what is there; in its middle, the whole leaf, a tab
+  with what is there. Let go there, it docks.
+- **Undocking:** a tab dragged out of its tab bar floats its window, as
+  big as its leaf was, still held by the pointer as if by its title. A
+  leaf left with no windows goes, its sibling taking its place.
+- **Tabs:** clicked, the window is shown. A window that can close has a
+  close button on its tab; closed, it keeps its place, for when it is
+  opened again. A window not recorded (closed, or not called for) has no
+  tab.
+- **Resizing:** the handle between two leaves, dragged.
+- Docked windows are drawn under the floating ones.
+
+| | |
+|---|---|
+| `dock_space(label[, d])` | a dock space, as big as there is room unless `d` says |
+| `dock_window(title, space, side[, ratio])` | window `title` docked in `space` (both labels at the top level), on `DOCK_LEFT`, `DOCK_RIGHT`, `DOCK_TOP` or `DOCK_BOTTOM` of all that is there, taking `ratio` of it; `DOCK_CENTER`, a tab in its biggest leaf. Into an empty space, it fills it, whatever its side. For a layout to start with |
+| `dock_window_with(title, other, side[, ratio])` | docked by window `other` (docked already): a tab with it, or beside it in its leaf |
+| `undock_window(title)`, `is_docked(title)` | floating again (where its leaf was, as big, if it never floated) |
 
 ## Logs and consoles
 
@@ -708,6 +767,15 @@ The tests are in three groups:
     and Shift; a table's columns sharing its width, one resized by its
     edge, the rest sharing what is left; sorting by a header, and the other
     way; a selected row shown so;
+  - `split`: panes sharing a split's length, one with a fraction; handles
+    dragged, moving the pane before and, if it has a fraction, the one
+    after; a pane no less than its least; a split in a pane; the split
+    resized, its panes keeping their fractions;
+  - `dock`: a layout made in code, each body in its leaf; tabs, one shown,
+    another clicked; a button in a docked window; the handle between two
+    leaves; a tab dragged out, floating, still held; a floating window
+    dragged by its title to a leaf's edge, the drop shown, docked; a tab's
+    close button; a leaf's last window undocked, the leaf gone;
   - `log`: the ring dropping the oldest past its count and its bytes; text
     split into lines; a view following the newest, stopping when
     scrolled back, following again at the end; filtered by text and by
