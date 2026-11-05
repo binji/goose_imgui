@@ -258,7 +258,10 @@ The classes are:
   `min_size.x` its thickness);
 - DOCK_SPACE (where no window is), DOCK_TAB_BAR, DOCK_TAB (checked: the
   one shown; its `min_size.y` the tab bar's height), DOCKED (a docked
-  window's frame), DOCK_PREVIEW (where a dragged window would go);
+  window's frame), DOCK_PREVIEW (where a dragged window would go),
+  DOCK_TARGET (a target; checked: under the pointer; its `min_size.x` its
+  side), DOCK_TARGET_MARK (the part of a window it fills), DOCK_TAB_TOGGLE
+  (a leaf's corner button, its tab bar hidden);
 - LOG (the pane: its look, padding and text size), LOG_LINE,
   LOG_DEBUG_LINE, LOG_WARN_LINE, LOG_ERROR_LINE, LOG_INPUT_LINE (each
   level's ink);
@@ -482,16 +485,23 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
   tab is the one shown; its title bar, grips and roll are its tab's and
   the leaf's. If its dock space isn't recorded, it floats.
 - **Docking:** a floating window dragged by its title over a dock space
-  shows where it would go: by a leaf's edge (its outer quarter), half of
-  the leaf, beside what is there; in its middle, the whole leaf, a tab
-  with what is there. Let go there, it docks.
+  shows targets: a cross of five on the leaf under the pointer (the middle
+  a tab with what is there; each side, half of the leaf, beside it) and,
+  if the space is split, four by its outer edges (a quarter of the whole
+  space, on that side). The area a target would give is shown while the
+  pointer is on it; let go there, the window docks. Let go anywhere else,
+  it floats on. An empty leaf has only the middle.
 - **Undocking:** a tab dragged out of its tab bar floats its window, as
   big as its leaf was, still held by the pointer as if by its title. A
   leaf left with no windows goes, its sibling taking its place.
-- **Tabs:** clicked, the window is shown. A window that can close has a
-  close button on its tab; closed, it keeps its place, for when it is
-  opened again. A window not recorded (closed, or not called for) has no
-  tab.
+- **Tabs:** clicked, the window is shown; dragged along the bar, past the
+  middle of the tab beside it, the two change places. A window that can
+  close has a close button on its tab; closed, it keeps its place, for
+  when it is opened again. A window not recorded (closed, or not called
+  for) has no tab. Tabs that don't fit are cut off, the one shown first,
+  and a button at the bar's end lists them all. A tab's menu (a right
+  click) can hide its leaf's tab bar (a button in the leaf's corner shows
+  it again) or undock it.
 - **Resizing:** the handle between two leaves, dragged.
 - Docked windows are drawn under the floating ones.
 
@@ -772,10 +782,13 @@ The tests are in three groups:
     after; a pane no less than its least; a split in a pane; the split
     resized, its panes keeping their fractions;
   - `dock`: a layout made in code, each body in its leaf; tabs, one shown,
-    another clicked; a button in a docked window; the handle between two
-    leaves; a tab dragged out, floating, still held; a floating window
-    dragged by its title to a leaf's edge, the drop shown, docked; a tab's
-    close button; a leaf's last window undocked, the leaf gone;
+    another clicked, one dragged past another; a button in a docked
+    window; the handle between two leaves; a tab dragged out, floating,
+    still held; a floating window dragged over a leaf, its targets shown,
+    let go off them and on one (the area shown first), docked; a target by
+    the space's outer edge; a tab's close button, and the window opened
+    again in its place; a full tab bar's list; a tab bar hidden and shown;
+    a leaf's last window undocked, the leaf gone;
   - `log`: the ring dropping the oldest past its count and its bytes; text
     split into lines; a view following the newest, stopping when
     scrolled back, following again at the end; filtered by text and by

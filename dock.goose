@@ -35,6 +35,7 @@ struct DockNode {
     ratio: f32 = 0.5,           // a's share of a split
     tabs: u64[..8] = [],        // a leaf's windows, in order
     selected: u64 = 0,          // the one shown
+    hide_tabs: bool = false,    // a leaf's tab bar hidden (its tab's menu): a button in its corner shows it
     used: bool = false,
 }
 
@@ -105,6 +106,8 @@ fn dock_rect(n: i32) -> gfx2d::Rect {
 }
 
 fn tab_height() -> f32 { class_style(DOCK_TAB).normal.min_size.y }
+// Leaf n's tab bar's height: 0 if it is hidden.
+fn bar_height(n: i32) -> f32 { if dock_nodes[n].hide_tabs { 0.0 } else { tab_height() } }
 
 // --- changing the tree --------------------------------------------------------------------
 
@@ -126,6 +129,7 @@ fn move_dock_content(n: i32, m: i32) {
     dock_nodes[m].b = src.b;
     dock_nodes[m].tabs = src.tabs;
     dock_nodes[m].selected = src.selected;
+    dock_nodes[m].hide_tabs = src.hide_tabs;
     if src.a >= 0 { dock_nodes[src.a].parent = m; }
     if src.b >= 0 { dock_nodes[src.b].parent = m; }
     for w in src.tabs {
@@ -161,6 +165,7 @@ fn dock_into(w: u64, n: i32, side: i64, ratio: f64) {
     dock_nodes[leaf].parent = n;
     dock_nodes[n].tabs.clear();
     dock_nodes[n].selected = 0;
+    dock_nodes[n].hide_tabs = false;
     dock_nodes[n].axis = if side == DOCK_LEFT || side == DOCK_RIGHT { 0 } else { 1 };
     let r = clamp(ratio, 0.05, 0.95) as f32;
     if side == DOCK_LEFT || side == DOCK_TOP {
@@ -230,16 +235,48 @@ fn is_docked(title: const u8[:]) -> bool { window_state(id(title).v).dock >= 0 }
 
 // --- where a dragged window would go ------------------------------------------------------
 
-struct DockTarget { node: i32 = -1, side: i64 = 0, rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 } }
+struct DockTarget {
+    node: i32 = -1,             // where it docks: a leaf, or a space's root (by its outer edges)
+    side: i64 = 0,
+    ratio: f64 = 0.5,           // of the node it takes
+    rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },    // the area it would take
+}
 
-// The leaf under p in a dock space shown, and the side of it p is by (its
-// outer quarter by an edge), or its middle; and the rect the window would
-// take there.
-fn dock_target_at(p: float2) -> DockTarget {
+// The targets a window dragged over a dock space aims at: a cross of five
+// on the leaf under the pointer (its middle: a tab; its four sides: half of
+// it, beside what is there), and, if the space is split, four by the
+// space's outer edges (a side of all of it). Only the middle, on an empty
+// leaf. Each is a square; `at` is its rect.
+struct DockAim { target: DockTarget = DockTarget { .. }, at: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 } }
+var dock_aims: DockAim[..9] = [];
+
+// The part of r a window docked on `side` of it, taking `ratio`, would take.
+fn side_rect(r: gfx2d::Rect, side: i64, ratio: f64) -> gfx2d::Rect {
+    let f = ratio as f32;
+    match side {
+        DOCK_LEFT => gfx2d::Rect { r.x, r.y, r.w * f, r.h },
+        DOCK_RIGHT => gfx2d::Rect { r.x + r.w * (1.0 - f), r.y, r.w * f, r.h },
+        DOCK_TOP => gfx2d::Rect { r.x, r.y, r.w, r.h * f },
+        DOCK_BOTTOM => gfx2d::Rect { r.x, r.y + r.h * (1.0 - f), r.w, r.h * f },
+        _ => r,
+    }
+}
+
+// The targets for a window dragged to p, in dock_aims: none if p isn't
+// over a dock space shown.
+fn find_dock_aims(p: float2) {
+    dock_aims.clear();
+    let s = class_style(DOCK_TARGET).normal.min_size.x;
+    let gap = s * 0.2;
+    fn aim(c: float2, node: i32, side: i64, ratio: f64, area: gfx2d::Rect) {
+        let t = DockTarget { node: node, side: side, ratio: ratio, rect: side_rect(area, side, ratio) };
+        dock_aims.push(DockAim { t, gfx2d::Rect { c.x - s * 0.5, c.y - s * 0.5, s, s } });
+    }
     for sp in dock_spaces {
         let root = dock_root(sp);
         guard dock_shown(root) else { continue; }
-        guard inside(dock_rect(root), p) else { continue; }
+        let space = dock_rect(root);
+        guard inside(space, p) else { continue; }
         var n = root;
         while dock_nodes[n].axis >= 0 {
             let a = dock_nodes[n].a;
@@ -248,27 +285,58 @@ fn dock_target_at(p: float2) -> DockTarget {
         let r = dock_rect(n);
         var live = 0;
         for w in dock_nodes[n].tabs { if tab_live(w) { live++; } }
-        if live == 0 { return DockTarget { node: n, side: DOCK_CENTER, rect: r }; }
-        let fx = (p.x - r.x) / max(r.w, 1.0);
-        let fy = (p.y - r.y) / max(r.h, 1.0);
-        let m = min(min(fx, 1.0 - fx), min(fy, 1.0 - fy));
-        guard m < 0.25 else { return DockTarget { node: n, side: DOCK_CENTER, rect: r }; }
-        if m == fx { return DockTarget { node: n, side: DOCK_LEFT, rect: gfx2d::Rect { r.x, r.y, r.w * 0.5, r.h } }; }
-        if m == 1.0 - fx { return DockTarget { node: n, side: DOCK_RIGHT, rect: gfx2d::Rect { r.x + r.w * 0.5, r.y, r.w * 0.5, r.h } }; }
-        if m == fy { return DockTarget { node: n, side: DOCK_TOP, rect: gfx2d::Rect { r.x, r.y, r.w, r.h * 0.5 } }; }
-        return DockTarget { node: n, side: DOCK_BOTTOM, rect: gfx2d::Rect { r.x, r.y + r.h * 0.5, r.w, r.h * 0.5 } };
+        let c = float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 };
+        aim(c, n, DOCK_CENTER, 1.0, r);
+        if live > 0 {
+            let k = s + gap;
+            aim(c - float2 { k, 0.0 }, n, DOCK_LEFT, 0.5, r);
+            aim(c + float2 { k, 0.0 }, n, DOCK_RIGHT, 0.5, r);
+            aim(c - float2 { 0.0, k }, n, DOCK_TOP, 0.5, r);
+            aim(c + float2 { 0.0, k }, n, DOCK_BOTTOM, 0.5, r);
+        }
+        if dock_nodes[root].axis >= 0 {
+            let m = s * 0.5 + 8.0;
+            let sc = float2 { space.x + space.w * 0.5, space.y + space.h * 0.5 };
+            aim(float2 { space.x + m, sc.y }, root, DOCK_LEFT, 0.25, space);
+            aim(float2 { space.x + space.w - m, sc.y }, root, DOCK_RIGHT, 0.25, space);
+            aim(float2 { sc.x, space.y + m }, root, DOCK_TOP, 0.25, space);
+            aim(float2 { sc.x, space.y + space.h - m }, root, DOCK_BOTTOM, 0.25, space);
+        }
+        return;
     }
+}
+
+// The target under p, if any, of a window dragged there.
+fn dock_target_at(p: float2) -> DockTarget {
+    find_dock_aims(p);
+    for a in dock_aims { if inside(a.at, p) { return a.target; } }
     DockTarget { .. }
 }
 
-// Where a window dragged to p would dock, shown over everything.
+// The targets of a window dragged to p, over everything; and the area the
+// one under p would give it.
 fn dock_preview(p: float2) {
-    let t = dock_target_at(p);
-    guard t.node >= 0;
-    open_root(ROOT_TOOLTIP, hash_combine(ROOT_ID, 0xD0C4), Anchor { kind: ANCHOR_POINT, at: float2 { t.rect.x, t.rect.y }, .. },
-              column());
+    find_dock_aims(p);
+    guard dock_aims.len > 0;
+    var hit = -1;
+    for a, k in dock_aims { if inside(a.at, p) { hit = k; } }
+    open_root(ROOT_TOOLTIP, hash_combine(ROOT_ID, 0xD0C4), Anchor { kind: ANCHOR_POINT, at: float2 { viewport.x, viewport.y }, .. },
+              column().size(viewport.w, viewport.h));
     roots[roots.len - 1].level = -1;
-    panel(column().skin(DOCK_PREVIEW).size(t.rect.w, t.rect.h));
+    if hit >= 0 {
+        let r = dock_aims[hit].target.rect;
+        panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h));
+    }
+    for a, k in dock_aims {
+        let at = a.at;
+        box(column().skin(DOCK_TARGET).look(checked_look(k == hit)).absolute(at.x - viewport.x, at.y - viewport.y)
+                .size(at.w, at.h)) {
+            // Its mark: the part of a window it would fill.
+            let inner = gfx2d::Rect { at.w * 0.2, at.h * 0.2, at.w * 0.6, at.h * 0.6 };
+            let m = side_rect(inner, a.target.side, 0.5);
+            panel(column().skin(DOCK_TARGET_MARK).absolute(m.x, m.y).size(m.w, m.h));
+        };
+    }
     close_root();
 }
 
@@ -316,12 +384,25 @@ fn dock_space(label: const u8[:], d: Desc = column()) {
                 for w in n.tabs { if sel == 0 && tab_live(w) { sel = w; } }
                 dock_nodes[k].selected = sel;
             }
-            box(row().skin(DOCK_TAB_BAR).absolute(r.x - o.x, r.y - o.y).size(r.w, th).clip().align(END)) {
-                for w in n.tabs {
-                    if !tab_live(w) { continue; }
-                    dock_tab(w, k, sel == w, r);
-                }
+            if n.hide_tabs { continue; }
+            // Tabs past the bar's end: a button lists them all, and the
+            // one shown goes first, so that it shows.
+            var wide: f32 = 0.0;
+            for w in n.tabs { if tab_live(w) { wide += state_of(sub_id(Id { w }, "tab").v).rect.w + 2.0; } }
+            let list_w = th * 0.9;
+            let over = wide > r.w - 8.0;
+            box(row().skin(DOCK_TAB_BAR).absolute(r.x - o.x, r.y - o.y).size(r.w, th).clip().align(END)
+                    .padding(4, 0, if over { list_w + 4.0 } else { 4.0 }, 0)) {
+                // The tabs cut off before the list's button, not under it.
+                box(row().grow().align(END).clip().with_bits(SHRINKS).gap(class_style(DOCK_TAB_BAR).normal.gap)) {
+                    if over && tab_live(sel) { dock_tab(sel, k, true, r); }
+                    for w in n.tabs {
+                        if !tab_live(w) || (over && w == sel) { continue; }
+                        dock_tab(w, k, sel == w, r);
+                    }
+                };
             };
+            if over { tab_list(i, k, gfx2d::Rect { r.x + r.w - list_w - 2.0 - o.x, r.y - o.y, list_w, th }); }
         }
     };
 }
@@ -350,12 +431,76 @@ fn dock_tab(w: u64, n: i32, on: bool, leaf: gfx2d::Rect) {
         // Its window has its own title bar now, close button and all.
         return;
     }
+    if it.held && it.dragging { reorder_tab(w, n, p.x); }
     let ws = window_state(w);
     box(tid, td) {
         text(ws.title[..]);
         if ws.closable {
             let bd = clickable(row().skin(WINDOW_BUTTON)).nav_skip();
             box(sub_id(wid, "close"), bd) { icon(ICON_CLOSE); };
+        }
+    };
+    context_menu(it) {
+        if menu_item("Hide tab bar") { dock_nodes[n].hide_tabs = true; }
+        if menu_item("Undock") {
+            undock_id(w);
+            raise_window_id(w);
+        }
+    };
+}
+
+// A tab held and dragged along its bar, past the middle of the live tab
+// beside it: the two change places.
+fn reorder_tab(w: u64, n: i32, x: f32) {
+    let tabs = dock_nodes[n].tabs;
+    var at = -1;
+    for t, k in tabs { if t == w { at = k; } }
+    guard at >= 0;
+    var before = at - 1;
+    while before >= 0 && !tab_live(tabs[before]) { before--; }
+    var after = at + 1;
+    while after < tabs.len && !tab_live(tabs[after]) { after++; }
+    var to = -1;
+    if before >= 0 {
+        let r = state_of(sub_id(Id { tabs[before] }, "tab").v).rect;
+        if x < r.x + r.w * 0.5 { to = before; }
+    }
+    if to < 0 && after < tabs.len {
+        let r = state_of(sub_id(Id { tabs[after] }, "tab").v).rect;
+        if x > r.x + r.w * 0.5 { to = after; }
+    }
+    guard to >= 0;
+    dock_nodes[n].tabs[at] = tabs[to];
+    dock_nodes[n].tabs[to] = w;
+}
+
+// The button at the end of a full tab bar: it lists leaf n's windows, to
+// show one. `r` is its rect in the dock space `space`.
+fn tab_list(space: Id, n: i32, r: gfx2d::Rect) {
+    let bid = sub_id(space, n as i64 + 0x7AB5);
+    let pid = sub_id(bid, "list");
+    let bd = clickable(row().skin(WINDOW_BUTTON).center()).nav_skip().absolute(r.x, r.y).size(r.w, r.h);
+    let it = interact(bid, bd);
+    if it.activated {
+        if popup_level(pid.v) > 0 { close_popup(pid); }
+        else {
+            open_popup_at(pid, POPUP_MENU, Anchor { kind: ANCHOR_BELOW, rect: it.rect, .. });
+            set_popup_header(pid, bid.v);
+        }
+    }
+    let header = nodes.len as i32;
+    box(bid, bd) { icon(ICON_CHEVRON_DOWN); };
+    popup_root(pid, POPUP_MENU, column().min_w(140), MENU, header) {
+        for w in dock_nodes[n].tabs {
+            if !tab_live(w) { continue; }
+            let item = box(Id { hash_combine(pid.v, w) }, clickable(row().skin(MENU_ITEM).grow_w().align(CENTER))
+                                                   .look(checked_look(dock_nodes[n].selected == w))) {
+                text(window_state(w).title[..]);
+            };
+            if item.activated {
+                dock_nodes[n].selected = w;
+                close_popup(pid);
+            }
         }
     };
 }
@@ -372,7 +517,11 @@ fn docked_window<F>(wid: Id, open: bool&, d: Desc, flags: i64) {
     }
     guard dock_nodes[n].selected == wid.v;
     let r = dock_rect(n);
-    let th = tab_height();
+    let th = bar_height(n);
+    // Its tab bar hidden: a button in its corner shows it again.
+    let show_id = sub_id(wid, "show tabs");
+    let show_d = clickable(column().skin(DOCK_TAB_TOGGLE)).nav_skip();
+    if dock_nodes[n].hide_tabs && interaction_for(show_id.v, show_d).activated { dock_nodes[n].hide_tabs = false; }
     let root = open_root(ROOT_WINDOW, wid.v, Anchor { kind: ANCHOR_POINT, at: float2 { r.x, r.y + th }, .. },
                          column().skin(DOCKED).keep().size(r.w, max(r.h - th, 0.0)));
     id_stack.push(wid.v);
@@ -383,5 +532,9 @@ fn docked_window<F>(wid: Id, open: bool&, d: Desc, flags: i64) {
     bd = bd.grow().with_bits(SHRINKS);
     if bd.vis.class.index == 0 { bd = bd.skin(WINDOW_BODY); }
     window_body(flags, bd) { F(); };
+    if dock_nodes[n].hide_tabs {
+        let side = class_style(DOCK_TAB_TOGGLE).normal.min_size.x;
+        panel(show_id, show_d.absolute(0, 0).size(side, side));
+    }
     close_root();
 }

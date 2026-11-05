@@ -8,6 +8,8 @@ B's tab:
   B docked: 154.0 32.0 446.0 245.0
   C docked: 154.0 314.0 446.0 87.0
   D docked: not shown
+tabs: B D 
+B dragged past D: D B ; B still docked true
 button in A: pressed;
 handle right 60:
   A docked: 0.0 32.0 209.0 368.0
@@ -20,15 +22,24 @@ let go:
   B docked: 214.0 32.0 386.0 245.0
   C docked: 214.0 314.0 386.0 87.0
   D floating: 414.0 324.0 386.0 277.0
-over A's left edge, the drop shown: true
+over A: 9 targets (five on A, four by the edges); previewed false
+let go off the targets: D docked false
+on A's left target: previewed true
 docked left of A:
   A docked: 107.0 32.0 102.0 368.0
   B docked: 214.0 32.0 386.0 245.0
   C docked: 214.0 314.0 386.0 87.0
   D docked: 0.0 32.0 102.0 368.0
-D's close: open false
+D's close: open false, its tab shown false
+opened again: docked true, shown true
+E by the outer right edge: docked true, its leaf the root's right half true, 149.0 wide
+a full bar: its list button true; shown: Sixth true
+its list: open 1
+D chosen from it: shown true, open 0
+A's tab bar hidden: A at 0.0, tab shown false
+its corner button: A at 32.0, tab shown true
 C undocked:
-  A docked: 107.0 32.0 102.0 368.0
-  B docked: 214.0 32.0 386.0 368.0
-  C floating: 230.0 298.0 386.0 120.0
-  D docked: not shown
+  A docked: 80.0 32.0 75.0 368.0
+  B docked: 160.0 32.0 286.0 368.0
+  C floating: 176.0 298.0 286.0 120.0
+  D docked: 0.0 32.0 75.0 368.0

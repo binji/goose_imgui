@@ -152,7 +152,11 @@ let DOCK_TAB_BAR = StyleClass { 73 };   // a dock leaf's row of tabs
 let DOCK_TAB = StyleClass { 74 };       // a docked window's tab (checked: shown); its min_size.y the bar's height
 let DOCKED = StyleClass { 75 };         // a docked window's frame
 let DOCK_PREVIEW = StyleClass { 76 };   // where a window dragged over a dock space would go
-let CLASS_COUNT = 77;
+let DOCK_TARGET = StyleClass { 77 };    // a target to drop a dragged window on (checked: under the pointer);
+                                        // its min_size.x its side
+let DOCK_TARGET_MARK = StyleClass { 78 };   // the mark in a target: the part of a window it fills
+let DOCK_TAB_TOGGLE = StyleClass { 79 };    // a leaf's corner button, its tab bar hidden, to show it
+let CLASS_COUNT = 80;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -653,6 +657,18 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[DOCKED.index] = style_set(Style { bg: p.surface, ink: p.ink, font: p.font, text_size: p.text_size });
     classes[DOCK_PREVIEW.index] = style_set(Style { bg: gfx2d::with_alpha(p.accent, 0.25), border: p.accent,
                                                     border_width: 2.0, radius: r });
+    var target = style_set(Style { bg: gfx2d::with_alpha(p.surface, 0.92), border: p.line, border_width: 1.0,
+                                   radius: radii(p.radius * 0.66),
+                                   shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 2.0 }, blur: 6.0 },
+                                   min_size: float2 { 30.0, 30.0 } });
+    target.checked.border = p.accent;
+    target.checked.bg = p.surface;
+    classes[DOCK_TARGET.index] = target;
+    classes[DOCK_TARGET_MARK.index] = style_set(Style { bg: gfx2d::with_alpha(p.accent, 0.7), radius: radii(1.0) });
+    var toggle = clickable(Style { bg: gfx2d::with_alpha(p.accent, 0.55), radius: float4 { 0.0, 0.0, 4.0, 0.0 },
+                                   min_size: float2 { 10.0, 10.0 } }, p.accent, p.accent_hover);
+    toggle.active.zoom = 1.0;
+    classes[DOCK_TAB_TOGGLE.index] = toggle;
     classes
 }
 
