@@ -54,6 +54,7 @@ import events;
 import pixel;
 import window;
 import devwidgets;
+import plots;
 
 // --- frames ---------------------------------------------------------------------------
 

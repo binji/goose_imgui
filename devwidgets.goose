@@ -213,6 +213,38 @@ struct Drag {
 var number_editing: u64 = 0;
 var number_text: u8[..64] = [];
 
+// Field `i` typed in from now on, starting from `s`, all of it selected.
+fn start_typing(i: Id, s: const u8[:]) {
+    number_editing = i.v;
+    number_text.clear();
+    for c in s { if number_text.len < number_text.cap { number_text.push(c); } }
+    let edit_id = sub_id(i, "edit");
+    var es = state_of(edit_id.v);
+    es.caret = number_text.len as i32;
+    es.anchor = 0;
+    es.text_scroll = 0.0;
+    put_state(edit_id.v, es);
+    focus(edit_id, focus_visible);
+}
+// While field `i` is typed in: its text_input, `w` wide, recorded; true
+// the frame what was typed is kept (Enter, or the focus gone elsewhere),
+// in number_text. Escape stops it without keeping it.
+fn typing(i: Id, d: Desc, w: f32) -> bool {
+    let edit_id = sub_id(i, "edit");
+    var ed = d.skin(INPUT).with_bits(CAPTURE_X);
+    if w > 0.0 { ed = ed.width(w); }
+    let e = text_input(edit_id, number_text, ed, 63);
+    if input.nav.cancel {
+        number_editing = 0;
+        focus(i, focus_visible);
+        return false;
+    }
+    guard e.submitted || focused != edit_id.v else { return false; }
+    number_editing = 0;
+    if e.submitted { focus(i, focus_visible); }
+    true
+}
+
 // v written with `decimals` digits after the point.
 fn format_fixed(out: u8[>..]&, v: f64, decimals: i64) {
     let d = clamp(decimals, 0, 12);
@@ -265,25 +297,14 @@ fn axis_color(k: i64) -> gfx2d::Color {
 // held, coarser with Alt), Left and Right by its step while focused; a
 // click (or Enter) without a drag types in it, Enter or a click elsewhere
 // keeping what was typed, Escape not. `tag` (0 to 3) shows X, Y, Z or W
-// in its color before the value. True the frame the value changes.
+// in its color before the value (4 to 7: R, G, B or A). True the frame
+// the value changes.
 fn number_field(i: Id, v: f64&, o: Drag, whole: bool, d: Desc, tag: i64) -> bool {
     let s = drag_span(o, whole);
     let start: f64 = v;
     var st = state_of(i.v);
-    let edit_id = sub_id(i, "edit");
     if number_editing == i.v {
-        var ed = d.skin(INPUT).with_bits(CAPTURE_X);
-        if st.rect.w > 0.0 { ed = ed.width(st.rect.w); }
-        let e = text_input(edit_id, number_text, ed, 63);
-        if input.nav.cancel {
-            number_editing = 0;
-            focus(i, focus_visible);
-            return false;
-        }
-        guard e.submitted || focused != edit_id.v else { return false; }
-        // Kept: Enter, or the focus gone elsewhere.
-        number_editing = 0;
-        if e.submitted { focus(i, focus_visible); }
+        guard typing(i, d, st.rect.w) else { return false; }
         let x, ok = parse_flt(number_text[..]);
         if ok { v = if whole { clamp(round(x), s.lo, s.hi) } else { kept_to(x, s) }; }
         if v != start { ui_event(UI_CHANGE, i.v, NUMBER); }
@@ -311,18 +332,9 @@ fn number_field(i: Id, v: f64&, o: Drag, whole: bool, d: Desc, tag: i64) -> bool
         value = if whole { round(value) } else { kept_to(value, s) };
     }
     if it.activated && !st.open {
-        // Typing: its text all selected.
-        number_editing = i.v;
-        number_text.clear();
         var t: u8[>..] = [];
         format_fixed(t, value, s.decimals);
-        for c in t { if number_text.len < number_text.cap { number_text.push(c); } }
-        var es = state_of(edit_id.v);
-        es.caret = number_text.len as i32;
-        es.anchor = 0;
-        es.text_scroll = 0.0;
-        put_state(edit_id.v, es);
-        focus(edit_id, focus_visible);
+        start_typing(i, t);
     }
     put_state(i.v, st);
     v = value;
@@ -330,7 +342,8 @@ fn number_field(i: Id, v: f64&, o: Drag, whole: bool, d: Desc, tag: i64) -> bool
     if changed { ui_event(UI_CHANGE, i.v, NUMBER); }
     box(i, fd) {
         if tag >= 0 {
-            text(match tag { 0 => "X", 1 => "Y", 2 => "Z", _ => "W" }, column().ink(axis_color(tag)));
+            text(match tag { 0 => "X", 1 => "Y", 2 => "Z", 3 => "W", 4 => "R", 5 => "G", 6 => "B", _ => "A" },
+                 column().ink(axis_color(tag % 4)));
         }
         textf(column()) { out => format_fixed(out, value, s.decimals); };
     };

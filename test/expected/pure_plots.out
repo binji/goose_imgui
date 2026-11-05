@@ -1,0 +1,17 @@
+samples: 6.0 9.0 12.0 15.0 (4)
+fitted: [15.00] [6.00] [5] [0] 
+fixed: [20.00] [0.00] [5] [0] 
+pointer on lines: [15.00] [6.00] [2: 12.00] [5] [0] 
+pointer on bars: [15.00] [6.00] [5] [0] [2: 3] 
+hex: #FF8000FF true, #1A2B3C80 true, #FFFFFF80 true, false
+picker: #3366CCFF h 0.61 s 0.75 v 0.8
+square's corner: #0055FFFF h 0.61 s 1.0 v 1.0
+hue's middle: #00FFFFFF h 0.5 s 1.0 v 1.0
+to black: #000000FF h 0.5 s 0.5 v 0.0
+back up: #00FFFFFF h 0.5 s 1.0 v 1.0
+alpha three quarters down: #00FFFF40
+typed R: #10FFFF40
+typed hex: #10203040 h 0.58 s 0.67 v 0.19
+tint: #FF880080, open 0
+swatch clicked: open 1, picker shown: true
+again: open 0

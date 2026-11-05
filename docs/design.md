@@ -514,6 +514,18 @@ spills past the box.
   pane does, at their content's height whatever its own. So the content's
   whole height is measured even as it starts to open the first time, and
   read the next frame, when it matters.
+- **Plots** are canvases: a plot is the values drawn, and the readout
+  under the pointer is drawn too, not a tooltip, so it follows the
+  pointer at once. `f32` values are copied into a scratch `f64` array, so
+  both kinds share one drawing.
+- **A color picker keeps its own HSV**, by its ID, and uses it while the
+  color is still the one it makes: RGB can't say the hue of a gray or the
+  saturation of black, so a color dragged through them would otherwise
+  lose them. A color changed elsewhere (typed, or by the program) is read
+  back into HSV, keeping the old hue where the new color has none.
+- A color's hex is typed in as a number is: the typing that number fields
+  do (the shared buffer, its text all selected, Enter or a click away to
+  keep it, Escape not to) is `start_typing` and `typing`, used by both.
 - `Input.mods` is new: the modifiers held, not only those pressed with a
   key, which a drag needs.
 
@@ -633,6 +645,7 @@ spills past the box.
 | `scroll.goose`, `popup.goose`, `text_input.goose` | the larger widgets |
 | `window.goose` | windows: their own roots, kept state and order |
 | `devwidgets.goose` | property rows, collapsing headers, trees, number fields |
+| `plots.goose` | plots, sparklines, color swatches, pickers and fields |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

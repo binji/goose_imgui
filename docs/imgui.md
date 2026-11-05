@@ -70,7 +70,8 @@ The examples each show one part:
 - `windows`: developer windows over a running scene, in the dense dev
   theme: moved, resized, collapsed, closed and raised; a tree of the
   scene's entities, each with a context menu; an inspector of the one
-  selected, of property rows, number fields and collapsing headers;
+  selected, of property rows, number fields, colors and collapsing
+  headers; a plot of frame times, a histogram and a sparkline;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
   character at a time, each letter popping in, with spans that wave, glow,
   shake, shiver (an effect of the program's own) and cycle their hue.
@@ -245,7 +246,11 @@ The classes are:
   WINDOW_BODY, WINDOW_BUTTON, RESIZE_GRIP (its `min_size.x` is how thick
   the grips are);
 - HEADER, TREE_ROW (checked: selected), TREE (its left padding is the
-  indent), NUMBER, PROPERTIES (its gap), PROPERTY_LABEL.
+  indent), NUMBER, PROPERTIES (its gap), PROPERTY_LABEL;
+- PLOT (its ink and text size the scale's and readout's), PLOT_LINE (its
+  bg the line's color, its `min_size.x` the line's width), PLOT_BAR (hover:
+  the bar under the pointer), SWATCH, PICKER (its gap, and its square's
+  side as `min_size.x`).
 
 ## Pixel art
 
@@ -403,6 +408,27 @@ let it = imgui::tree_node("Enemies", chosen == -1) {
 
 `Input.mods` holds the `MOD_SHIFT`, `MOD_CTRL` and `MOD_ALT` held this
 frame (from gfx in `input_from_gfx`).
+
+## Plots and colors
+
+```goose
+imgui::push_sample(frame_ms, dt * 1000.0, 120);
+imgui::plot_lines("##frame time", frame_ms, imgui::Plot { lo: 0, hi: 33, decimals: 1 });
+imgui::plot_bars("##spread", buckets[..], imgui::Plot { decimals: 0 }, imgui::column().height(48));
+imgui::color_edit("Tint", tint);
+```
+
+| | |
+|---|---|
+| `plot_lines(label, values[, Plot][, d]) -> Interaction` | `f64` or `f32` values, a line through them, oldest at the left, the area under it filled; the range's ends written at the left; under the pointer, a guide and the nearest value (`k: v`). A frame 64 high and at least 120 wide unless `d` says. Its interaction, for a tooltip or a click |
+| `plot_bars(label, values[, Plot][, d]) -> Interaction` | a bar for each value, from zero (or the end of the range nearest it); the bar under the pointer lit and read out |
+| `sparkline(label, values[, d])` | a line alone, 80 wide and a line of text high unless `d` says: for a row of stats |
+| `Plot { lo, hi, offset, fill, scale, readout, decimals }` | `lo` and `hi`: the range (equal: the values' own); `offset`: where the oldest value is, for a ring of them; `fill`: the area under the line; `scale`, `readout`: shown or not; `decimals`: of the numbers written |
+| `push_sample(buf, v, keep)` | `v` added to a `f64[>..]` or `f32[>..]`, the oldest dropped past `keep`: a rolling buffer |
+| `color_edit(label, c[, alpha][, d]) -> bool` | a swatch and the hex of a `gfx2d::Color`; the swatch opens a picker under it (or above, if there is no room), and closes it. True the frame it changes `c` |
+| `color_picker(label, c[, alpha][, d]) -> bool` | a square of saturation across and value up, a bar of hue, a bar of alpha (if `alpha`), each dragged, or moved by the arrows while focused; fields for R, G, B (and A), 0 to 255, and the hex, to drag or type in. It keeps its own hue, so a color dragged to gray or black and back keeps it |
+| `color_swatch(label, c[, d]) -> Interaction` | the color over a checkerboard (its left half opaque, if it is see-through); activated when clicked, as a button is |
+| `format_hex(out, c, alpha)`, `parse_hex(s, alpha) -> Color, bool` | `#RRGGBB(AA)`; `#RGB`, `#RRGGBB` or `#RRGGBBAA`, the `#` optional, `alpha` used when it has none |
 
 ## Canvases
 
@@ -621,6 +647,11 @@ The tests are in three groups:
     the keys and the buttons, typed in (Enter keeps, Escape doesn't, a
     click elsewhere keeps), a vector's parts; trees and headers rolling
     open and closed;
+  - `plots`: a rolling buffer; a line plot's range, fitted or fixed, and
+    the value under the pointer; a bar plot's bar under it; hex written
+    and read; a picker's square, hue and alpha dragged, its hue kept
+    through black, a channel and the hex typed in; a color field opening
+    and closing its picker;
   - `events`: UI events for sounds: a hover once and only by moving, a
     press, an activation, a denial, focus shown by navigation, slider
     ticks with and without steps, tabs, popups opening and closing, back.

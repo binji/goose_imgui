@@ -129,7 +129,12 @@ let TREE = StyleClass { 50 };           // a tree node's children: its left padd
 let NUMBER = StyleClass { 51 };         // a number field, dragged or typed in
 let PROPERTIES = StyleClass { 52 };     // a grid of properties: its gap
 let PROPERTY_LABEL = StyleClass { 53 }; // a property's label
-let CLASS_COUNT = 54;
+let PLOT = StyleClass { 54 };           // a plot's frame; its ink the scale's and the readout's
+let PLOT_LINE = StyleClass { 55 };      // a line plot's line (bg), its width (min_size.x)
+let PLOT_BAR = StyleClass { 56 };       // a bar plot's bars (bg); hover: the one under the pointer
+let SWATCH = StyleClass { 57 };         // a color's swatch: its frame, size and radius
+let PICKER = StyleClass { 58 };         // a color picker: its gap, and its square's side (min_size.x)
+let CLASS_COUNT = 59;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -575,6 +580,20 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[NUMBER.index] = num;
     classes[PROPERTIES.index] = style_set(Style { gap: 8.0 * sp });
     classes[PROPERTY_LABEL.index] = style_set(Style { ink: p.ink });
+    classes[PLOT.index] = style_set(Style { bg: gfx2d::with_alpha(p.pressed, 0.5), border: p.line, border_width: 1.0,
+                                            radius: r, padding: sp4(6.0, 6.0), ink: p.muted,
+                                            text_size: p.text_size * 0.8 });
+    classes[PLOT_LINE.index] = style_set(Style { bg: p.accent, min_size: float2 { 1.5, 0.0 } });
+    var bar = style_set(Style { bg: p.accent });
+    bar.hover.bg = p.accent_hover;
+    classes[PLOT_BAR.index] = bar;
+    var sw = clickable(Style { border: p.line, border_width: 1.0, radius: radii(p.radius * 0.66),
+                               min_size: float2 { p.control + p.padding.y, p.control + p.padding.y } },
+                       gfx2d::TRANSPARENT, gfx2d::TRANSPARENT);
+    sw.hover.border = p.muted;
+    sw.active.zoom = 1.0;
+    classes[SWATCH.index] = sw;
+    classes[PICKER.index] = style_set(Style { gap: 8.0 * sp, min_size: float2 { p.control * 9.0, 0.0 } });
     classes
 }
 

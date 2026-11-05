@@ -16,36 +16,35 @@ item here, by its title, at each workaround.
 
     Done: windows (moved, resized, collapsed, closed, raised by a press;
     `examples/windows.goose`), the dense theme `theme_dev()`, context
-    menus, property rows, collapsing headers and trees, and number fields
-    (dragged, typed in, stepped; vectors). Left of them:
+    menus, property rows, collapsing headers and trees, number fields
+    (dragged, typed in, stepped; vectors), plots (lines, bars,
+    sparklines), and colors (a swatch, a picker, a field). Left of them:
     - a window raised when navigation moves the focus into it;
     - a context menu opened from the keyboard or a pad (Shift+F10, the
       menu key, a button);
     - the pointer's shape from gfx, once it has cursor shapes (`cursor()`
       says which);
     - step buttons that repeat while held; a number field with a unit
-      ("ms"); a tree's open and close animated, as a window's roll is.
+      ("ms");
+    - plots of several series, with a legend, axes marked along the
+      bottom, zoomed and panned (as implot does); a picker's palette of
+      recent colors.
 
     Common in tools:
-    1. Plots, on canvases: lines from an array or a rolling buffer (frame
-       times), bars, a fixed or fitted range, the value under the pointer,
-       and a small sparkline.
-    2. A color field: a swatch that opens a picker, with a saturation and
-       value square, hue and alpha bars, and RGB, HSV and hex fields.
-    3. Tables: a header, columns resized by dragging their edges, sorting by
+    1. Tables: a header, columns resized by dragging their edges, sorting by
        a header's click (the program sorts, by the order handed back),
        striped and selected rows, a header that stays as the rows scroll,
        and only the rows in view recorded. Reordering and hiding columns
        later.
-    4. A list clipper, recording only the rows of a long list that are in
+    2. A list clipper, recording only the rows of a long list that are in
        view, and selecting several rows with Shift and Ctrl, in lists, trees
        and tables.
-    5. A log and a console: lines that stay scrolled to the newest unless
+    3. A log and a console: lines that stay scrolled to the newest unless
        scrolled back, colored by level, filtered, copied; a command line
        with its history on Up and Down.
-    6. Splitters and side panels: panes resized by dragging the line
+    4. Splitters and side panels: panes resized by dragging the line
        between them.
-    7. Docking: windows dragged by their titles onto a dock space, to a
+    5. Docking: windows dragged by their titles onto a dock space, to a
        side of a pane (splitting it) or its middle (a tab with the others
        there), and dragged out again to float. The dock space is a tree of
        splits that lasts. It builds on windows, splitters, tabs, and drag
@@ -53,17 +52,17 @@ item here, by its title, at each workaround.
        it; an editor always does.
 
     Useful, less often:
-    8. Layouts saved and loaded: where the windows are, which are open,
+    6. Layouts saved and loaded: where the windows are, which are open,
        and the dock tree, in a file.
-    9. Multi-line text editing (under Text, below).
-    10. Small pieces: small and icon buttons, toolbars and a status bar, a
-        label and its value, bullets, links, a spinner, vertical, angle
-        and range sliders, a knob.
-    11. An image viewer: a texture panned and zoomed, with a pixel grid and
-        the value under the pointer.
-    12. imgui's own tools: a window of its nodes, the one under the pointer
+    7. Multi-line text editing (under Text, below).
+    8. Small pieces: small and icon buttons, toolbars and a status bar, a
+       label and its value, bullets, links, a spinner, vertical, angle
+       and range sliders, a knob.
+    9. An image viewer: a texture panned and zoomed, with a pixel grid and
+       the value under the pointer.
+    10. imgui's own tools: a window of its nodes, the one under the pointer
         outlined, with counts and timings; a style editor.
-    13. A memory viewer in hex, and a profiler's timeline (an example on a
+    11. A memory viewer in hex, and a profiler's timeline (an example on a
         canvas more than a widget).
 
     Not planned: windows of the OS's own (gfx has one), a code editor,

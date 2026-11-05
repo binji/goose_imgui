@@ -4,7 +4,8 @@
 // fading and zooming as they hide and show, raised by a click. A tree of
 // the scene's entities (right-click one for its menu), and an inspector of
 // the one selected: property rows, number fields to drag or type in,
-// collapsing headers.
+// collapsing headers, a color for each; a plot of frame times and a
+// histogram of them.
 //
 //   goose examples/windows.goose [-- --theme dev-light|light|dark|game]
 import std;
@@ -32,6 +33,9 @@ var hidden: bool[7] = [false; 7];
 var offsets: float2[7] = [float2 { 0.0, 0.0 }; 7];
 var radii: f64[7] = [12.0; 7];
 var glow: f64[7] = [26.0; 7];
+var colors: gfx2d::Color[7] = [gfx2d::rgb(0x4C8DF6); 7];
+var frame_ms: f64[>..] = [];
+var buckets: f64[8] = [0.0; 8];
 
 fn scene() {
     imgui::canvas("scene", imgui::column().grow()) { size =>
@@ -41,9 +45,10 @@ fn scene() {
             let a = t * spin + k as f64 * 6.2832 / count as f64;
             let p = c + float2 { cos(a) as f32, sin(a) as f32 } * min(size.x, size.y) * 0.3 + offsets[k];
             if trails {
-                imgui::fill_circle(p.x, p.y, radii[k] + glow[k] - 12.0, gfx2d::rgba(0x4C8DF6, 0.15));
+                imgui::fill_circle(p.x, p.y, radii[k] + glow[k] - 12.0, gfx2d::with_alpha(colors[k], colors[k].a * 0.15));
             }
-            imgui::fill_circle(p.x, p.y, radii[k], if k == chosen { gfx2d::rgb(0xF6C14C) } else { gfx2d::rgb(0x4C8DF6) });
+            imgui::fill_circle(p.x, p.y, radii[k], colors[k]);
+            if k == chosen { imgui::stroke_circle(p.x, p.y, radii[k] + 3.0, 2, gfx2d::rgb(0xF6C14C)); }
         }
     };
 }
@@ -79,10 +84,14 @@ fn ui() {
             imgui::property("Paused") { imgui::checkbox("", paused); };
         };
     };
-    imgui::window("Stats", show_stats, imgui::column().absolute(400, 44)) {
-        imgui::textf(imgui::column()) { out => format(out, "frame time ", round(1000.0 / fps * 10.0) / 10.0, " ms"); };
-        imgui::textf(imgui::column()) { out => format(out, "entities ", count); };
-        imgui::progress(t * 0.2 - floor(t * 0.2), imgui::row().width(160));
+    imgui::window("Stats", show_stats, imgui::column().size(240, 230).absolute(390, 44)) {
+        imgui::box(imgui::row().gap(8).align(imgui::CENTER)) {
+            imgui::textf(imgui::column()) { out => format(out, "frame ", round(1000.0 / fps * 10.0) / 10.0, " ms"); };
+            imgui::sparkline("spark", frame_ms, imgui::column().width(60));
+        };
+        imgui::plot_lines("##frame time", frame_ms, imgui::Plot { lo: 10, hi: 25, decimals: 1 });
+        imgui::text("frame times", imgui::MUTED);
+        imgui::plot_bars("##spread", buckets[..], imgui::Plot { decimals: 0 }, imgui::column().height(48));
     };
     imgui::window("Scene", show_scene, imgui::column().size(220, 260).absolute(16, 240)) {
         imgui::tree_node("World", false, true) {
@@ -91,12 +100,13 @@ fn ui() {
             imgui::tree_node("Props") { entity_row(4); entity_row(5); };
         };
     };
-    imgui::window("Inspector", show_inspector, imgui::column().size(280, 250).absolute(664, 44)) {
+    imgui::window("Inspector", show_inspector, imgui::column().size(280, 290).absolute(664, 44)) {
         imgui::text(names[chosen], imgui::TITLE);
         imgui::collapsing("Transform", imgui::column(), true) {
             imgui::properties() {
                 imgui::property("Offset") { imgui::drag_vec("", offsets[chosen]); };
                 imgui::property("Radius") { imgui::drag_number("", radii[chosen], imgui::Drag { lo: 4, hi: 40, decimals: 1 }); };
+                imgui::property("Color") { imgui::color_edit("", colors[chosen]); };
             };
         };
         imgui::collapsing("Render", imgui::column(), true) {
@@ -122,6 +132,11 @@ fn main() {
         let dt = frame_dt();
         if !paused { t += dt * speed; }
         if dt > 0.0 { fps = fps * 0.95 + (1.0 / dt) * 0.05; }
+        // Frame times: the real ones, with a wobble so a fixed step shows something.
+        let ms = dt * 1000.0 + sin(t * 3.1) * 2.5 + sin(t * 17.0) * 1.2;
+        imgui::push_sample(frame_ms, ms, 120);
+        let b = clamp(((ms - 12.0) / 1.5) as i64, 0, 7);
+        buckets[b] += 1.0;
         gfx2d::frame(imgui::screen_color()) {
             imgui::frame(dt) { ui(); };
         };
