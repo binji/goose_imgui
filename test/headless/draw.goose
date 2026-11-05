@@ -2,7 +2,7 @@
 // gradient; opacity, multiplied in and through a layer; clipping by a box
 // that clips (a scroll pane's content past its edge); a motion offset and
 // scale; the focus ring, which shows only after navigation; a text's
-// outline and shadow; a radial meter; a box turned and skewed; what has
+// outline and shadow, hard and soft, and its glow; a radial meter; a box turned and skewed; what has
 // left drawn on, with its canvas, as its exit plays; rich text's spans, its
 // image and its underline; text revealed in part, each character where it
 // is in the whole.
@@ -154,6 +154,7 @@ fn main() {
     render(none) { word(imgui::column()); };
     let plain_red = count(0xFF0000, 60);
     let plain_blue = count(0x0000FF, 60);
+    let plain_black = count(0x000000, 40);
     render(none) { word(imgui::column().text_outline(2, gfx2d::rgb(0xFF0000))); };
     let red = count(0xFF0000, 60);
     render(none) {
@@ -170,6 +171,45 @@ fn main() {
     print("text outline: none plain ", plain_red == 0, ", drawn ", red > 100);
     print("text shadow: none plain ", plain_blue == 0, ", inherited ", blue > 100,
           "; turned off ", off_red == 0 && off_blue == 0);
+
+    // A soft shadow and a glow: pixels part white, part their color (in
+    // `ch`, 0 red, 2 blue), over a band where the hard shadow has only
+    // its edge's.
+    fn tinted(ch: i64) -> i64 {
+        var n = 0;
+        for y in H {
+            for x in W {
+                let c = at(x, y);
+                let v: i64[3] = [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+                let o1 = v[(ch + 1) % 3];
+                let o2 = v[(ch + 2) % 3];
+                if v[ch] > 200 && o1 > 30 && o1 < 225 && abs(o1 - o2) < 20 { n++; }
+            }
+        }
+        n
+    }
+    render(none) { word(imgui::column()); };
+    let plain_tinted = tinted(0);
+    render(none) { word(imgui::column().text_shadow(gfx2d::rgb(0x0000FF), 4, 4)); };
+    let hard_band = tinted(2);
+    render(none) { word(imgui::column().text_shadow(gfx2d::rgb(0x0000FF), 4, 4, 4)); };
+    let soft_band = tinted(2);
+    let soft_solid = count(0x0000FF, 60);
+    render(none) { word(imgui::column().text_glow(4, gfx2d::rgb(0xFF0000))); };
+    let glow_band = tinted(0);
+    let glow_x = abs(count(0x000000, 40) - plain_black) * 10 < plain_black;
+    render(none) {
+        imgui::box(imgui::stack().grow().text_glow(4, gfx2d::rgb(0xFF0000))) {
+            word(imgui::column().text_shadow(gfx2d::rgb(0x0000FF), 4, 4, 4).text_outline(1, gfx2d::BLACK));
+        };
+    };
+    let both_red = tinted(0);
+    let both_blue = tinted(2);
+    render(none) { word(imgui::column().text_glow(4, gfx2d::rgb(0xFF0000)).no_text_glow()); };
+    let no_glow = tinted(0);
+    print("soft text shadow: a band ", soft_band > hard_band * 2, ", blue at its middle ", soft_solid > 50,
+          "; glow: a band ", glow_band > hard_band * 2, ", the glyphs black ", glow_x,
+          "; both, with an outline ", both_red > 100 && both_blue > 100, "; turned off ", no_glow == plain_tinted);
 
     // A radial meter, a quarter swept from the top, clockwise: red in the
     // top right quarter, not in the top left.

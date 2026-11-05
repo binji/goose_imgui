@@ -92,6 +92,7 @@ let OV_TEXT_OUTLINE = 512;
 let OV_TEXT_SHADOW = 1024;
 let OV_REVEAL = 2048;
 let OV_TEXT_FX = 4096;
+let OV_TEXT_GLOW = 8192;
 
 struct LookDesc {
     class: StyleClass = StyleClass { 0 },   // NONE: no style but the overrides
@@ -197,7 +198,8 @@ fn with_fx(var d: Desc, fx: TextLook, flag: i64) -> Desc {
 
 fn same_fx(a: TextLook, b: TextLook) -> bool {
     a.letter_spacing == b.letter_spacing && a.outline == b.outline && a.outline_color == b.outline_color &&
-    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset && a.reveal == b.reveal &&
+    a.shadow == b.shadow && a.shadow_offset == b.shadow_offset && a.shadow_soft == b.shadow_soft &&
+    a.glow == b.glow && a.glow_color == b.glow_color && a.reveal == b.reveal &&
     a.text_fx == b.text_fx && a.fx_args == b.fx_args
 }
 
@@ -373,14 +375,27 @@ fn text_outline(d: Desc, w: f64, c: gfx2d::Color) -> Desc {
     with_fx(d, fx, OV_TEXT_OUTLINE)
 }
 fn no_text_outline(d: Desc) -> Desc { text_outline(d, -1.0, gfx2d::TRANSPARENT) }
-// A copy of the text (and its outline) in c, moved by (dx, dy), under it.
-fn text_shadow(d: Desc, c: gfx2d::Color, dx: f64 = 1.0, dy: f64 = 1.0) -> Desc {
+// A shadow of the text in c, moved by (dx, dy), under it: with `soft` 0,
+// a copy of the text and its outline; > 0, soft, fading from the glyphs'
+// edges over `soft` pixels (at most an eighth of the text's size).
+fn text_shadow(d: Desc, c: gfx2d::Color, dx: f64 = 1.0, dy: f64 = 1.0, soft: f64 = 0.0) -> Desc {
     var fx = desc_fx(d.vis);
     fx.shadow = c;
     fx.shadow_offset = float2 { dx as f32, dy as f32 };
+    fx.shadow_soft = max(soft, 0.0) as f32;
     with_fx(d, fx, OV_TEXT_SHADOW)
 }
 fn no_text_shadow(d: Desc) -> Desc { text_shadow(d, gfx2d::BLACK, 0.0, 0.0) }
+// A halo in c around the glyphs, fading over `reach` pixels from their
+// edges (at most an eighth of the text's size): for titles, and text over
+// a scene.
+fn text_glow(d: Desc, reach: f64, c: gfx2d::Color) -> Desc {
+    var fx = desc_fx(d.vis);
+    fx.glow = reach as f32;
+    fx.glow_color = c;
+    with_fx(d, fx, OV_TEXT_GLOW)
+}
+fn no_text_glow(d: Desc) -> Desc { text_glow(d, -1.0, gfx2d::TRANSPARENT) }
 // The text's effect (FX_SHAKE, FX_WAVE … or a program's own, from
 // FX_USER), and up to four numbers for it (0: its default); its text
 // descendants' too. See textfx.goose.

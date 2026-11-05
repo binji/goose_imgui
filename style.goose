@@ -151,16 +151,19 @@ fn add_nine_slice(t: gfx::Texture, src: gfx2d::Rect, insets: float4,
     (nine_slices.len - 1) as u16
 }
 
-// Text's letter spacing, outline and shadow, for Style.text_look. Text
-// inherits each part from its parents unless it is set here: a spacing of
-// 0, an outline of 0 and a transparent shadow are unset. An outline < 0,
-// or a shadow moved by (0, 0), is none.
+// Text's letter spacing, outline, shadow and glow, for Style.text_look.
+// Text inherits each part from its parents unless it is set here: a
+// spacing of 0, an outline or glow of 0 and a transparent shadow are
+// unset. An outline or glow < 0, or a shadow moved by (0, 0), is none.
 struct TextLook {
     letter_spacing: f32 = 0.0,              // pixels after each character
     outline: f32 = 0.0,                     // pixels around the glyphs
     outline_color: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },
     shadow: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },     // a copy under the text and its outline
     shadow_offset: float2 = float2 { 0.0, 0.0 },
+    shadow_soft: f32 = 0.0,                 // > 0: the shadow soft, fading over this many pixels
+    glow: f32 = 0.0,                        // pixels a halo reaches past the glyphs
+    glow_color: gfx2d::Color = gfx2d::Color { 0.0, 0.0, 0.0, 0.0 },
     reveal: f32 = -1.0,                     // characters drawn (< 0: all); the node's own, not inherited
     text_fx: u16 = 0,                       // its effect (textfx.goose), and the numbers for it
     fx_args: float4 = float4 { 0.0, 0.0, 0.0, 0.0 },
@@ -178,7 +181,8 @@ fn over_look(l: TextLook, up: TextLook) -> TextLook {
     var r = up;
     if l.letter_spacing != 0.0 { r.letter_spacing = l.letter_spacing; }
     if l.outline != 0.0 { r.outline = l.outline; r.outline_color = l.outline_color; }
-    if l.shadow.a > 0.0 { r.shadow = l.shadow; r.shadow_offset = l.shadow_offset; }
+    if l.shadow.a > 0.0 { r.shadow = l.shadow; r.shadow_offset = l.shadow_offset; r.shadow_soft = l.shadow_soft; }
+    if l.glow != 0.0 { r.glow = l.glow; r.glow_color = l.glow_color; }
     if l.text_fx != 0 { r.text_fx = l.text_fx; r.fx_args = l.fx_args; }
     r
 }

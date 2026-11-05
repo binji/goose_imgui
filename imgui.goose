@@ -221,10 +221,8 @@ fn list_bounds() {
         var reach = max(s.shadow.blur * 3.0 + max(abs(s.shadow.offset.x), abs(s.shadow.offset.y)) + s.shadow.spread,
                         s.ring_offset + s.ring_width) + 2.0;
         if n.kind == NODE_TEXT {
-            // A text's outline and shadow reach past its box.
-            let l = look_of(n);
-            let o = l.shadow_offset;
-            reach = max(reach, max(l.outline, 0.0) + max(abs(o.x), abs(o.y)) + 2.0);
+            // A text's outline, shadow and glow reach past its box.
+            reach = max(reach, look_reach(look_of(n), s.text_size) + 2.0);
         } else if n.kind == NODE_RICH {
             reach = max(reach, rich_reach(i) + 2.0);
         }

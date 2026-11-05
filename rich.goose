@@ -417,7 +417,8 @@ fn rich_height(i: i32, w: f32) -> f32 {
 }
 
 // Drawn, its lines justified in its box: under it all its shadows, then its
-// outlines, then its glyphs, images and underlines.
+// halos, then its outlines, then its glyphs, images and underlines; a pass
+// no piece needs is skipped.
 fn draw_rich(i: i32, a: f32) {
     let n .= nodes[i];
     let b = box_of(n);
@@ -429,7 +430,15 @@ fn draw_rich(i: i32, a: f32) {
     // lines (newlines, spaces where they broke) counted too.
     let limit: i64 = if own.reveal < 0.0 { 1 << 62 } else { ceil(own.reveal) as i64 };
     let fx = if has_glyphs(n) { n.cmd_first } else { -1 };
-    for pass in 3 {
+    var needed = 1 << TEXT_GLYPHS;
+    for k in n.text_off..n.text_off + n.text_len {
+        let p = pieces[k];
+        guard p.kind == PIECE_WORD else { continue; }
+        text_layers(piece_look(p.look, own), gfx2d::TextStyle { .. }, p.size, gfx2d::WHITE, 1.0, false)
+        { o, st, c, ink, pass => needed |= 1 << pass; };
+    }
+    for pass in 4 {
+        guard needed & (1 << pass) != 0 else { continue; }
         var y = b.y + n.d.lay.padding.y;
         var counted = n.text_off;
         var before: i64 = 0;
@@ -444,7 +453,7 @@ fn draw_rich(i: i32, a: f32) {
                 if shown == 0 { break; }
                 let ink = faded(if p.ink.a > 0.0 { p.ink } else { n.style.ink }, a);
                 if p.kind == PIECE_IMAGE {
-                    if pass == 2 {
+                    if pass == TEXT_GLYPHS {
                         let im = inlines[p.off];
                         let h: f64 = p.size * im.scale;
                         let ascent_f = gfx2d::font_ascent(p.font, p.size);
@@ -471,20 +480,12 @@ fn draw_rich(i: i32, a: f32) {
                                                    baseline: gfx2d::BASELINE_ALPHABETIC, .. };
                     let whole = shown == piece_chars(p);
                     let s = text_arena[p.off..chars_end(text_arena, p.off, p.off + p.len, shown)];
-                    let ow = outline_width(l, p.size);
-                    var os = style;
-                    os.outline = ow * 2.0;
-                    let sh = l.shadow_offset;
-                    if pass == 0 && p.kind == PIECE_WORD && l.shadow.a > 0.0 && sh != float2_0 {
-                        let c = faded(l.shadow, a);
-                        if ow > 0.0 { fx_text(x + sh.x, base + sh.y, s, os, c, fx, before, false, a); }
-                        fx_text(x + sh.x, base + sh.y, s, style, c, fx, before, false, a);
+                    if p.kind == PIECE_WORD {
+                        text_layers(l, style, p.size, ink, a, false) { o, st, c, is_ink, layer =>
+                            if layer == pass { fx_text(x + o.x, base + o.y, s, st, c, fx, before, is_ink, a); }
+                        };
                     }
-                    if pass == 1 && p.kind == PIECE_WORD && ow > 0.0 && l.outline_color.a > 0.0 {
-                        fx_text(x, base, s, os, faded(l.outline_color, a), fx, before, false, a);
-                    }
-                    if pass == 2 {
-                        if p.kind == PIECE_WORD { fx_text(x, base, s, style, ink, fx, before, true, a); }
+                    if pass == TEXT_GLYPHS {
                         if p.underline {
                             let t = max(p.size / 14.0, 1.0);
                             let uw = if whole { p.w } else { gfx2d::measure_text(s, style).x as f32 };
@@ -526,14 +527,14 @@ fn rich_chars(s: const u8[:]) -> i64 {
     c
 }
 
-// How far its outlines and shadows reach past its box.
+// How far its outlines, shadows and glows reach past its box.
 fn rich_reach(i: i32) -> f32 {
     let n .= nodes[i];
     let own = look_of(n);
     var r: f32 = 0.0;
     for k in n.text_off..n.text_off + n.text_len {
         let l = piece_look(pieces[k].look, own);
-        r = max(r, max(l.outline, 0.0) + max(abs(l.shadow_offset.x), abs(l.shadow_offset.y)));
+        r = max(r, look_reach(l, pieces[k].size));
     }
     r
 }

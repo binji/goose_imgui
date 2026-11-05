@@ -119,6 +119,24 @@ fn main() {
     print("--- text look from a class: ", round(imgui::rect_of(imgui::id("class")).w), ", a Desc's over it: ",
           round(imgui::rect_of(imgui::id("over")).w));
 
+    // Glows and soft shadows, inherited, from a class and turned off, and
+    // how far they reach past the text (a glow at most an eighth of its size).
+    let glowing = imgui::add_class(imgui::style_set(imgui::Style {
+        text_look: imgui::add_text_look(imgui::TextLook { glow: 3.0, glow_color: gfx2d::WHITE, .. }), .. }));
+    imgui::frame(view(400, 300), 1.0 / 60.0) {
+        imgui::box(imgui::column().text_glow(20, gfx2d::BLACK).text_shadow(gfx2d::BLACK, 0, 1, 0.5)) {
+            imgui::text("in", imgui::column().text_size(16));
+            imgui::text("off", imgui::column().no_text_glow());
+            imgui::box(imgui::column().skin(glowing)) { imgui::text("class", imgui::column().text_size(40)); };
+        };
+    };
+    for n in imgui::nodes {
+        guard n.kind == imgui::NODE_TEXT else { continue; }
+        let l = imgui::look_of(n);
+        print("--- glow ", round(l.glow * 10.0) / 10.0, " in ", if l.glow_color == gfx2d::WHITE { "white" } else { "black" },
+              ", soft shadow ", l.shadow_soft, ", reach ", imgui::look_reach(l, n.style.text_size), " at ", n.style.text_size);
+    }
+
     case("absolute, placed by a pivot") {
         imgui::box(imgui::stack().size(300, 200)) {
             imgui::panel(imgui::column().size(40, 20).absolute(100, 50).pivot(0.5, 1));

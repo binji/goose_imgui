@@ -113,7 +113,8 @@ var node_looks: TextLook[>..<] = [];
 
 // The look a node with style s and Desc look v has under a parent's `up`.
 fn resolve_look(s: Style, v: LookDesc, up: i32) -> i32 {
-    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW | OV_REVEAL | OV_TEXT_FX);
+    let fx_ov = v.ov & (OV_LETTER_SPACING | OV_TEXT_OUTLINE | OV_TEXT_SHADOW | OV_TEXT_GLOW | OV_REVEAL |
+                         OV_TEXT_FX);
     if s.text_look == 0 && fx_ov == 0 && node_looks[up as i64].reveal < 0.0 { return up; }
     var l = node_looks[up as i64];
     l.reveal = -1.0;
@@ -122,7 +123,8 @@ fn resolve_look(s: Style, v: LookDesc, up: i32) -> i32 {
         let d = desc_fx(v);
         if v.ov & OV_LETTER_SPACING != 0 { l.letter_spacing = d.letter_spacing; }
         if v.ov & OV_TEXT_OUTLINE != 0 { l.outline = d.outline; l.outline_color = d.outline_color; }
-        if v.ov & OV_TEXT_SHADOW != 0 { l.shadow = d.shadow; l.shadow_offset = d.shadow_offset; }
+        if v.ov & OV_TEXT_SHADOW != 0 { l.shadow = d.shadow; l.shadow_offset = d.shadow_offset; l.shadow_soft = d.shadow_soft; }
+        if v.ov & OV_TEXT_GLOW != 0 { l.glow = d.glow; l.glow_color = d.glow_color; }
         if v.ov & OV_REVEAL != 0 { l.reveal = d.reveal; }
         if v.ov & OV_TEXT_FX != 0 { l.text_fx = d.text_fx; l.fx_args = d.fx_args; }
     }

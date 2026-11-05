@@ -138,7 +138,7 @@ imgui::row().gap(8).padding(12, 6).align(imgui::CENTER).grow_w().skin(imgui::PAN
 - Scalars are `f64`, as in gfx2d, so any number can be passed.
 - What few nodes use is kept out of the structs that every node copies.
   56 bytes more in `Style` made recording about 12% slower, used or not.
-  So text effects (letter spacing, outline, shadow) are indices:
+  So text effects (letter spacing, outline, shadow, glow) are indices:
   - A Style refers to a `TextLook` registered by `add_text_look`, as it
     refers to a nine-slice.
   - A Desc's setters put theirs in a table. Set during a frame, they go in
@@ -401,9 +401,17 @@ spills past the box.
   the widget it is in is the one under the pointer, so a panel over it
   blocks it. The text gets an ID from its string in its scope, to keep the
   span last hovered by, for a tooltip fading out.
-- Drawn in three passes over its lines, all shadows, then all outlines,
-  then glyphs, images and underlines, so that one piece's shadow doesn't
-  fall over the glyphs before it.
+- Drawn in passes over its lines, all shadows, then all halos, then all
+  outlines, then glyphs, images and underlines, so that one piece's shadow
+  or halo doesn't fall over the glyphs before it. A pass no piece needs is
+  skipped.
+- Soft shadows and halos are gfx2d's glows, from the glyphs' distance
+  field: gfx2d draws a string's glow under all its glyphs, one glow a
+  string. Plain text, drawn whole, puts one on its outline pass, or on its
+  glyphs if it has no outline, so a soft shadow costs no pass of its own;
+  with both, the shadow gets one, as text of no color carrying the glow.
+  Rich text gives each its own pass, since a piece's glow drawn with its
+  glyphs would fall over the piece before it where they touch.
 
 ## Text effects
 

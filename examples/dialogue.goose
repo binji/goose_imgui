@@ -1,8 +1,8 @@
-// Dialogue, as an RPG's: a speaker's portrait and name, and what they say
+// Dialogue, as an RPG's: a speaker's portrait and name, glowing, and what they say
 // typed out a character at a time (rich text, revealed), its lines laid
 // out whole from the start so that nothing moves as it types, each letter
 // popping in. Names, places and items are in spans, some with effects: a
-// place waving, an item glowing, a danger shaking, a cold voice shivering
+// place waving, an item flashing in a halo, a danger shaking, a cold voice shivering
 // (an effect of the program's own), magic in a rainbow; the key is an
 // image on the line. Click, Enter or Space shows the rest at once, then
 // goes on to the next line; a chevron bobs when a line is all there.
@@ -37,7 +37,8 @@ fn speaker_color(name: const u8[:]) -> i64 { if name == "Wren" { PORTRAITS[1] } 
 fn spans() {
     imgui::add_span("who", imgui::Span { ink: rgb(0x8EC3FF), .. });
     imgui::add_span("place", imgui::Span { ink: rgb(0xF2CF7A), text_fx: imgui::FX_WAVE, fx_args: float4 { 2, 0.8, 0, 0 }, .. });
-    imgui::add_span("item", imgui::Span { ink: rgb(0xFF9F5A), underline: true, text_fx: imgui::FX_FLASH, .. });
+    let halo = imgui::add_text_look(imgui::TextLook { glow: 3, glow_color: rgba(0xFF7A2A, 0.55), .. });
+    imgui::add_span("item", imgui::Span { ink: rgb(0xFF9F5A), underline: true, text_look: halo, text_fx: imgui::FX_FLASH, .. });
     imgui::add_span("danger", imgui::Span { ink: rgb(0xFF6A6A), text_fx: imgui::FX_SHAKE, fx_args: float4 { 1.2, 0, 0, 0 }, .. });
     imgui::add_span("cold", imgui::Span { ink: rgb(0xB8D8FF), text_fx: SHIVER, .. });
     imgui::add_span("magic", imgui::Span { text_fx: imgui::FX_RAINBOW, .. });
@@ -78,7 +79,8 @@ fn main() {
                                  .bg(gfx2d::lighten(rgb(speaker_color(LINES[line][0])), 0.25), rgb(speaker_color(LINES[line][0])))
                                  .border(3, rgba(INK, 0.85)));
                     imgui::box(imgui::column().gap(8).grow_w()) {
-                        imgui::text(LINES[line][0], imgui::column().text_size(15).letter_spacing(2).ink(rgb(GOLD)));
+                        imgui::text(LINES[line][0], imgui::column().text_size(15).letter_spacing(2).ink(rgb(GOLD))
+                                                    .text_glow(2, rgba(GOLD, 0.7)));
                         // Laid out whole, three lines tall at least, so the
                         // panel keeps its size as the text types.
                         // Each letter pops in as it is revealed; the spans'

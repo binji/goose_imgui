@@ -75,6 +75,9 @@ root 0.0 0.0 400.0 300.0
 frame 1: 36.0
 frame 2: 36.0
 --- text look from a class: 36.0, a Desc's over it: 26.0
+--- glow 20.0 in black, soft shadow 0.5, reach 2.0 at 16.0
+--- glow -1.0 in black, soft shadow 0.5, reach 1.5 at 16.0
+--- glow 3.0 in white, soft shadow 0.5, reach 3.0 at 40.0
 --- absolute, placed by a pivot
 root 0.0 0.0 400.0 300.0
   box 0.0 0.0 300.0 200.0

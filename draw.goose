@@ -201,23 +201,72 @@ fn draw_text(i: i32, a: f32) {
         }
     }
     let s = node_text(i);
-    // Under the text: its shadow (a copy of it and its outline, moved),
-    // then its outline (a stroke, half of it hidden by the glyphs).
     let l = look_of(n);
     let fx = if has_glyphs(n) { n.cmd_first } else { -1 };
-    let ow = outline_width(l, n.style.text_size);
+    text_layers(l, style, n.style.text_size, faded(n.style.ink, a), a, true) { o, st, c, ink, pass =>
+        text_part(x + o.x, y + o.y, s, st, c, l.reveal, fx, ink, a);
+    };
+}
+
+// The passes of text_layers: shadows, halos, outlines, the glyphs.
+let TEXT_SHADOWS = 0;
+let TEXT_HALOS = 1;
+let TEXT_OUTLINES = 2;
+let TEXT_GLYPHS = 3;
+
+// Text in look `l`, drawn in `style` at `size` in `ink`, as the layers
+// the block draws, in order: its shadow (a copy of it and its outline,
+// moved; or soft, a glow), its halo (a glow), its outline (a stroke, half
+// of it hidden by the glyphs), and its glyphs. The block gets where the
+// layer is moved to, its style and color, whether it is the glyphs, and
+// its pass. A glow (gfx2d's, under all of a string's glyphs) is drawn on
+// its own, under glyphs of no color; with `merge`, for text drawn whole,
+// one rides on the outline, or on the glyphs if there is none.
+fn text_layers<F>(l: TextLook, style: gfx2d::TextStyle, size: f32, ink: gfx2d::Color, a: f32, merge: bool) {
+    let ow = outline_width(l, size);
     var os = style;
     os.outline = ow * 2.0;
+    let outlined = ow > 0.0 && l.outline_color.a > 0.0;
     let sh = l.shadow_offset;
-    if l.shadow.a > 0.0 && sh != float2_0 {
+    let shadowed = l.shadow.a > 0.0 && sh != float2_0;
+    let soft = shadowed && l.shadow_soft > 0.0;
+    let halo = l.glow > 0.0 && l.glow_color.a > 0.0;
+    var soft_style = style;
+    soft_style.glow = l.shadow_soft;
+    soft_style.glow_color = faded(l.shadow, a);
+    soft_style.glow_offset = sh;
+    var halo_style = style;
+    halo_style.glow = l.glow;
+    halo_style.glow_color = faded(l.glow_color, a);
+    // Which glow rides on the top layer under the glyphs' own: the halo,
+    // else the soft shadow.
+    let rides_halo = merge && halo;
+    let rides_soft = merge && soft && !halo;
+    if shadowed && !soft {
         let c = faded(l.shadow, a);
-        if ow > 0.0 { text_part(x + sh.x, y + sh.y, s, os, c, l.reveal, fx, false, a); }
-        text_part(x + sh.x, y + sh.y, s, style, c, l.reveal, fx, false, a);
+        if ow > 0.0 { F(sh, os, c, false, TEXT_SHADOWS); }
+        F(sh, style, c, false, TEXT_SHADOWS);
     }
-    if ow > 0.0 && l.outline_color.a > 0.0 {
-        text_part(x, y, s, os, faded(l.outline_color, a), l.reveal, fx, false, a);
+    if soft && !rides_soft { F(float2_0, soft_style, gfx2d::TRANSPARENT, false, TEXT_SHADOWS); }
+    if halo && !rides_halo { F(float2_0, halo_style, gfx2d::TRANSPARENT, false, TEXT_HALOS); }
+    var top = if outlined { os } else { style };
+    if rides_halo || rides_soft {
+        let g = if rides_halo { halo_style } else { soft_style };
+        top.glow = g.glow;
+        top.glow_color = g.glow_color;
+        top.glow_offset = g.glow_offset;
     }
-    text_part(x, y, s, style, faded(n.style.ink, a), l.reveal, fx, true, a);
+    if outlined { F(float2_0, top, faded(l.outline_color, a), false, TEXT_OUTLINES); }
+    F(float2_0, if outlined { style } else { top }, ink, true, TEXT_GLYPHS);
+}
+
+// How far a text's shadow, halo and outline reach past its glyphs, at `size`.
+fn look_reach(l: TextLook, size: f32) -> f32 {
+    let o = l.shadow_offset;
+    let outline: f32 = max(l.outline, 0.0);
+    let soft: f32 = if l.shadow.a > 0.0 { min(l.shadow_soft, size / 8.0) } else { 0.0 };
+    let glow: f32 = if l.glow > 0.0 { min(l.glow, size / 8.0) } else { 0.0 };
+    max(outline + max(abs(o.x), abs(o.y)), max(soft + max(abs(o.x), abs(o.y)), glow))
 }
 
 // s drawn as gfx2d::text draws it, but only its first `chars` characters
@@ -261,6 +310,7 @@ fn fx_text(x: f64, y: f64, s: const u8[:], style: gfx2d::TextStyle, c: gfx2d::Co
         let g = glyphs[fx + count];
         glyph_edit(e, g);
         e.color = if ink_pass { faded(g.ink, a * g.alpha) } else { faded(c, g.alpha) };
+        e.glow = faded(style.glow_color, g.alpha);
     };
 }
 

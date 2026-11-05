@@ -165,7 +165,8 @@ How children share space:
 | `ink(c)`, `text_size(s)`, `font(f)` | the node's text, and its text descendants' |
 | `letter_spacing(px)` | pixels after each character, inherited the same way |
 | `text_outline(w, c)`, `no_text_outline()` | an outline `w` pixels wide around the glyphs (up to a sixteenth of the text's size), inherited; for text over a busy scene. Faded, `isolate()` keeps it from showing through the glyphs |
-| `text_shadow(c, dx, dy)`, `no_text_shadow()` | a copy of the text and its outline, moved, under it; inherited |
+| `text_shadow(c, dx, dy, soft)`, `no_text_shadow()` | a shadow moved by (dx, dy) under the text; inherited. `soft` 0: a copy of the text and its outline; > 0: soft, fading from the glyphs' edges over `soft` pixels (at most an eighth of the text's size; a wider one is a `layer` with a blur). Under an outline, a soft shadow starts at the glyphs, not the outline |
+| `text_glow(reach, c)`, `no_text_glow()` | a halo in `c` around the glyphs, fading over `reach` pixels (at most an eighth of the text's size); inherited. With a soft shadow too, one of them takes a pass of its own |
 | `reveal(chars)` | only the text's first `chars` characters drawn (of `text` or `rich`; a space, a newline or an image each one), each where it is with all of them, so typing it out doesn't move its lines: `reveal((time() - began) * 40)`. A fraction shows the next character just begun (for `FX_POP_IN` and the like). Not inherited |
 | `text_fx(fx, a, b, c, d)` | an effect on each character of the text, and of its text descendants': `FX_SHAKE`, `FX_WAVE`, `FX_PULSE`, `FX_SWING`, `FX_RAINBOW`, `FX_FLASH`, and, as `reveal` uncovers them, `FX_POP_IN`, `FX_DROP_IN`, `FX_FADE_IN`; up to four numbers for it, 0 for its default (textfx.goose lists them). It moves only what is drawn, never the layout |
 | `Span { text_fx, fx_args, .. }` | a span's effect, over the text's own: `[scared]OUT[/]` |

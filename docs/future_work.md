@@ -16,10 +16,6 @@ item here, by its title, at each workaround.
    - `prompt(action)` would draw the glyph for an action, from a table of
      images the program fills in for each device.
 2. **Text.**
-    - A soft text shadow. `text_shadow` is a hard copy; the glyphs'
-      distance field could be drawn wider and faded to blur it. That is
-      gfx2d's "No text glow, and no soft text shadow" (its future work,
-      item 14) first.
     - Multi-line editing.
     - IME composition.
     - Measurements cached by text, font and size, if the benchmark shows a

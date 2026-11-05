@@ -146,7 +146,7 @@ fn main() {
                     let s = to_screen(e.pos);
                     if s.x < -60.0 || s.y < -60.0 || s.x > view.x + 60.0 || s.y > view.y + 60.0 { continue; }
                     imgui::box(i, imgui::column().absolute(s.x, s.y - 22.0).pivot(0.5, 1).align(imgui::CENTER).gap(3)) {
-                        imgui::text(e.name, imgui::column().text_size(12).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.8)));
+                        imgui::text(e.name, imgui::column().text_size(12).ink(rgb(INK)).text_shadow(rgba(SHADE, 0.9), 0, 1, 1.5));
                         imgui::meter("hp", e.hp / e.max_hp, imgui::row().size(56, 6), enemy_bar);
                     };
                 }
@@ -243,7 +243,7 @@ fn main() {
                         imgui::box(n.id(), imgui::column().align(imgui::CENTER).gap(6)
                                              .enter(imgui::slide_in(0, 16, m)).exit(imgui::slide_out(0, 16, m))) {
                             imgui::text(n.text, imgui::column().text_size(34).letter_spacing(10).ink(rgb(INK))
-                                                    .text_shadow(rgba(SHADE, 0.7), 0, 2));
+                                                    .text_shadow(rgba(SHADE, 0.8), 0, 2, 4));
                             let drawn = imgui::ease(imgui::EASE_OUT_CUBIC, min(n.age() / 0.6, 1.0));
                             imgui::panel(imgui::column().size(260 * drawn, 1).bg(rgba(INK, 0.6)));
                             imgui::text("The Cinder Reaches", imgui::column().text_size(14).ink(rgba(INK, 0.7)));
