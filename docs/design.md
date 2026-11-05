@@ -453,6 +453,15 @@ spills past the box.
   rolled out: the content doesn't reflow or scroll as it goes. A spring's
   overshoot is clamped, as the body can't be taller than itself. The grips
   wait until it is open.
+- Showing and hiding (`set_window_show`) are the window frame's enter and
+  exit, so a window hides however it goes, closed by its cross or simply
+  not recorded, without imgui running the program's block after it has
+  gone. Its copy would be put under the main root, below every window, so
+  a window's copy is made a window root of its own, without input, and the
+  roots are ordered again after the copies are placed: it fades out where
+  it was among the windows. A window showing or hiding is isolated, so
+  that its parts don't show through each other; at rest it isn't, as a
+  layer costs a pass.
 - A window fits its content until it is resized, and then keeps its size.
   Its body is a scroll pane that grows, so a fitted window that the screen
   is too small for still scrolls.

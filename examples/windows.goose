@@ -1,7 +1,7 @@
 // Developer windows over a running scene, in the dense dev theme: dragged
 // by their titles, resized by their edges and corners, rolled up by their
 // arrows or a double click, closed (and opened again from the View menu),
-// raised by a click. Right-click an entity for its menu.
+// fading and zooming as they hide and show, raised by a click. Right-click an entity for its menu.
 //
 //   goose examples/windows.goose [-- --theme dev-light|light|dark|game]
 import std;
@@ -82,6 +82,7 @@ fn main() {
     else if theme_name == "game" { imgui::theme_game(); }
     else { imgui::theme_dev(); }
     imgui::set_window_roll(imgui::tween(0.18, imgui::EASE_OUT_CUBIC));
+    imgui::set_window_show(imgui::tween(0.15, imgui::EASE_OUT_CUBIC), 0.95);
     run("imgui: windows", 960, 600) {
         let dt = frame_dt();
         if !paused { t += dt * speed; }

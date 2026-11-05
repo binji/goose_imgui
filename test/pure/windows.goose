@@ -3,7 +3,7 @@
 // (and no smaller than they can be), raised by a press, collapsed and
 // opened, closed and opened again in front; a press over two windows
 // reaching only the front one; a context menu on a right click; rolling
-// up and down.
+// up and down; hiding and showing.
 import std;
 import vec;
 import math;
@@ -235,4 +235,45 @@ fn main() {
     for k in 12 { step(); }
     show("Log");
     imgui::set_window_roll(imgui::INSTANT);
+
+    // Hiding and showing: closed, a copy of it fades and shrinks where it
+    // was among the windows (in front: the press on its cross raised it),
+    // taking no input; opened again, it fades and grows in. (Set on windows
+    // already showing, their enter plays once first.)
+    imgui::set_window_show(imgui::tween(0.2, imgui::EASE_LINEAR), 0.9);
+    for k in 15 { step(); }
+    click_at(mid(imgui::rect_of(imgui::sub_id(imgui::id("Log"), "close"))));
+    print("hiding: closed ", !show_log, ", copies playing ", imgui::exits_playing());
+    for k in 3 {
+        step();
+        var line: u8[>..] = [];
+        for j in imgui::root_order {
+            let r = imgui::roots[j as i64];
+            if r.kind != imgui::ROOT_WINDOW { continue; }
+            let n = imgui::nodes[r.node];
+            if r.popup == imgui::id("Log").v {
+                format(line, "Log(copy, alpha ", round(n.alpha * 100.0) / 100.0, " zoom ", round(n.zoom * 100.0) / 100.0, ") ");
+            } else if r.popup == imgui::id("Tools").v { line.append("Tools "); }
+            else { line.append("Info "); }
+        }
+        print("  back to front: ", line, "; over the copy, pointer wanted: ", imgui::wants_pointer());
+    }
+    for k in 12 { step(); }
+    print("hidden: copies playing ", imgui::exits_playing());
+    show_log = true;
+    print("showing:");
+    for k in 3 {
+        step();
+        for j in imgui::root_order {
+            let r = imgui::roots[j as i64];
+            if r.kind == imgui::ROOT_WINDOW && r.popup == imgui::id("Log").v {
+                let n = imgui::nodes[r.node];
+                print("  Log alpha ", round(n.alpha * 100.0) / 100.0, " zoom ", round(n.zoom * 100.0) / 100.0);
+            }
+        }
+    }
+    for k in 12 { step(); }
+    let n = imgui::nodes[imgui::roots[imgui::root_order[imgui::root_order.len - 1] as i64].node];
+    print("shown: alpha ", n.alpha, " zoom ", n.zoom);
+    imgui::set_window_show(imgui::INSTANT);
 }

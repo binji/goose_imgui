@@ -10,7 +10,8 @@
 //
 // The copy is drawn among its parent's children, after the sibling it came
 // after, if its parent is still there; if not, where it was on the screen,
-// over the main root. It takes no input. A copy of a subtree is as it was
+// over the main root. A window's is a window root, in the window's place
+// among them. It takes no input. A copy of a subtree is as it was
 // last drawn: its text, images and drawing, still.
 
 namespace imgui;
@@ -31,6 +32,7 @@ struct Leaver {
     id: u64 = 0,
     outer: u64 = 0,             // the nearest node above it with an exit (0: none), which copies it too
     parent: u64 = 0,            // its parent's ID
+    window: bool = false,       // a window's root: drawn as a window
     after: u64 = 0,             // its sibling before it (0: it was the first)
     parent_m: gfx2d::Affine = gfx2d::Affine { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 },  // its parent's to the screen
     exit: Exit = Exit { .. },
@@ -123,6 +125,7 @@ fn play_exits() {
         let n .= nodes[i];
         var r = Leaver { id: n.id, exit: desc_exit(n.d.mot), .. };
         let p = n.parent;
+        if p < 0 && roots[n.root as i64].kind == ROOT_WINDOW { r.window = true; }
         if p >= 0 {
             r.parent = nodes[p].id;
             r.parent_m = nodes[p].m;
@@ -302,6 +305,16 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
     t.alpha = r.alpha * (1.0 + (e.alpha - 1.0) * p);
     t.shift = r.shift + e.shift * p;
     t.zoom = r.zoom * (1.0 + (e.zoom - 1.0) * p);
+    // A window's: a root of its own, among the windows.
+    if r.window {
+        nodes[base].ghost = GHOST_ALONE;
+        nodes[base].parent = -1;
+        nodes[base].m = motion_affine(nodes[base]);
+        nodes[base].root = roots.len as i16;
+        nodes[base].d.vis.isolated = true;      // as it fades, its parts not showing through each other
+        roots.push(Root { node: base, kind: ROOT_WINDOW, popup: r.id, level: -1, .. });
+        return base;
+    }
     // Under its parent, after its sibling, if they are still there.
     var parent: i32 = -1;
     for j: i32 in 0..live { if nodes[j].id == r.parent && nodes[j].ghost == 0 { parent = j; break; } }

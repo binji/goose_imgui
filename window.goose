@@ -69,6 +69,19 @@ fn begin_windows() { wanted_cursor = CURSOR_DEFAULT; }
 var window_roll = INSTANT;
 fn set_window_roll(m: Motion) { window_roll = m; }
 
+// How windows show and hide: `e` played as one appears (opened, or first
+// recorded), `x` on a copy of it as it goes (closed, or no longer
+// recorded), in its place among the windows. Instant by default.
+var window_enter = Enter { .. };
+var window_exit = Exit { .. };
+fn set_window_show(e: Enter, x: Exit) {
+    window_enter = e;
+    window_exit = x;
+}
+// Fading, and growing from `zoom` of its size as it shows, shrinking to it
+// as it hides.
+fn set_window_show(m: Motion, zoom: f64 = 0.95) { set_window_show(pop_in(zoom, m), pop_out(zoom, m)); }
+
 // Window `id` put in front of the others.
 fn raise_window_id(id: u64) {
     var found = false;
@@ -242,7 +255,13 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     // The frame: its kept size, or its content's; collapsed, its title
     // bar's height and its width as it was; rolling, as much of its body
     // as has rolled out.
-    var fd = column().skin(WINDOW).keep();
+    var fd = column().skin(WINDOW).keep().enter(window_enter).exit(window_exit);
+    // Showing, drawn in a layer, so that its parts don't show through each
+    // other as it fades (a copy hiding is too).
+    let m = window_enter.motion;
+    if !is_instant(m) && (!last_st.laid || last_st.seen < frame_index - 1 || enter_progress(m, last_st.entered) < 1.0) {
+        fd = fd.isolate();
+    }
     if w.size.x > 0.0 { fd = fd.width(w.size.x); } else if w.collapsed && last.w > 0.0 { fd = fd.width(last.w); }
     if rolling { fd = fd.height(title_h + roll * body_full); }
     else if w.size.y > 0.0 && !w.collapsed { fd = fd.height(w.size.y); }
@@ -316,7 +335,8 @@ fn order_roots() {
         for r, k in roots {
             if r.kind == ROOT_WINDOW && r.popup == wid {
                 root_order.push(k as i32);
-                front_window = wid;
+                // Not a copy of one hiding, which takes no input.
+                if r.level >= 0 { front_window = wid; }
             }
         }
     }

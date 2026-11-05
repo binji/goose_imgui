@@ -53,3 +53,13 @@ rolling down:
   height 86.0
   height 97.0
   Log: 30.0 50.0 246.0 163.0
+hiding: closed true, copies playing 1
+  back to front: Info Tools Log(copy, alpha 0.83 zoom 0.98) ; over the copy, pointer wanted: false
+  back to front: Info Tools Log(copy, alpha 0.75 zoom 0.98) ; over the copy, pointer wanted: false
+  back to front: Info Tools Log(copy, alpha 0.67 zoom 0.97) ; over the copy, pointer wanted: false
+hidden: copies playing 0
+showing:
+  Log alpha 0.0 zoom 0.9
+  Log alpha 0.08 zoom 0.91
+  Log alpha 0.17 zoom 0.92
+shown: alpha 1.0 zoom 1.0
