@@ -413,8 +413,10 @@ fn image(t: gfx::Texture, src: gfx2d::Rect, d: Desc, fit_mode: i64 = gfx2d::FIT_
 
 // --- icons --------------------------------------------------------------------------------
 
-// Small line drawings in the ink, for widgets' parts: a check mark, the
-// chevrons of dropdowns and submenus, a cross.
+// Small drawings in the ink, for widgets' parts (a check mark, the
+// chevrons of dropdowns and submenus, a cross) and for icon buttons and
+// toolbars (play, pause, stop, step; a menu's lines, a search, a refresh,
+// a dot).
 let ICON_CHECK = 1;
 let ICON_CHEVRON_DOWN = 2;
 let ICON_CHEVRON_RIGHT = 3;
@@ -423,6 +425,14 @@ let ICON_CHEVRON_UP = 5;
 let ICON_CLOSE = 6;
 let ICON_PLUS = 7;
 let ICON_MINUS = 8;
+let ICON_PLAY = 9;
+let ICON_PAUSE = 10;
+let ICON_STOP = 11;
+let ICON_STEP = 12;         // one step forward: a play triangle and a bar
+let ICON_MENU = 13;         // three lines
+let ICON_SEARCH = 14;
+let ICON_REFRESH = 15;
+let ICON_DOT = 16;
 
 // An icon, as big as the text (or the Desc's size).
 fn icon(kind: i64, d: Desc) {

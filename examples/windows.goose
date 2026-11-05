@@ -9,7 +9,8 @@
 // collapsing headers, a color for each; a table of them, sorted by its
 // headers, its rows selected by clicks (Ctrl and Shift for more); a plot
 // of frame times and a histogram of them; a console that logs slow frames
-// and selections, and takes commands (type help). The Layout menu saves
+// and selections, and takes commands (type help); a toolbar over the
+// viewport, a status bar along the bottom. The Layout menu saves
 // where everything is to windows_layout.json, and loads it back.
 //
 //   goose examples/windows.goose [-- --theme dev-light|light|dark|game]
@@ -183,8 +184,30 @@ fn ui() {
         };
         // The windows dock here; the scene is in one of them.
         imgui::dock_space("dock", imgui::column().grow());
+        imgui::status_bar("status") {
+            if !paused { imgui::spinner("running"); }
+            imgui::text(if paused { "Paused" } else { "Running" });
+            imgui::text(str(count, " entities"));
+            imgui::panel(imgui::row().grow_w());
+            imgui::text(str(round(fps) as i64, " fps"));
+        };
     };
-    imgui::window("Viewport", imgui::column().padding(0), imgui::WINDOW_NO_SCROLL) { scene(); };
+    imgui::window("Viewport", imgui::column().padding(0).gap(0), imgui::WINDOW_NO_SCROLL) {
+        imgui::toolbar("tools") {
+            if imgui::icon_button(if paused { "Play##run" } else { "Pause##run" }, if paused { imgui::ICON_PLAY } else { imgui::ICON_PAUSE }) {
+                paused = !paused;
+            }
+            if imgui::icon_button("Step", imgui::ICON_STEP) {
+                paused = true;
+                t += speed / 60.0;
+            }
+            if imgui::icon_button("Restart", imgui::ICON_REFRESH) { t = 0.0; }
+            imgui::separator();
+            imgui::text("Speed", imgui::MUTED);
+            imgui::slider("##speed", speed, 0, 4, 0.1, imgui::row().width(120));
+        };
+        scene();
+    };
     imgui::window("Tweaks", show_tweaks, imgui::column().size(230, 170).absolute(220, 60)) {
         imgui::properties() {
             imgui::property("Speed") { imgui::slider("", speed, 0, 4, 0.1, imgui::row()); };

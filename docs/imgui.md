@@ -164,7 +164,7 @@ How children share space:
 | `add_span(name, Span { ink, font, text_size, text_look, underline })` | a span's style, by name: what it sets of the text's ink, font, size and look (`add_text_look`'s, over the text's own), and an underline |
 | `add_inline(name, texture, src, scale = 1, rise = 0)` | an image for `[img=name]`: `src` of the texture, `scale` times the text's size tall, centered on the text and raised by `rise` times its size |
 | `image(texture, d, fit_mode, filter)`, `image(texture, src, d, fit_mode, filter)` | an image, or a sprite from a sheet; fitted by `gfx2d::FIT_CONTAIN`, `COVER` or `STRETCH`; sampled by `gfx2d::FILTER_LINEAR` or `NEAREST` (by default nearest in pixel-art mode, else linear) |
-| `icon(ICON_CHECK …)`, `icon(kind, d)` | line icons in the ink: check, chevrons, close, plus, minus |
+| `icon(ICON_CHECK …)`, `icon(kind, d)` | icons in the ink: `ICON_CHECK`, the chevrons (`ICON_CHEVRON_DOWN`, `_UP`, `_LEFT`, `_RIGHT`), `ICON_CLOSE`, `ICON_PLUS`, `ICON_MINUS`; for tools, `ICON_PLAY`, `ICON_PAUSE`, `ICON_STOP`, `ICON_STEP`, `ICON_MENU`, `ICON_SEARCH`, `ICON_REFRESH`, `ICON_DOT` |
 
 ## Looks
 
@@ -428,6 +428,35 @@ let it = imgui::tree_node("Enemies", chosen == -1) {
 
 `Input.mods` holds the `MOD_SHIFT`, `MOD_CTRL` and `MOD_ALT` held this
 frame (from gfx in `input_from_gfx`).
+
+## Small pieces
+
+```goose
+imgui::toolbar("tools") {
+    if imgui::icon_button("Step", imgui::ICON_STEP) { step(); }
+    imgui::icon_toggle("Pause", imgui::ICON_PAUSE, paused);
+    imgui::separator();
+    if imgui::small_button("Reset") { reset(); }
+};
+imgui::knob("Gain", gain, 0, 2);
+imgui::status_bar("status") { imgui::spinner("busy"); imgui::text("loading"); };
+```
+
+| | |
+|---|---|
+| `small_button(label[, d]) -> bool` | a button with less padding (SMALL_BUTTON) |
+| `icon_button(label, kind[, d]) -> bool` | a square button with an icon, flat until hovered (ICON_BUTTON); its label is its ID and its tooltip (none if it is all after "##") |
+| `icon_toggle(label, kind, v&[, d]) -> bool` | an icon button that turns `v` on and off, checked while on; true the frame it changes |
+| `toolbar(label[, d]) { … }` | a row of tools, as wide as there is room (TOOLBAR); `separator()` stands up in it |
+| `status_bar(label[, d]) { … }` | a row of small, muted text (STATUS_BAR): last in a column that fills a window or the screen |
+| `link(label[, d]) -> bool` | text in the accent, underlined while hovered or focused (LINK, LINK_LINE); true when clicked or accepted |
+| `bullet([d])`, `bullet_text(s)` | a dot (BULLET); one and text beside it |
+| `label_value(label, value[, d])` | a label, muted, and its value at the row's other end |
+| `spinner([label][, d])` | an arc going round (SPINNER: its ink the arc, its bg the track); `label` is its ID |
+| `vslider(label, v, lo, hi[, step][, d]) -> bool` | a slider standing up, lo at the bottom; Up and Down step it; its label under it |
+| `slider_angle(label, radians, lo_deg = -180, hi_deg = 180) -> bool` | an angle kept in radians, slid in whole degrees, shown beside it |
+| `range_slider(label, from, to, lo, hi[, step][, d]) -> bool` | two thumbs that don't cross: a press takes the nearer; Left and Right move the one taken last, and accept changes which |
+| `knob(label, v, lo, hi[, step][, d]) -> bool` | a dial (KNOB, in the slider's colors): dragged up or right turns it up, the whole range in 200 pixels; the arrows step it; its label under it |
 
 ## Long lists and tables
 
@@ -834,6 +863,12 @@ The tests are in three groups:
     dragged, moving the pane before and, if it has a fraction, the one
     after; a pane no less than its least; a split in a pane; the split
     resized, its panes keeping their fractions;
+  - `small`: an icon button, a toggle and a small button clicked; a
+    link clicked and accepted; a knob dragged and stepped; a standing
+    slider clicked and stepped, its label inside it; a range's nearer
+    thumb taken, not past the other, the keys moving the one taken and
+    accept changing which; an angle in degrees; a label and value,
+    bullets, a spinner;
   - `save`: a layout saved and loaded, all of it changed in between:
     docked and floating windows, a collapsed one, the order, a pane, an
     open header, a closed window's flag; the text the same saved twice;

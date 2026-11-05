@@ -62,6 +62,7 @@ import log;
 import split;
 import dock;
 import save;
+import small;
 
 // --- frames ---------------------------------------------------------------------------
 

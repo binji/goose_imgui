@@ -361,6 +361,33 @@ fn draw_icon(kind: u8, b: gfx2d::Rect, c: gfx2d::Color) {
             gfx2d::line(p(0.5, 0.2), p(0.5, 0.8), w, c, gfx2d::CAP_ROUND);
         },
         ICON_MINUS => { gfx2d::line(p(0.2, 0.5), p(0.8, 0.5), w, c, gfx2d::CAP_ROUND); },
+        ICON_PLAY => { gfx2d::triangle(p(0.28, 0.18), p(0.82, 0.5), p(0.28, 0.82), c); },
+        ICON_PAUSE => {
+            gfx2d::rounded_rect(x + 0.24 * s, y + 0.2 * s, 0.17 * s, 0.6 * s, 0.03 * s, c);
+            gfx2d::rounded_rect(x + 0.59 * s, y + 0.2 * s, 0.17 * s, 0.6 * s, 0.03 * s, c);
+        },
+        ICON_STOP => { gfx2d::rounded_rect(x + 0.22 * s, y + 0.22 * s, 0.56 * s, 0.56 * s, 0.06 * s, c); },
+        ICON_STEP => {
+            gfx2d::triangle(p(0.2, 0.2), p(0.62, 0.5), p(0.2, 0.8), c);
+            gfx2d::rounded_rect(x + 0.66 * s, y + 0.2 * s, 0.14 * s, 0.6 * s, 0.03 * s, c);
+        },
+        ICON_MENU => {
+            for k in 3 {
+                let v = 0.25 + k as f32 * 0.25;
+                gfx2d::line(p(0.18, v), p(0.82, v), w, c, gfx2d::CAP_ROUND);
+            }
+        },
+        ICON_SEARCH => {
+            gfx2d::circle_outline(p(0.43, 0.43), 0.24 * s, w, c);
+            gfx2d::line(p(0.61, 0.61), p(0.82, 0.82), w, c, gfx2d::CAP_ROUND);
+        },
+        ICON_REFRESH => {
+            let o = p(0.5, 0.5);
+            gfx2d::arc(o.x, o.y, 0.3 * s, -1.2, 4.0, w, c, gfx2d::CAP_ROUND);
+            // The arrow head, at the arc's start.
+            gfx2d::polyline([p(0.62, 0.08), p(0.68, 0.22), p(0.53, 0.27)], w, c, gfx2d::CAP_ROUND, gfx2d::JOIN_ROUND);
+        },
+        ICON_DOT => { gfx2d::circle(p(0.5, 0.5), 0.2 * s, c); },
         _ => {},
     }
 }

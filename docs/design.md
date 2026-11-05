@@ -777,6 +777,7 @@ spills past the box.
 | `split.goose` | splitters: panes and the handles between them |
 | `dock.goose` | dock spaces: a tree of splits whose leaves hold windows as tabs |
 | `save.goose` | layouts saved and loaded, as JSON |
+| `small.goose` | small pieces: small and icon buttons, toolbars, status bars, links, bullets, a spinner, sliders standing up, in degrees and with two ends, a knob |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

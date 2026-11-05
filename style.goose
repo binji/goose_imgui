@@ -156,7 +156,16 @@ let DOCK_TARGET = StyleClass { 77 };    // a target to drop a dragged window on 
                                         // its min_size.x its side
 let DOCK_TARGET_MARK = StyleClass { 78 };   // the mark in a target: the part of a window it fills
 let DOCK_TAB_TOGGLE = StyleClass { 79 };    // a leaf's corner button, its tab bar hidden, to show it
-let CLASS_COUNT = 80;
+let SMALL_BUTTON = StyleClass { 80 };   // a button with less padding
+let ICON_BUTTON = StyleClass { 81 };    // a square button with an icon, flat until hovered (checked: on)
+let TOOLBAR = StyleClass { 82 };        // a row of icon buttons and the like
+let STATUS_BAR = StyleClass { 83 };     // a row of small text along a window's bottom
+let LINK = StyleClass { 84 };           // text to click: its ink
+let LINK_LINE = StyleClass { 85 };      // the line under a link (its bg), shown while hovered
+let BULLET = StyleClass { 86 };         // a bullet's dot: its bg and min_size
+let SPINNER = StyleClass { 87 };        // its ink the arc, its bg the track; its min_size
+let KNOB = StyleClass { 88 };           // a knob: its min_size; drawn in the slider's colors
+let CLASS_COUNT = 89;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -669,6 +678,47 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
                                    min_size: float2 { 10.0, 10.0 } }, p.accent, p.accent_hover);
     toggle.active.zoom = 1.0;
     classes[DOCK_TAB_TOGGLE.index] = toggle;
+
+    // A small button: the button's look, less padded, in every state.
+    var small = classes[BUTTON.index];
+    fn less(st: Style) -> Style {
+        var t = st;
+        t.padding = sp4(7.0, 2.0);
+        t.min_size = float2 { 0.0, 0.0 };
+        t
+    }
+    small.normal = less(small.normal);
+    small.hover = less(small.hover);
+    small.active = less(small.active);
+    small.focused = less(small.focused);
+    small.checked = less(small.checked);
+    small.disabled = less(small.disabled);
+    classes[SMALL_BUTTON.index] = small;
+    let ib = p.control + 4.0 * sp;
+    var icon_b = clickable(Style { radius: r, padding: sq(3.0), ink: p.ink, min_size: float2 { ib, ib } }, p.hover, p.pressed);
+    icon_b.checked.bg = gfx2d::with_alpha(p.accent, 0.3);
+    icon_b.checked.ink = p.ink;
+    classes[ICON_BUTTON.index] = icon_b;
+    classes[TOOLBAR.index] = style_set(Style { bg: p.surface, padding: sp4(4.0, 3.0), gap: 2.0 * sp });
+    classes[STATUS_BAR.index] = style_set(Style { bg: p.raised, padding: sp4(8.0, 3.0), gap: 14.0 * sp, ink: p.muted,
+                                                  text_size: p.text_size * 0.875 });
+    var link = style_set(Style { ink: p.accent, radius: radii(2.0) }, move);
+    link.hover.ink = p.accent_hover;
+    link.active.ink = p.accent_hover;
+    link.focused = focus_ring(link.normal);
+    classes[LINK.index] = link;
+    var link_line = style_set(Style { min_size: float2 { 0.0, 1.0 } }, move);
+    link_line.hover.bg = p.accent_hover;
+    link_line.active.bg = p.accent_hover;
+    link_line.focused.bg = p.accent;
+    classes[LINK_LINE.index] = link_line;
+    let dot = max(p.text_size * 0.32, 4.0);
+    classes[BULLET.index] = style_set(Style { bg: p.muted, radius: radii(dot * 0.5), min_size: float2 { dot, dot } });
+    classes[SPINNER.index] = style_set(Style { bg: gfx2d::with_alpha(p.line, 0.8), ink: p.accent,
+                                               min_size: float2 { p.text_size * 1.1, p.text_size * 1.1 } });
+    var knob = style_set(Style { radius: radii(p.control * 1.2), min_size: float2 { p.control * 2.2, p.control * 2.2 } }, move);
+    knob.focused = focus_ring(knob.normal);
+    classes[KNOB.index] = knob;
     classes
 }
 

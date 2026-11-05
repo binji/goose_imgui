@@ -1,0 +1,17 @@
+toolbar: play;pause;reset; paused true
+pause again: paused false
+link clicked and accepted: docs;docs;
+knob up 50: 0.75
+knob left 100: 0.25
+knob up and right: 0.35
+standing: 20.0 by 95.0, taller than wide true; its label inside it true
+clicked near its top: 10.0
+down: 9.0
+lower thumb to 40: 40.0 60.0
+not past the upper: 60.0 60.0
+the upper taken, to 80: 60.0 80.0
+right moves it: 60.0 81.0
+accept, then left moves the lower: 59.0 81.0
+angle shown: true
+a degree right: 91.0 degrees, true
+label and value: true true; bullet true; spinner true
