@@ -82,6 +82,8 @@ struct WidgetState {
     born: i64 = -1,                 // the frame it first was
     stamp: i64 = -1,                // the frame its amounts last moved in
     laid: bool = false,             // laid out at least once
+    heard_hover: bool = false,      // hovered, and showing focus, last frame: for its events
+    heard_focus: bool = false,
 }
 
 var states = dictionary<u64, WidgetState> {};

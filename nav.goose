@@ -133,7 +133,7 @@ fn begin_nav() {
         }
     }
     if nav.cancel {
-        if top > 0 { close_top_popup(); } else { cancel_pressed = true; }
+        if top > 0 { close_top_popup(); } else { cancel_pressed = true; ui_event(UI_BACK, 0, NONE); }
     }
     if cur < 0 {
         if moving || nav.accept {

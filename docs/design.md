@@ -334,6 +334,27 @@ lets it through a subtree. The widgets in that subtree still take it.
   panes to keep it in view. A closing popup gives focus back to the widget
   that opened it.
 
+## UI events
+
+- Sounds are the program's: imgui keeps a list of events a frame, and
+  plays nothing. A list read after the frame, not a callback, since a
+  Goose function value can't be stored, and the program's audio is its
+  own business anyway.
+- Hovers, focus, presses and activations come from `interact`, so every
+  widget, the program's own too, has them, and each carries its class:
+  a program picks a sound for buttons and another for tabs without
+  naming IDs.
+- Each widget keeps whether it was hovered, and showing focus, the frame
+  before, so the events fire as they begin. A hover counts only when the
+  pointer moved: a menu that opens, or a page that changes, under a still
+  pointer would otherwise tick for whatever lands under it. Focus counts
+  only as navigation shows it, so a click doesn't sound twice.
+- A dragged slider changes every frame. It ticks instead, a ratchet:
+  once a step, or once a twentieth of its range without one.
+- Events raised between frames (a popup opened by the program's own
+  logic) go in the next frame's list: the list in progress is published
+  when a frame ends.
+
 ## What building it taught
 
 - **The root is a stack.** Top-level boxes are each placed by
@@ -477,6 +498,7 @@ spills past the box.
 | `notice.goose` | notices: queues of what the program posted once |
 | `rich.goose` | rich text: markup read into pieces, broken into lines |
 | `textfx.goose` | text effects: each character's change, and the built-in effects |
+| `events.goose` | UI events: each frame's list, for sounds |
 | `style.goose` | `Style`, `StyleSet`, the class registry, themes |
 | `draw.goose` | the draw walk |
 | `widgets.goose` | buttons, toggles, sliders and the rest |

@@ -1,8 +1,8 @@
 // What the examples share: the command line (--frames N runs N frames and
 // quits, --screenshot FILE saves the last one, --theme light|dark|game
 // picks a theme, --scale 2 draws the UI twice as big (or set IMGUI_SCALE),
-// --keys A,B presses keys during the run) and the loop
-// around a frame.
+// --keys A,B presses keys during the run, --log-ui prints the UI's events,
+// for sounds) and the loop around a frame.
 import std;
 import os;
 import gfx;
@@ -11,6 +11,7 @@ var frames_wanted = -1;
 var screenshot_path: u8[>..] = [];
 var theme_name: u8[>..] = [];
 var keys: u8[>..] = [];         // --keys Down,Return: pressed one by one from frame 40, 12 apart
+var log_ui = false;
 
 var parsed = false;
 
@@ -30,6 +31,8 @@ fn parse_args() {
         } else if argv[i] == "--keys" && i + 1 < argv.len {
             keys.append(argv[i + 1]);
             i++;
+        } else if argv[i] == "--log-ui" {
+            log_ui = true;
         } else if argv[i] == "--scale" && i + 1 < argv.len {
             let s, ok = parse_flt(argv[i + 1]);
             if ok { imgui::set_scale(s); }
@@ -63,10 +66,19 @@ fn run<F>(title: const u8[:], w: i64, h: i64, escape_quits: bool = true) {
         if escape_quits && gfx::key_pressed("Escape") { break; }
         inject_keys(drawn);
         F();
+        if log_ui { print_ui_events(drawn); }
         drawn++;
     }
     if screenshot_path.len > 0 { gfx::screenshot(screenshot_path); }
     gfx::close();
+}
+
+// The frame's UI events, as a game would play sounds for them: the kind,
+// the ID and the class's number.
+fn print_ui_events(frame: i64) {
+    for e in imgui::ui_events() {
+        print("frame ", frame, ": ", imgui::ui_event_name(e.kind), " ", e.id, " class ", e.class.index);
+    }
 }
 
 // The --keys pressed, the k-th at frame 40 + 12k, released the frame after.

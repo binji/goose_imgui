@@ -50,6 +50,7 @@ import exit;
 import notice;
 import rich;
 import textfx;
+import events;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -88,6 +89,7 @@ fn end_frame() {
     end_nav();
     place_focus_cursor();
     end_drag();
+    publish_ui_events();
     if frame_index % 30 == 0 {
         sweep_states();
         sweep_anims();

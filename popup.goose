@@ -91,6 +91,7 @@ fn open_popup_at(i: Id, kind: i64, a: Anchor) {
     if popups.len >= MAX_POPUPS { misuse("open_popup: too many open"); return; }
     remove_closing(i.v);
     popups.push(OpenPopup { id: i.v, opener: focused, kind: kind as u8, anchor: a, seen: frame_index });
+    ui_event(UI_OPEN, i.v, popup_class(kind));
 }
 
 // A popup at the pointer.
@@ -123,6 +124,7 @@ fn close_popups_above(level: i32) {
     let opener = popups[level].opener;
     while popups.len > level {
         let p = popups.pop();
+        ui_event(UI_CLOSE, p.id, popup_class(p.kind));
         remove_closing(p.id);
         if closing.len < closing.cap { closing.push(p); }
     }

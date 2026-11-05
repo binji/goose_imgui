@@ -104,6 +104,7 @@ var clicked_id: u64 = 0;
 var double_id: u64 = 0;
 var wheel_id: u64 = 0;          // the scroll pane the wheel goes to
 var accept_id: u64 = 0;         // the widget navigation accepted
+var denied_id: u64 = 0;         // the disabled widget the pointer went down on
 var keyboard_used = false;
 var pointer_moved = false;      // the pointer is somewhere else than last frame
 var last_pointer = float2 { -1.0e9, -1.0e9 };
@@ -137,6 +138,7 @@ fn begin_input(inp: Input) {
     hot = 0;
     hot_level = 0;
     over_ui = false;
+    denied_id = 0;
     var k = hits.len - 1;
     while k >= 0 {
         let h = hits[k];
@@ -144,6 +146,7 @@ fn begin_input(inp: Input) {
             over_ui = true;
             hot_level = h.level;
             if h.bits & HIT != 0 && h.bits & DISABLED == 0 { hot = h.id; }
+            if h.bits & HIT != 0 && h.bits & DISABLED != 0 && input.pointer.pressed { denied_id = h.id; }
             break;
         }
         k--;
@@ -243,6 +246,17 @@ fn interaction_for(nid: u64, d: Desc) -> Interaction {
         st.checked = st.checked_p;
     }
     if st.stamp != frame_index {
+        // Its events, once a frame: a hover or a shown focus only as it
+        // begins, a hover only by the pointer moving onto it.
+        let c = d.vis.class;
+        let shown_focus = it.focused && focus_visible;
+        if it.hovered && !st.heard_hover && pointer_moved { ui_event(UI_HOVER, nid, c); }
+        if shown_focus && !st.heard_focus { ui_event(UI_FOCUS, nid, c); }
+        if it.pressed { ui_event(UI_PRESS, nid, c); }
+        if it.activated { ui_event(UI_ACTIVATE, nid, c); }
+        if !enabled && denied_id == nid { ui_event(UI_DENIED, nid, c); }
+        st.heard_hover = it.hovered;
+        st.heard_focus = shown_focus;
         st.hover = ease_toward(st.hover_p, it.hovered || it.held, m, delta);
         st.press = ease_toward(st.press_p, it.held && hot == nid, m, delta);
         st.focus = ease_toward(st.focus_p, it.focused && focus_visible, m, delta);

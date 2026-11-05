@@ -70,7 +70,8 @@ The examples each show one part:
   shake, shiver (an effect of the program's own) and cycle their hue.
 
 Each takes `-- --frames N --screenshot file.png --theme light|dark|game
---scale 2 --keys Down,Return`. With `--frames`, every frame is 1/60 s.
+--scale 2 --keys Down,Return --log-ui`. With `--frames`, every frame is
+1/60 s; `--log-ui` prints the UI's events each frame.
 
 ## The frame
 
@@ -364,6 +365,39 @@ widget: the pointer on any of them hovers, presses and drags the widget.
   `nav` (captured presses);
 - the eased amounts `hover_t`, `press_t`, `focus_t` and `checked_t`.
 
+## UI events, for sounds
+
+Each frame keeps a list of what happened in the interface, for the
+program to play sounds by: imgui plays nothing itself. Read it after the
+frame:
+
+```goose
+imgui::frame() { ui(); };
+for e in imgui::ui_events() {
+    if e.kind == imgui::UI_HOVER || e.kind == imgui::UI_FOCUS { play(tick); }
+    else if e.kind == imgui::UI_ACTIVATE { play(if e.class == imgui::TAB { swish } else { click }); }
+    else if e.kind == imgui::UI_CHANGE { play(ratchet); }
+    else if e.kind == imgui::UI_DENIED { play(buzz); }
+}
+```
+
+| | |
+|---|---|
+| `ui_events() -> const UiEvent[:]` | the last frame's events, in order: `{ kind, id, class }`, the widget's (or popup's) ID and its style class |
+| `UI_HOVER` | the pointer moved onto an enabled widget; not when a widget comes under a pointer that is still |
+| `UI_FOCUS` | navigation showed the focus on a widget; a click focuses quietly |
+| `UI_PRESS`, `UI_ACTIVATE` | the pointer went down on it; it was clicked, or accepted while focused |
+| `UI_CHANGE` | a value moved without an activation: a slider's ticks (each step, or each twentieth of its range without one), whether dragged or moved by left and right; tabs switched by the shoulder buttons |
+| `UI_OPEN`, `UI_CLOSE` | a popup, menu, dropdown or modal opened, or closed (by cancel, a press outside, the program, or no longer being recorded); its class `POPUP`, `MENU` or `MODAL` |
+| `UI_DENIED` | the pointer went down on a disabled widget |
+| `UI_BACK` | cancel with no popup open to close: the program's "back" (`cancelled()` is true too) |
+| `ui_event(kind, i, class)` | an event of the program's own widget, or of its own kind (from 64, say) |
+| `ui_event_name(kind)` | "hover", "focus" …, for logging |
+
+Hovers, focus, presses, activations and denials come from `interact`, so
+widgets made with it have them without asking. An event raised between
+frames goes in the next frame's list.
+
 ## Navigation
 
 - **Focus.** `focus(id)`, `blur()`, `is_focused(id)`, `focused_id()`.
@@ -456,7 +490,10 @@ The tests are in three groups:
     program's own type, clearing, text reused, long text kept whole;
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
   - `text_input`: typing, caret and selection, words, cut and paste,
-    limits, the caret held solid while typing and then blinking.
+    limits, the caret held solid while typing and then blinking;
+  - `events`: UI events for sounds: a hover once and only by moving, a
+    press, an activation, a denial, focus shown by navigation, slider
+    ticks with and without steps, tabs, popups opening and closing, back.
 - **`test/headless/`** draws and reads back: fills, borders, corners,
   gradients, opacity, isolation, clipping, motion, nine-slices, the focus
   ring, the UI scale, exits drawn after their node has gone, rich text's

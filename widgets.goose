@@ -157,6 +157,11 @@ fn slider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64, d: Desc) -> 
     if step > 0.0 { value = lo + round((value - lo) / step) * step; }
     value = clamp(value, min(lo, hi), max(lo, hi));
     let changed = value != start;
+    // A tick a step, or a twentieth of the way along without one.
+    let tick = if step > 0.0 { step } else { span / 20.0 };
+    if changed && tick_of(value, lo, tick) != tick_of(clamp(start, min(lo, hi), max(lo, hi)), lo, tick) {
+        ui_event(UI_CHANGE, track_id.v, SLIDER_THUMB);
+    }
     v = value;
     let f = ((value - lo) / span) as f32;
     let shown_label = label_text(label);
@@ -334,8 +339,10 @@ fn tabs<F>(label: const u8[:], selected: i64&, d: Desc = column(), shoulders: bo
     }
     let count = st.index as i64;
     if shoulders && count > 0 {
+        let was = sel;
         if input.nav.tab_left { sel = (sel + count - 1) % count; }
         if input.nav.tab_right { sel = (sel + 1) % count; }
+        if sel != was { ui_event(UI_CHANGE, i.v, TAB); }
     }
     let at = nodes.len as i32;
     box(i, d.gap(0)) {

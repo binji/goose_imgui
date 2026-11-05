@@ -47,11 +47,9 @@ item here, by its title, at each workaround.
     and grid tracks of `minmax`.
 10. **Momentum scrolling** and drag-to-scroll for touch, and scroll snapping
     (a carousel of cards).
-11. **Sounds on interaction:** a hook, polled once a frame, for "a button
-    was hovered or clicked", for a game's UI sounds.
-12. **Accessibility:** the tree is all there, so an outline of it could be
+11. **Accessibility:** the tree is all there, so an outline of it could be
     given to a screen reader.
-13. **Several contexts:** the state is global, as gfx2d's is. Gathering it
+12. **Several contexts:** the state is global, as gfx2d's is. Gathering it
     into a `root struct` would allow, say, a UI in the world and a UI on
     the screen.
 

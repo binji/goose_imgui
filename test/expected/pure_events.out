@@ -1,0 +1,26 @@
+nothing happening: none
+onto Options: hover Options BUTTON
+still on it: none
+moved on it: none
+press: press Options BUTTON
+release: activate Options BUTTON, open options POPUP
+next frame: none
+press outside: close options POPUP
+onto Swap A: hover Swap A BUTTON
+Swap B under the still pointer: none
+onto Locked: none
+press on Locked: denied Locked BUTTON
+Sound clicked: activate Sound CHOICE
+down: focus Volume SLIDER_THUMB
+then nothing: none
+right on Volume: change Volume SLIDER_THUMB
+Volume dragged 90 px (232.0 wide): 8 ticks, now 0.93
+right on Steps: change Steps SLIDER_THUMB
+right on Steps again: change Steps SLIDER_THUMB
+shoulder right: change tabs TAB
+shoulder right, back to One: change tabs TAB
+opened by the program: open options POPUP
+cancel: close options POPUP
+cancel again: back - NONE
+the program's own: own Sound CHOICE
+and nothing: none
