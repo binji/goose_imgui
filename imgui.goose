@@ -63,6 +63,7 @@ import split;
 import dock;
 import save;
 import small;
+import metrics;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -85,6 +86,7 @@ fn begin_frame(inp: Input, dt: f64) {
     in_frame = true;
     begin_canvases();
     begin_tree();
+    times_mark = clock_ns();
 }
 // With gfx's input and frame time.
 fn begin_frame() { begin_frame(input_from_gfx(), gfx::delta_time()); }
@@ -93,9 +95,13 @@ fn begin_frame() { begin_frame(input_from_gfx(), gfx::delta_time()); }
 // tested against.
 fn end_frame() {
     if !in_frame { misuse("end_frame: not in a frame"); return; }
+    frame_times.record = ms_since(times_mark);
+    times_mark = clock_ns();
     end_tree();
     in_frame = false;
     layout_all();
+    frame_times.layout = ms_since(times_mark);
+    times_mark = clock_ns();
     finish_frame();
     play_exits();
     order_roots();      // again: with the copies of windows hiding
@@ -108,6 +114,8 @@ fn end_frame() {
         sweep_states();
         sweep_anims();
     }
+    frame_times.after = ms_since(times_mark);
+    note_frame();
     check();
 }
 

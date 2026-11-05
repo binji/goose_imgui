@@ -7,6 +7,7 @@
 namespace imgui;
 
 import std;
+import os;
 import vec;
 import math;
 import gfx;
@@ -18,6 +19,7 @@ fn draw() {
         misuse("draw: not inside a gfx2d frame");
         return;
     }
+    let started = clock_ns();
     // Pixel art: nothing antialiased, images nearest.
     let aliased = gfx2d::state.aliased;
     if pixel_art { gfx2d::set_antialias(false); }
@@ -28,6 +30,7 @@ fn draw() {
         draw_roots();
     }
     gfx2d::set_antialias(!aliased);
+    frame_times.draw = ms_since(started);
 }
 // Each root, then the focus cursor over them all.
 fn draw_roots() {

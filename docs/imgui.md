@@ -783,6 +783,31 @@ frames goes in the next frame's list.
   nine-slice, as `examples/main_menu.goose` has. It fades in and out as
   focus shows and hides. `set_focus_cursor(NONE, INSTANT)` turns it off.
 
+## Metrics
+
+```goose
+imgui::menu_check("Metrics", show_metrics);
+imgui::metrics_window(show_metrics);
+```
+
+`metrics_window(open&)` is a window of what the last frame took: its
+time in imgui (recording, layout, what follows layout, drawing), and how
+many nodes, roots, hits, focusables, states, animations, windows and
+canvas ops there were. Under them is the last frame's tree of nodes, a
+row each (its kind, its text or its ID if it was named, its size): a row
+hovered outlines its node on the screen, and one clicked shows its kind,
+ID, class, rect, what it takes (hits, focus, scrolling) and its number of
+children. The search button picks a node: the one under the pointer is
+outlined, and a click selects it, opening the tree down to it. The nodes
+are kept only while the window is shown; the times and counts always.
+
+| | |
+|---|---|
+| `metrics_window(open&)` | the window, closed by its close button |
+| `frame_times` | `FrameTimes { record, layout, after, draw }`, the last frame's, in milliseconds |
+| `frame_counts` | `FrameCounts { nodes, roots, hits, focusables, states, animations, windows, canvas_ops }` |
+| `class_name(index) -> u8[>..]` | a built-in class's name ("BUTTON"); "class N" for one a program added |
+
 ## How it works
 
 Each frame records a flat array of nodes in pre-order, linked by index to
@@ -863,6 +888,10 @@ The tests are in three groups:
     dragged, moving the pane before and, if it has a fraction, the one
     after; a pane no less than its least; a split in a pane; the split
     resized, its panes keeping their fractions;
+  - `metrics`: the counts and times; the nodes kept only while the
+    window is shown; the tree opened by a row's arrow; a node picked,
+    selected, its parents opened, outlined; the class names in step with
+    the classes (the last name is CLASS_COUNT's);
   - `small`: an icon button, a toggle and a small button clicked; a
     link clicked and accepted; a knob dragged and stepped; a standing
     slider clicked and stepped, its label inside it; a range's nearer

@@ -29,6 +29,7 @@ var show_scene = true;
 var show_inspector = true;
 var show_entities = true;
 var show_console = true;
+var show_metrics = false;
 var log = imgui::Log { .. };
 var cmd: u8[>..] = [];
 var picked: bool[7] = [false; 7];
@@ -161,6 +162,8 @@ fn ui() {
                 imgui::menu_check("Inspector", show_inspector);
                 imgui::menu_check("Entities", show_entities);
                 imgui::menu_check("Console", show_console);
+                imgui::separator();
+                imgui::menu_check("Metrics", show_metrics);
             };
             // The layout, in a file beside where it runs.
             imgui::menu("Layout") {
@@ -235,6 +238,7 @@ fn ui() {
     };
     entities();
     // Its log scrolls itself, so the window's body doesn't: the log fills it.
+    imgui::metrics_window(show_metrics);
     imgui::window("Console", show_console, imgui::column().size(340, 220).absolute(610, 360), imgui::WINDOW_NO_SCROLL) {
         if imgui::console("console", log, cmd, imgui::column().grow()) { run_command(); }
     };

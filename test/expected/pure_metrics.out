@@ -1,0 +1,11 @@
+counts: nodes true, roots 1, hits true, focusables 1
+times: none less than 0 true
+nodes kept while hidden: 0
+shown: nodes kept true, rows 2 (the roots, closed)
+first root opened: rows 3, open true
+picking: outlined true
+picked: text "Press me", its parent the button true; picking off true
+its row shown (its parents opened) true; outlined while selected true
+the button's class: BUTTON
+class names: NONE, BUTTON, the last true, past them class 89
+closed: outlined false

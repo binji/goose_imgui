@@ -640,6 +640,15 @@ spills past the box.
   parent, windows docked in leaves) before anything is replaced. Loaded
   windows are marked as never called, so the first call doesn't raise
   them as it does a window new to the program.
+- **The metrics window** shows the last frame, not this one, which is
+  still being recorded when it is. At the end of each frame its times and
+  counts are noted (a few clock reads), and, only while the window is
+  shown, its nodes are copied: their kind, ID, class, bits, screen rect
+  and a little of their text. The outline of the node hovered or picked
+  is a root over everything that lets the pointer through, so it doesn't
+  take the hovers it shows. The built-in classes' names are a string in
+  their order; a test checks that the last is CLASS_COUNT's, so that a
+  class added without its name shows.
 - **Plots** are canvases: a plot is the values drawn, and the readout
   under the pointer is drawn too, not a tooltip, so it follows the
   pointer at once. `f32` values are copied into a scratch `f64` array, so
@@ -777,6 +786,7 @@ spills past the box.
 | `split.goose` | splitters: panes and the handles between them |
 | `dock.goose` | dock spaces: a tree of splits whose leaves hold windows as tabs |
 | `save.goose` | layouts saved and loaded, as JSON |
+| `metrics.goose` | the metrics window: the last frame's times, counts and tree of nodes |
 | `small.goose` | small pieces: small and icon buttons, toolbars, status bars, links, bullets, a spinner, sliders standing up, in degrees and with two ends, a knob |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |

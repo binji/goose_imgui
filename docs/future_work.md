@@ -24,7 +24,8 @@ item here, by its title, at each workaround.
     splitters, docking, layouts saved and loaded, and small pieces (small
     and icon buttons, toolbars, status bars, links, bullets, a label and
     its value, a spinner, sliders standing up, in degrees and with two
-    ends, a knob).
+    ends, a knob), and a metrics window (the last frame's times, counts
+    and nodes, a node picked by the pointer).
     Left of them:
     - a window raised when navigation moves the focus into it;
     - a context menu opened from the keyboard or a pad (Shift+F10, the
@@ -51,8 +52,7 @@ item here, by its title, at each workaround.
     1. Multi-line text editing (under Text, below).
     2. An image viewer: a texture panned and zoomed, with a pixel grid and
        the value under the pointer.
-    3. imgui's own tools: a window of its nodes, the one under the pointer
-       outlined, with counts and timings; a style editor.
+    3. A style editor: a theme's classes changed live, and written out.
     4. A memory viewer in hex, and a profiler's timeline (an example on a
        canvas more than a widget).
 
