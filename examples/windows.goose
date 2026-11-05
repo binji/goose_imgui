@@ -232,6 +232,7 @@ fn main() {
     imgui::set_window_show(imgui::tween(0.15, imgui::EASE_OUT_CUBIC), 0.95);
     imgui::set_tree_roll(imgui::tween(0.15, imgui::EASE_OUT_CUBIC));
     imgui::set_tab_slide(imgui::tween(0.15, imgui::EASE_OUT_CUBIC));
+    imgui::set_dock_preview(true, imgui::tween(0.12, imgui::EASE_OUT_CUBIC));
     run("imgui: windows", 960, 600) {
         let dt = frame_dt();
         if !paused { t += dt * speed; }

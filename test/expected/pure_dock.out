@@ -60,3 +60,6 @@ C undocked:
 Q on B's tab bar: previewed true, before tab 0
 Q let go there: tabs Q B ; shown Q true
 E past the last tab: tabs Q B E 
+E on B's left target: where it would go true, outlined false
+off it: 160.0 by 400.0, as before true
+let go off it: docked false

@@ -592,6 +592,14 @@ spills past the box.
   them change back. Sliding is the tab's place along the bar, animated
   and drawn as an offset, rather than `.glide`, which would have the tabs
   trail the bar when a handle moves it.
+- **The window as its own preview** (`set_dock_preview(true)`): only
+  the dragged window moves, drawn at the target's rect; its kept place and
+  size don't change. Laying the whole dock out as if it were docked would
+  move the targets, which are placed from the leaves' rects, out from
+  under the pointer, and it would flicker between docked and not. How far
+  it is toward the target and the target's rect are animated apart, so
+  that dragging freely follows the pointer exactly, and moving from one
+  target to another moves between their rects.
 - A tab bar is a drop target with no square of its own: the squares are
   tested first, and the bar under the pointer after. The space's top edge
   square sits below the tab bars, so it doesn't cover the middle of the

@@ -289,4 +289,28 @@ fn main() {
     release();
     step();
     print("E past the last tab: tabs ", tabs_of("B"));
+    // The preview the window itself: E, floating, on B's left target, is
+    // drawn there, as big, with no outline; off it, back under the pointer
+    // at its own size.
+    imgui::set_dock_preview(true);
+    imgui::undock_window("E");
+    step();
+    step();
+    let er3 = rect("E");
+    press(float2 { er3.x + 40.0, er3.y + 8.0 });
+    move_to(mid(rect("B")));
+    move_to(aim(leaf_of("B"), imgui::DOCK_LEFT));
+    var want = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 };
+    for a in imgui::dock_aims { if a.target.node == leaf_of("B") && a.target.side == imgui::DOCK_LEFT { want = a.target.rect; } }
+    step_down();
+    let on = rect("E");
+    print("E on B's left target: where it would go ", round(on.x) == round(want.x) && round(on.y) == round(want.y) &&
+          round(on.w) == round(want.w) && round(on.h) == round(want.h), ", outlined ", previewed());
+    move_to(float2 { 700.0, 560.0 });
+    step_down();
+    let off = rect("E");
+    print("off it: ", round(off.w), " by ", round(off.h), ", as before ", round(off.w) == round(er3.w) && round(off.h) == round(er3.h));
+    release();
+    print("let go off it: docked ", imgui::is_docked("E"));
+    imgui::set_dock_preview(false);
 }

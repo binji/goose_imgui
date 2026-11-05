@@ -215,6 +215,10 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
 
     // The title bar: dragged, it moves the window; double-clicked, or its
     // arrow clicked, it collapses or opens it.
+    // On a dock target, the area it would take (drawn there, if the dock
+    // preview is the window).
+    var aimed = false;
+    var aim = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 };
     if has_title {
         let tb = interaction_for(title_id.v, bar_d);
         if tb.pressed { w.grab = w.pos; }
@@ -222,7 +226,10 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         // Dragged over a dock space: where it would go shown; let go
         // there, docked.
         // (A floating dock isn't docked itself: its windows are, one by one.)
-        if tb.held && tb.dragging && !w.host { dock_preview(input.pointer.pos, wid.v); }
+        if tb.held && tb.dragging && !w.host {
+            let t = dock_preview(input.pointer.pos, wid.v);
+            if t.node >= 0 || t.window != 0 { aimed = true; aim = t.rect; }
+        }
         // Only after a drag: a click on a title over another window's
         // target doesn't dock it.
         if tb.released && last_st.laid && !w.host && w.pos != w.grab {
@@ -316,7 +323,28 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         fd.dim.h.lo = d.dim.h.lo;
         fd.dim.h.hi = d.dim.h.hi;
     }
-    let root = open_root(ROOT_WINDOW, wid.v, Anchor { kind: ANCHOR_POINT, at: w.pos, .. }, fd);
+    // Drawn where a dock target would put it, while on one: moving there
+    // and back by the preview's motion. (Its kept place and size stay.)
+    var at = w.pos;
+    if dock_preview_window && last_st.laid {
+        let k = animate(sub_id(wid, "dock aim"), if aimed { 1.0 } else { 0.0 }, dock_preview_motion) as f32;
+        let ak = sub_id(wid, "dock area").v;
+        let ta = float4 { aim.x, aim.y, aim.w, aim.h };
+        // Coming from no target, it starts at the one it is on.
+        if aimed { animate_lanes(ak, ta, if k > 0.0 { dock_preview_motion } else { INSTANT }, ta, true); }
+        if k > 0.0001 {
+            let found = anims.get(ak);
+            let a = if found { found.value } else { ta };
+            let size = if w.size.x > 0.0 && w.size.y > 0.0 { w.size } else { float2 { last.w, last.h } };
+            let from = float4 { w.pos.x, w.pos.y, size.x, size.y };
+            let r = from + (a - from) * k;
+            at = float2 { r.x, r.y };
+            fd = fd.size(r.z, r.w);
+            fd.dim.w.lo = 0.0;
+            fd.dim.h.lo = 0.0;
+        }
+    }
+    let root = open_root(ROOT_WINDOW, wid.v, Anchor { kind: ANCHOR_POINT, at: at, .. }, fd);
     id_stack.push(wid.v);
     nodes[root].scoped = true;
     if has_title {

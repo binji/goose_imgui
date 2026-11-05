@@ -123,18 +123,17 @@ fn bar_height(n: i32) -> f32 { if dock_nodes[n].hide_tabs { 0.0 } else { tab_hei
 // --- changing the tree --------------------------------------------------------------------
 
 // Window w added to leaf n's tabs, before the one at `at` (-1: after
-// them all), and shown.
+// them all), and shown. A leaf already full: it stays floating.
 fn dock_into_leaf(w: u64, n: i32, at: i64 = -1) {
-    if dock_nodes[n].tabs.len < DOCK_TABS {
-        dock_nodes[n].tabs.push(w);
-        if at >= 0 {
-            var k = dock_nodes[n].tabs.len - 1;
-            while k > at {
-                dock_nodes[n].tabs[k] = dock_nodes[n].tabs[k - 1];
-                k--;
-            }
-            dock_nodes[n].tabs[k] = w;
+    guard dock_nodes[n].tabs.len < DOCK_TABS else { misuse("dock: a leaf has at most 8 windows"); return; }
+    dock_nodes[n].tabs.push(w);
+    if at >= 0 {
+        var k = dock_nodes[n].tabs.len - 1;
+        while k > at {
+            dock_nodes[n].tabs[k] = dock_nodes[n].tabs[k - 1];
+            k--;
         }
+        dock_nodes[n].tabs[k] = w;
     }
     dock_nodes[n].selected = w;
     var ws = window_state(w);
@@ -303,8 +302,9 @@ fn add_aim(c: float2, t: DockTarget) {
 }
 
 // A cross of five on r, its middle at its center, each a target of `t`
-// (for its side and its part of r).
-fn add_cross(r: gfx2d::Rect, t: DockTarget, sides: bool) {
+// (for its side and its part of r): its sides only if `sides`, its middle
+// only if `middle`.
+fn add_cross(r: gfx2d::Rect, t: DockTarget, sides: bool, middle: bool = true) {
     let s = class_style(DOCK_TARGET).normal.min_size.x;
     let k = s * 1.2;
     let c = float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 };
@@ -315,7 +315,7 @@ fn add_cross(r: gfx2d::Rect, t: DockTarget, sides: bool) {
         u.rect = side_rect(r, side, u.ratio);
         add_aim(at, u);
     }
-    one(c, DOCK_CENTER);
+    if middle { one(c, DOCK_CENTER); }
     if sides {
         one(c - float2 { k, 0.0 }, DOCK_LEFT);
         one(c + float2 { k, 0.0 }, DOCK_RIGHT);
@@ -339,7 +339,9 @@ fn space_aims(sp: u64, p: float2) -> bool {
     for w in dock_nodes[n].tabs { if tab_live(w) { live++; } }
     let leaf = dock_rect(n);
     let bh = bar_height(n);
-    if live > 0 && bh > 0.0 && p.y < leaf.y + bh {
+    // A full leaf takes no more tabs.
+    let room = dock_nodes[n].tabs.len < DOCK_TABS;
+    if room && live > 0 && bh > 0.0 && p.y < leaf.y + bh {
         // On its tab bar: before the first tab whose middle is past p.
         var at: i64 = -1;
         var x = leaf.x + 4.0;
@@ -354,7 +356,7 @@ fn space_aims(sp: u64, p: float2) -> bool {
         }
         dock_bar = DockTarget { node: n, side: DOCK_CENTER, ratio: 1.0, rect: leaf, index: at, mark: x, .. };
     }
-    add_cross(dock_rect(n), DockTarget { node: n, .. }, live > 0);
+    add_cross(dock_rect(n), DockTarget { node: n, .. }, live > 0, room);
     if dock_nodes[root].axis >= 0 {
         let m = class_style(DOCK_TARGET).normal.min_size.x * 0.5 + 8.0;
         let sc = float2 { space.x + space.w * 0.5, space.y + space.h * 0.5 };
@@ -406,18 +408,29 @@ fn dock_target_at(p: float2, dragged: u64) -> DockTarget {
     dock_bar
 }
 
+// How the area a dragged window would take is shown: outlined, or (with
+// `window`) the window drawn there, moving there and back by `m`.
+var dock_preview_window = false;
+var dock_preview_motion = INSTANT;
+fn set_dock_preview(window: bool, m: Motion = INSTANT) {
+    dock_preview_window = window;
+    dock_preview_motion = m;
+}
+
 // The targets of a window dragged to p, over everything; and the area the
-// one under p would give it.
-fn dock_preview(p: float2, dragged: u64) {
+// one under p would give it, outlined unless the window is to be drawn
+// there. The target under p, if any.
+fn dock_preview(p: float2, dragged: u64) -> DockTarget {
     find_dock_aims(p, dragged);
-    guard dock_aims.len > 0;
+    guard dock_aims.len > 0 else { return DockTarget { .. }; }
     var hit = -1;
     for a, k in dock_aims { if inside(a.at, p) { hit = k; } }
     let bar = hit < 0 && dock_bar.node >= 0;
+    let outline = !dock_preview_window;
     open_root(ROOT_TOOLTIP, hash_combine(ROOT_ID, 0xD0C4), Anchor { kind: ANCHOR_POINT, at: float2 { viewport.x, viewport.y }, .. },
               column().size(viewport.w, viewport.h));
     roots[roots.len - 1].level = -1;
-    if hit >= 0 {
+    if hit >= 0 && outline {
         let r = dock_aims[hit].target.rect;
         panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h));
     }
@@ -425,7 +438,7 @@ fn dock_preview(p: float2, dragged: u64) {
         // The leaf it would join, and where its tab would go.
         let r = dock_bar.rect;
         let th = tab_height();
-        panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h));
+        if outline { panel(column().skin(DOCK_PREVIEW).absolute(r.x - viewport.x, r.y - viewport.y).size(r.w, r.h)); }
         panel(column().skin(DOCK_TARGET_MARK).absolute(dock_bar.mark - 1.0 - viewport.x, r.y + 2.0 - viewport.y)
                   .size(2.0, th - 4.0));
     }
@@ -440,6 +453,7 @@ fn dock_preview(p: float2, dragged: u64) {
         };
     }
     close_root();
+    if hit >= 0 { dock_aims[hit].target } else { dock_bar }
 }
 
 // --- recording ----------------------------------------------------------------------------

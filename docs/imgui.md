@@ -492,7 +492,12 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
   pointer is on it; let go there, the window docks. A leaf's tab bar is a
   target too: let go on it, the window goes in as a tab where it was let
   go, between the tabs either side (a line shows where). Let go anywhere
-  else, it floats on. An empty leaf has only the middle.
+  else, it floats on. An empty leaf has only the middle. A leaf holds at
+  most 8 windows; a full one has no middle, and its tab bar is no target.
+- **The preview:** `set_dock_preview(true[, m])` shows where a window
+  would go by drawing the window itself there, at that size, rather than
+  an outline; it moves there and back by `m`. Nothing else moves until it
+  is let go.
 - **Floating docks:** dragged over another floating window, a window
   shows a cross of targets on it too. Let go on one, the two go in a
   floating dock where the other was: a window of imgui's, titled by the
@@ -523,6 +528,7 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
 | `dock_window(title, space, side[, ratio])` | window `title` docked in `space` (both labels at the top level), on `DOCK_LEFT`, `DOCK_RIGHT`, `DOCK_TOP` or `DOCK_BOTTOM` of all that is there, taking `ratio` of it; `DOCK_CENTER`, a tab in its biggest leaf. Into an empty space, it fills it, whatever its side. For a layout to start with |
 | `dock_window_with(title, other, side[, ratio])` | docked by window `other`: a tab with it, or beside it in its leaf; if `other` floats, the two in a floating dock where it is (`set_window_rect` it first to say where) |
 | `undock_window(title)`, `is_docked(title)` | floating again (where its leaf was, as big, if it never floated) |
+| `set_dock_preview(window[, m])` | while a dragged window is on a target, the window itself drawn in the area it would take (`true`), or that area outlined (`false`, the default); with `m`, it moves between the pointer and the target |
 | `set_tab_slide(m)` | tabs slide to their places by `m` (a tween or a spring) as a dragged tab passes them, and the dragged one when it is let go; `INSTANT`, the default, jumps |
 
 ## Logs and consoles
