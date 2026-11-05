@@ -26,6 +26,8 @@ fn ui() {
     imgui::window("E") { imgui::text("ee"); };
     imgui::window("Fifth window") { imgui::text("ef"); };
     imgui::window("Sixth window") { imgui::text("gee"); };
+    imgui::window("P", imgui::column().size(170, 120).absolute(620, 20)) { imgui::text("pea"); };
+    imgui::window("Q", imgui::column().size(170, 120).absolute(620, 300)) { imgui::text("queue"); };
 }
 
 var at = float2 { -100.0, -100.0 };
@@ -190,6 +192,49 @@ fn main() {
     step();
     print("its corner button: A at ", round(rect("A").y), ", tab shown ",
           imgui::state_of(imgui::sub_id(imgui::id("A"), "tab").v).seen == imgui::frame_index);
+    // Q onto P's right target: the two in a floating dock where P was, side
+    // by side, the dock titled by P.
+    let pr = rect("P");
+    let qr = rect("Q");
+    press(float2 { qr.x + 40.0, qr.y + 8.0 });
+    move_to(mid(pr));
+    var right = float2 { -100.0, -100.0 };
+    for a in imgui::dock_aims { if a.target.window == imgui::id("P").v && a.target.side == imgui::DOCK_RIGHT { right = mid(a.at); } }
+    move_to(right);
+    print("Q on P's right target: previewed ", previewed());
+    release();
+    step();
+    let host = hash_combine(imgui::id("P").v, 0xD0C7);
+    let hr = imgui::state_of(host).rect;
+    print("a floating dock at ", round(hr.x), " ", round(hr.y), ", ", round(hr.w), " by ", round(hr.h), "; its title P ",
+          imgui::window_state(host).title[..] == "P");
+    show("P");
+    show("Q");
+    // It moves by its title, the two with it.
+    press(float2 { hr.x + hr.w * 0.5, hr.y + 8.0 });
+    move_to(float2 { hr.x + hr.w * 0.5 - 300.0, hr.y + 8.0 + 200.0 });
+    release();
+    step();
+    print("the dock moved:");
+    show("P");
+    show("Q");
+    // Its windows over it, over the program's dock space.
+    var order: u8[>..] = [];
+    for k in imgui::root_order {
+        let r = imgui::roots[k as i64];
+        if r.popup == host { order.append("dock "); }
+        if r.popup == imgui::id("P").v { order.append("P "); }
+        if r.popup == imgui::id("B").v { order.append("B "); }
+    }
+    print("  drawn: ", order);
+    // Q's tab dragged out: floating again; P still in the dock.
+    press(tab("Q"));
+    move_to(float2 { 700.0, 560.0 });
+    release();
+    step();
+    print("Q's tab dragged out:");
+    show("P");
+    show("Q");
     // C undocked: its leaf gone, B taking the room.
     imgui::undock_window("C");
     step();

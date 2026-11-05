@@ -36,6 +36,7 @@ struct WindowState {
     dock: i32 = -1,                             // the dock node it is in (dock.goose); -1: floating
     called: i64 = -1,                           // the frame window() was last called for it
     closable: bool = false,                     // it has a close button: so does its tab, docked
+    host: bool = false,                         // a floating dock: imgui's window holding a dock space
     title: u8[..48] = [],                       // its title, for its tab
 }
 
@@ -182,6 +183,12 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     w.title.clear();
     for c in label_text(title) { if w.title.len < w.title.cap { w.title.push(c); } }
     windows.insert(wid.v, w);
+    // Docked in a floating dock: that window recorded first (once a frame);
+    // the frame it first is, it isn't laid out yet, so this one waits.
+    if w.dock >= 0 && dock_host_of(w.dock) != 0 {
+        record_host(dock_host_of(w.dock));
+        if !dock_shown(w.dock) { return; }
+    }
     // Docked, in a dock space being shown: its body in its node, if its tab
     // is the one selected (dock.goose).
     if w.dock >= 0 && dock_shown(w.dock) {
@@ -214,9 +221,18 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         if tb.held && tb.dragging && flags & WINDOW_NO_MOVE == 0 { w.pos = w.grab + tb.drag; }
         // Dragged over a dock space: where it would go shown; let go
         // there, docked.
-        if tb.held && tb.dragging { dock_preview(input.pointer.pos); }
-        if tb.released && last_st.laid {
-            let t = dock_target_at(input.pointer.pos);
+        // (A floating dock isn't docked itself: its windows are, one by one.)
+        if tb.held && tb.dragging && !w.host { dock_preview(input.pointer.pos, wid.v); }
+        // Only after a drag: a click on a title over another window's
+        // target doesn't dock it.
+        if tb.released && last_st.laid && !w.host && w.pos != w.grab {
+            let t = dock_target_at(input.pointer.pos, wid.v);
+            if t.window != 0 {
+                // Onto a floating window: the two in a floating dock.
+                windows.insert(wid.v, w);
+                dock_into_window(wid.v, t.window, t.side, t.ratio);
+                return;
+            }
             if t.node >= 0 {
                 // Recorded docked this frame, not skipping one (which would
                 // play its hiding).
@@ -362,20 +378,31 @@ fn order_roots() {
     if roots.len == 0 { return; }
     root_order.push(0);
     front_window = 0;
-    // Docked windows first, in their dock spaces under every floating one;
-    // then the floating ones, back to front.
+    // Docked windows first, in the program's dock spaces under every
+    // floating one; then the floating ones, back to front, each floating
+    // dock with its docked windows just over it.
     for r, k in roots {
-        if r.kind == ROOT_WINDOW && window_state(r.popup).dock >= 0 && dock_shown(window_state(r.popup).dock) {
+        let ws = window_state(r.popup);
+        if r.kind == ROOT_WINDOW && ws.dock >= 0 && dock_shown(ws.dock) && dock_host_of(ws.dock) == 0 {
             root_order.push(k as i32);
         }
     }
     for wid in window_order {
-        if window_state(wid).dock >= 0 && dock_shown(window_state(wid).dock) { continue; }
+        let ws = window_state(wid);
+        if ws.dock >= 0 && dock_shown(ws.dock) { continue; }
         for r, k in roots {
             if r.kind == ROOT_WINDOW && r.popup == wid {
                 root_order.push(k as i32);
                 // Not a copy of one hiding, which takes no input.
                 if r.level >= 0 { front_window = wid; }
+            }
+        }
+        if ws.host {
+            for r, k in roots {
+                let ds = window_state(r.popup);
+                if r.kind == ROOT_WINDOW && ds.dock >= 0 && dock_shown(ds.dock) && dock_host_of(ds.dock) == wid {
+                    root_order.push(k as i32);
+                }
             }
         }
     }

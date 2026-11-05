@@ -38,6 +38,17 @@ its list: open 1
 D chosen from it: shown true, open 0
 A's tab bar hidden: A at 0.0, tab shown false
 its corner button: A at 32.0, tab shown true
+Q on P's right target: previewed true
+a floating dock at 600.0 20.0, 200.0 by 150.0; its title P true
+  P docked: 600.0 83.0 98.0 87.0
+  Q docked: 703.0 83.0 98.0 87.0
+the dock moved:
+  P docked: 300.0 283.0 98.0 87.0
+  Q docked: 403.0 283.0 98.0 87.0
+  drawn: B dock P 
+Q's tab dragged out:
+  P docked: 300.0 283.0 200.0 87.0
+  Q floating: 640.0 480.0 160.0 120.0
 C undocked:
   A docked: 80.0 32.0 75.0 368.0
   B docked: 160.0 32.0 286.0 368.0

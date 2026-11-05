@@ -584,6 +584,15 @@ spills past the box.
   `active` becomes the title's ID and the press is moved to where the
   pointer is, so the window, now floating, follows the same drag, and a
   release over a dock space docks it again.
+- **A floating dock** is a window of imgui's (its ID from the window it
+  was made on) whose body is a dock space of its own, with a different
+  ID, as a window root and the box in it can't share one. Nothing in the
+  program records it, so the first of its windows recorded each frame
+  records it first: `window_with` for the window calls `record_host`,
+  which calls `window_with` for the dock (so `record_host` is declared
+  recursive). The frame it is made, its space isn't laid out yet, so its
+  windows wait a frame rather than float. Roots are ordered with each
+  floating dock's windows just over it, among the floating windows.
 - A window docked by a drag is recorded docked the frame it is let go,
   not a frame later: a frame with nothing recorded would play its hiding.
 - **Plots** are canvases: a plot is the values drawn, and the readout

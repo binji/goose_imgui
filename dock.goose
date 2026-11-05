@@ -44,6 +44,17 @@ struct DockNode {
 var dock_nodes: DockNode[>..] = [];
 var dock_roots = dictionary<u64, i32> {};
 var dock_spaces: u64[>..<] = [];
+// Floating docks: each space's window, by the space's ID.
+var space_host = dictionary<u64, u64> {};
+
+// The floating dock node n is in (its window's ID), or 0.
+fn dock_host_of(n: i32) -> u64 {
+    guard n >= 0 && n < dock_nodes.len else { return 0; }
+    let h = space_host.get(dock_nodes[n].space);
+    if h { return h; }
+    0
+}
+fn host_space(h: u64) -> u64 { hash_combine(h, 0x5ACE) }
 
 fn new_dock_node(space: u64) -> i32 {
     for n, k in dock_nodes {
@@ -223,11 +234,17 @@ fn dock_window(title: const u8[:], space: const u8[:], side: i64, ratio: f64 = 0
     dock_into(w, dock_root(id(space).v), side, ratio);
 }
 // Window `title` docked by window `other`: a tab with it, or beside it.
+// If `other` floats, the two go in a floating dock where it is.
 fn dock_window_with(title: const u8[:], other: const u8[:], side: i64, ratio: f64 = 0.5) {
     let w = id(title).v;
     if !windows.contains(w) { window_order.push(w); windows.insert(w, WindowState { .. }); }
-    let n = window_state(id(other).v).dock;
-    guard n >= 0 else { misuse("dock_window_with: the other window isn't docked"); return; }
+    let o = id(other).v;
+    if !windows.contains(o) { window_order.push(o); windows.insert(o, WindowState { .. }); }
+    let n = window_state(o).dock;
+    if n < 0 {
+        dock_into_window(w, o, side, ratio);
+        return;
+    }
     dock_into(w, n, side, ratio);
 }
 fn undock_window(title: const u8[:]) { undock_id(id(title).v); }
@@ -236,6 +253,7 @@ fn is_docked(title: const u8[:]) -> bool { window_state(id(title).v).dock >= 0 }
 // --- where a dragged window would go ------------------------------------------------------
 
 struct DockTarget {
+    window: u64 = 0,            // a floating window it docks with, in a floating dock; or
     node: i32 = -1,             // where it docks: a leaf, or a space's root (by its outer edges)
     side: i64 = 0,
     ratio: f64 = 0.5,           // of the node it takes
@@ -262,61 +280,100 @@ fn side_rect(r: gfx2d::Rect, side: i64, ratio: f64) -> gfx2d::Rect {
     }
 }
 
-// The targets for a window dragged to p, in dock_aims: none if p isn't
-// over a dock space shown.
-fn find_dock_aims(p: float2) {
-    dock_aims.clear();
+fn add_aim(c: float2, t: DockTarget) {
     let s = class_style(DOCK_TARGET).normal.min_size.x;
-    let gap = s * 0.2;
-    fn aim(c: float2, node: i32, side: i64, ratio: f64, area: gfx2d::Rect) {
-        let t = DockTarget { node: node, side: side, ratio: ratio, rect: side_rect(area, side, ratio) };
-        dock_aims.push(DockAim { t, gfx2d::Rect { c.x - s * 0.5, c.y - s * 0.5, s, s } });
+    if dock_aims.len < dock_aims.cap { dock_aims.push(DockAim { t, gfx2d::Rect { c.x - s * 0.5, c.y - s * 0.5, s, s } }); }
+}
+
+// A cross of five on r, its middle at its center, each a target of `t`
+// (for its side and its part of r).
+fn add_cross(r: gfx2d::Rect, t: DockTarget, sides: bool) {
+    let s = class_style(DOCK_TARGET).normal.min_size.x;
+    let k = s * 1.2;
+    let c = float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 };
+    fn one(at: float2, side: i64) {
+        var u = t;
+        u.side = side;
+        u.ratio = if side == DOCK_CENTER { 1.0 } else { 0.5 };
+        u.rect = side_rect(r, side, u.ratio);
+        add_aim(at, u);
+    }
+    one(c, DOCK_CENTER);
+    if sides {
+        one(c - float2 { k, 0.0 }, DOCK_LEFT);
+        one(c + float2 { k, 0.0 }, DOCK_RIGHT);
+        one(c - float2 { 0.0, k }, DOCK_TOP);
+        one(c + float2 { 0.0, k }, DOCK_BOTTOM);
+    }
+}
+
+// Space sp's targets for a window dragged to p, if p is over it.
+fn space_aims(sp: u64, p: float2) -> bool {
+    let root = dock_root(sp);
+    guard dock_shown(root) else { return false; }
+    let space = dock_rect(root);
+    guard inside(space, p) else { return false; }
+    var n = root;
+    while dock_nodes[n].axis >= 0 {
+        let a = dock_nodes[n].a;
+        n = if inside(dock_rect(a), p) { a } else { dock_nodes[n].b };
+    }
+    var live = 0;
+    for w in dock_nodes[n].tabs { if tab_live(w) { live++; } }
+    add_cross(dock_rect(n), DockTarget { node: n, .. }, live > 0);
+    if dock_nodes[root].axis >= 0 {
+        let m = class_style(DOCK_TARGET).normal.min_size.x * 0.5 + 8.0;
+        let sc = float2 { space.x + space.w * 0.5, space.y + space.h * 0.5 };
+        fn edge(at: float2, side: i64) {
+            add_aim(at, DockTarget { node: root, side: side, ratio: 0.25, rect: side_rect(space, side, 0.25), .. });
+        }
+        edge(float2 { space.x + m, sc.y }, DOCK_LEFT);
+        edge(float2 { space.x + space.w - m, sc.y }, DOCK_RIGHT);
+        edge(float2 { sc.x, space.y + m }, DOCK_TOP);
+        edge(float2 { sc.x, space.y + space.h - m }, DOCK_BOTTOM);
+    }
+    true
+}
+
+// The targets for window `dragged`, dragged to p, in dock_aims: those of the
+// floating window in front under p (a floating dock's, its space's; any
+// other's, a cross on it, docking the two together), else of the dock
+// space under p; none if there is neither.
+fn find_dock_aims(p: float2, dragged: u64) {
+    dock_aims.clear();
+    var k = window_order.len - 1;
+    while k >= 0 {
+        let w = window_order[k];
+        k--;
+        if w == dragged { continue; }
+        let ws = window_state(w);
+        if ws.dock >= 0 && dock_shown(ws.dock) { continue; }
+        let st = state_of(w);
+        if st.seen < frame_index - 1 || !inside(st.screen, p) { continue; }
+        if ws.host {
+            space_aims(host_space(w), p);
+            return;
+        }
+        add_cross(st.screen, DockTarget { window: w, .. }, true);
+        return;
     }
     for sp in dock_spaces {
-        let root = dock_root(sp);
-        guard dock_shown(root) else { continue; }
-        let space = dock_rect(root);
-        guard inside(space, p) else { continue; }
-        var n = root;
-        while dock_nodes[n].axis >= 0 {
-            let a = dock_nodes[n].a;
-            n = if inside(dock_rect(a), p) { a } else { dock_nodes[n].b };
-        }
-        let r = dock_rect(n);
-        var live = 0;
-        for w in dock_nodes[n].tabs { if tab_live(w) { live++; } }
-        let c = float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 };
-        aim(c, n, DOCK_CENTER, 1.0, r);
-        if live > 0 {
-            let k = s + gap;
-            aim(c - float2 { k, 0.0 }, n, DOCK_LEFT, 0.5, r);
-            aim(c + float2 { k, 0.0 }, n, DOCK_RIGHT, 0.5, r);
-            aim(c - float2 { 0.0, k }, n, DOCK_TOP, 0.5, r);
-            aim(c + float2 { 0.0, k }, n, DOCK_BOTTOM, 0.5, r);
-        }
-        if dock_nodes[root].axis >= 0 {
-            let m = s * 0.5 + 8.0;
-            let sc = float2 { space.x + space.w * 0.5, space.y + space.h * 0.5 };
-            aim(float2 { space.x + m, sc.y }, root, DOCK_LEFT, 0.25, space);
-            aim(float2 { space.x + space.w - m, sc.y }, root, DOCK_RIGHT, 0.25, space);
-            aim(float2 { sc.x, space.y + m }, root, DOCK_TOP, 0.25, space);
-            aim(float2 { sc.x, space.y + space.h - m }, root, DOCK_BOTTOM, 0.25, space);
-        }
-        return;
+        if space_host.contains(sp) { continue; }
+        if space_aims(sp, p) { return; }
     }
 }
 
 // The target under p, if any, of a window dragged there.
-fn dock_target_at(p: float2) -> DockTarget {
-    find_dock_aims(p);
+fn dock_target_at(p: float2, dragged: u64) -> DockTarget {
+    find_dock_aims(p, dragged);
     for a in dock_aims { if inside(a.at, p) { return a.target; } }
     DockTarget { .. }
 }
 
 // The targets of a window dragged to p, over everything; and the area the
 // one under p would give it.
-fn dock_preview(p: float2) {
-    find_dock_aims(p);
+fn dock_preview(p: float2, dragged: u64) {
+    find_dock_aims(p, dragged);
     guard dock_aims.len > 0;
     var hit = -1;
     for a, k in dock_aims { if inside(a.at, p) { hit = k; } }
@@ -344,8 +401,8 @@ fn dock_preview(p: float2) {
 
 // A dock space: its windows' tabs and bodies in its leaves, the handles
 // between them. As big as there is room unless `d` says.
-fn dock_space(label: const u8[:], d: Desc = column()) {
-    let i = id(label);
+fn dock_space(label: const u8[:], d: Desc = column()) { dock_space_of(id(label), d); }
+fn dock_space_of(i: Id, d: Desc) {
     let st = state_of(i.v);
     if !dock_roots.contains(i.v) { dock_root(i.v); }
     var dd = d.skin(DOCK_SPACE);
@@ -502,6 +559,50 @@ fn tab_list(space: Id, n: i32, r: gfx2d::Rect) {
                 close_popup(pid);
             }
         }
+    };
+}
+
+// --- floating docks ---------------------------------------------------------------------
+
+// Window w docked with floating window `other`: the two in a floating dock,
+// a window of imgui's where `other` was, holding a dock space; `other`
+// fills it, and w goes on `side` of it (or as a tab, DOCK_CENTER).
+fn dock_into_window(w: u64, other: u64, side: i64, ratio: f64) {
+    let h = hash_combine(other, 0xD0C7);
+    let os = window_state(other);
+    let ost = state_of(other);
+    var hs = window_state(h);
+    // Where `other` is: as laid out, or (not yet) as it was set.
+    let at = if ost.laid { float2 { ost.rect.x, ost.rect.y } } else { os.pos };
+    let size = if ost.laid { float2 { ost.rect.w, ost.rect.h } } else { os.size };
+    hs.pos = at;
+    hs.size = float2 { max(size.x, 200.0), max(size.y, 150.0) };
+    hs.collapsed = false;
+    hs.host = true;
+    hs.dock = -1;
+    windows.insert(h, hs);
+    raise_window_id(h);
+    let space = host_space(h);
+    space_host.insert(space, h);
+    let root = dock_root(space);
+    dock_into(other, root, DOCK_CENTER, 1.0);
+    dock_into(w, root, side, ratio);
+}
+
+// Floating dock h recorded, once a frame: a window whose title is its
+// first window's, and whose body is its dock space.
+recursive fn record_host(h: u64) {
+    var hs = window_state(h);
+    guard hs.called != frame_index;
+    // Its title: the window shown in its first leaf.
+    var n = dock_root(host_space(h));
+    while dock_nodes[n].axis >= 0 { n = dock_nodes[n].a; }
+    var title: u8[..48] = [];
+    let sel = dock_nodes[n].selected;
+    if sel != 0 { for c in window_state(sel).title { title.push(c); } }
+    var open = true;
+    window_with(Id { h }, title[..], open, false, column().padding(0), WINDOW_NO_SCROLL) {
+        dock_space_of(Id { host_space(h) }, column().grow());
     };
 }
 

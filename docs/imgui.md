@@ -491,6 +491,14 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
   space, on that side). The area a target would give is shown while the
   pointer is on it; let go there, the window docks. Let go anywhere else,
   it floats on. An empty leaf has only the middle.
+- **Floating docks:** dragged over another floating window, a window
+  shows a cross of targets on it too. Let go on one, the two go in a
+  floating dock where the other was: a window of imgui's, titled by the
+  window shown in its first leaf, holding a dock space of its own that
+  takes targets, tabs, splits and undocking as any does. It is moved,
+  resized and rolled up by its title, its windows with it; it isn't
+  docked itself (its windows are, one by one). It has no window of its
+  own to record: it shows while any of its windows is recorded.
 - **Undocking:** a tab dragged out of its tab bar floats its window, as
   big as its leaf was, still held by the pointer as if by its title. A
   leaf left with no windows goes, its sibling taking its place.
@@ -509,7 +517,7 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
 |---|---|
 | `dock_space(label[, d])` | a dock space, as big as there is room unless `d` says |
 | `dock_window(title, space, side[, ratio])` | window `title` docked in `space` (both labels at the top level), on `DOCK_LEFT`, `DOCK_RIGHT`, `DOCK_TOP` or `DOCK_BOTTOM` of all that is there, taking `ratio` of it; `DOCK_CENTER`, a tab in its biggest leaf. Into an empty space, it fills it, whatever its side. For a layout to start with |
-| `dock_window_with(title, other, side[, ratio])` | docked by window `other` (docked already): a tab with it, or beside it in its leaf |
+| `dock_window_with(title, other, side[, ratio])` | docked by window `other`: a tab with it, or beside it in its leaf; if `other` floats, the two in a floating dock where it is (`set_window_rect` it first to say where) |
 | `undock_window(title)`, `is_docked(title)` | floating again (where its leaf was, as big, if it never floated) |
 
 ## Logs and consoles
@@ -788,7 +796,9 @@ The tests are in three groups:
     let go off them and on one (the area shown first), docked; a target by
     the space's outer edge; a tab's close button, and the window opened
     again in its place; a full tab bar's list; a tab bar hidden and shown;
-    a leaf's last window undocked, the leaf gone;
+    a floating window dropped on another, the two in a floating dock that
+    moves with them and is drawn under them, a tab dragged out of it; a
+    leaf's last window undocked, the leaf gone;
   - `log`: the ring dropping the oldest past its count and its bytes; text
     split into lines; a view following the newest, stopping when
     scrolled back, following again at the end; filtered by text and by

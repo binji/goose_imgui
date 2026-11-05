@@ -34,8 +34,9 @@ item here, by its title, at each workaround.
       scroll across, a header's context menu, rows of more than one
       height; Shift with the arrows extending a selection; a box dragged
       out to select;
-    - docking: a window docked into another floating window (a floating
-      dock); a leaf's tabs scrolled, not only listed, when they don't fit;
+    - docking: a floating dock docked whole into a dock space (its windows
+      go one by one now); a leaf's tabs scrolled, not only listed, when
+      they don't fit;
     - a log's lines selected and copied, or wrapped; a console's commands
       completed by Tab;
     - plots of several series, with a legend, axes marked along the
