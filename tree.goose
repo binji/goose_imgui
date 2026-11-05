@@ -85,6 +85,7 @@ let ROOT_MAIN = 0;
 let ROOT_POPUP = 1;
 let ROOT_MODAL = 2;
 let ROOT_TOOLTIP = 3;
+let ROOT_WINDOW = 4;            // a window: over the main tree, under popups, in the windows' order
 
 let ANCHOR_VIEWPORT = 0;        // the whole viewport (the main root, a modal's backdrop)
 let ANCHOR_POINT = 1;           // its top left at `at`
@@ -102,6 +103,9 @@ var text_arena: u8[>..] = [];
 var tracks: f32[>..] = [];
 var parents: i32[>..<] = [];
 var roots: Root[>..<] = [];
+// The roots in the order they are drawn and hit: the main one, the windows
+// back to front, then the rest as recorded. Made after layout.
+var root_order: i32[>..<] = [];
 var node_of = dictionary<u64, i32> {};     // this frame's named nodes
 // What text inherits: the nearest ink, font and size up the tree, and its
 // text look: where in `node_looks` the letter spacing, outline and shadow

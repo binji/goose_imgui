@@ -52,6 +52,7 @@ import rich;
 import textfx;
 import events;
 import pixel;
+import window;
 
 // --- frames ---------------------------------------------------------------------------
 
@@ -66,6 +67,7 @@ fn begin_frame(inp: Input, dt: f64) {
     }
     sweep_popups();
     begin_menus();
+    begin_windows();
     keyboard_used = false;
     id_stack.clear();
     scope_stack.clear();
@@ -268,10 +270,15 @@ fn hit_of(i: i32, id: u64, bits: u32, level: i32) -> Hit {
 }
 
 // The hit list and the focus list, in the order things are drawn: root by
-// root, each in the order it was recorded.
+// root (the main one, the windows back to front, the rest as recorded),
+// each in the order it was recorded. Each hit knows its window.
 fn list_hits() {
-    for r, k in roots {
+    order_roots();
+    for k in root_order {
+        let r = roots[k as i64];
         let level = r.level;
+        let win = if r.kind == ROOT_WINDOW { r.popup } else { 0 };
+        let first_hit = hits.len;
         for i: i32 in r.node..nodes.len as i32 {
             let n .= nodes[i];
             if n.root != k { continue; }
@@ -295,6 +302,7 @@ fn list_hits() {
                 focusables.push(Focusable { n.id, n.screen, n.scope, level, n.d.bits });
             }
         }
+        for h in first_hit..hits.len { hits[h].window = win; }
     }
 }
 

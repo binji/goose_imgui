@@ -23,6 +23,9 @@ import gfx2d;
 // first, changes its value, then records its boxes (with the same ID and
 // Desc) to look as the change makes it.
 fn interact(i: Id, d: Desc) -> Interaction { interaction_for(i.v, d) }
+// The interaction of the last widget recorded: for a widget that returns
+// only its value, such as selectable, to give to tooltip or context_menu.
+fn last_item() -> Interaction { last_interaction }
 
 // The bits a widget that takes clicks and focus has.
 fn clickable(d: Desc) -> Desc { d.hit().focusable() }

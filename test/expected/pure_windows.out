@@ -1,0 +1,42 @@
+start:
+  Tools: 20.0 20.0 200.0 150.0
+  Log: 60.0 50.0 220.0 160.0
+  Info: 80.0 80.0 102.0 75.0
+  back to front: Tools Log Info 
+under at 69.0 81.0, in log: true
+pressed over Under: log ""
+  back to front: Tools Info Log 
+pressed Tools:
+  back to front: Info Log Tools 
+  front: true; wants pointer: true
+  now Under is in front: log "under;"
+moved:
+  Tools: 80.0 60.0 200.0 150.0
+dragged off the screen:
+  Tools: 440.0 330.0 200.0 150.0
+  Tools: 0.0 0.0 200.0 150.0
+grip cursor: true
+resized:
+  Log: 60.0 50.0 260.0 180.0
+  Log: 30.0 50.0 290.0 180.0
+as small as it goes:
+  Log: 30.0 50.0 96.0 63.0
+  Log: 30.0 50.0 246.0 163.0
+collapsed:
+  Log: 30.0 50.0 246.0 31.0 collapsed
+  clear shown: false
+opened:
+  Log: 30.0 50.0 246.0 163.0
+  clear shown: true
+  back to front: Info Log Tools 
+closed: true; log shown: false
+  back to front: Info Tools 
+opened again:
+  Log: 30.0 50.0 246.0 163.0
+  back to front: Info Tools Log 
+log: clear;
+menu open: 1 rename at true
+chose: clear;delete 1; open: 0
+menu open: 1
+right click outside: 0
+menu drawn last: true

@@ -113,6 +113,7 @@ var last_pointer = float2 { -1.0e9, -1.0e9 };
 struct Hit {
     id: u64, rect: gfx2d::Rect, clip: gfx2d::Rect, bits: u32, level: i32,
     turned: i32 = -1,               // drawn turned or skewed: where in turned_hits its own box is
+    window: u64 = 0,                // the window it is in, if any
 }
 // A turned or skewed hit's own box, and the pointer taken back into it.
 struct TurnedHit { inv: gfx2d::Affine, local: gfx2d::Rect }
@@ -137,6 +138,7 @@ fn begin_input(inp: Input) {
     let floor = input_floor();
     hot = 0;
     hot_level = 0;
+    hot_window = 0;
     over_ui = false;
     denied_id = 0;
     var k = hits.len - 1;
@@ -145,6 +147,7 @@ fn begin_input(inp: Input) {
         if h.level >= floor && hit_at(h, p) {
             over_ui = true;
             hot_level = h.level;
+            hot_window = h.window;
             if h.bits & HIT != 0 && h.bits & DISABLED == 0 { hot = h.id; }
             if h.bits & HIT != 0 && h.bits & DISABLED != 0 && input.pointer.pressed { denied_id = h.id; }
             break;
@@ -162,6 +165,10 @@ fn begin_input(inp: Input) {
         if hot == active { clicked_id = active; }
         active = 0;
     }
+    // A press in a window puts it in front.
+    if (input.pointer.pressed || input.pointer.secondary) && hot_window != 0 { raise_window_id(hot_window); }
+    // A right press outside the popups closes them (and may open a context menu).
+    if input.pointer.secondary && !input.pointer.pressed { close_popups_above(hot_level); }
     if input.pointer.pressed {
         close_popups_above(level_kept_by(hot, hot_level));
         if hot != 0 {

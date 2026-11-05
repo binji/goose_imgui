@@ -31,7 +31,7 @@ fn draw() {
 }
 // Each root, then the focus cursor over them all.
 fn draw_roots() {
-    for r in roots { draw_tree(r.node, 1.0); }
+    for k in root_order { draw_tree(roots[k as i64].node, 1.0); }
     if cursor_node >= 0 { draw_tree(cursor_node, 1.0); }
 }
 

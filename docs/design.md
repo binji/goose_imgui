@@ -422,6 +422,41 @@ isn't known yet while the block runs, and charts want to fill their box.
 What the commands reach is kept per node, so culling counts drawing that
 spills past the box.
 
+## Windows
+
+- A window is a root of its own, as a popup is, so it is laid out after
+  the main tree and placed by its anchor: a point, its kept top left. It
+  can be recorded anywhere, even inside another box: what it contains
+  isn't the box's.
+- Roots are drawn and hit in one order, made after layout: the main root,
+  the windows back to front, then the rest as recorded. So a menu opened
+  from the menu bar before a window is recorded still opens over it, and a
+  dropdown inside a window over the windows in front of it. Without
+  windows the order is the one before them.
+- The windows' order is a list of IDs, back to front, kept between
+  frames. A press anywhere in a window puts it in front: each hit carries
+  the window it is in, so the press is known to be in it before anything
+  is recorded, wherever in the window it lands.
+- A window's own state (its place, size, collapse, and where a drag began)
+  is in a dictionary of its own rather than in `WidgetState`, which every
+  widget has and which is dropped once its ID isn't seen for a while. A
+  window closed for a minute comes back where it was.
+- Its title bar, buttons and grips are asked for their interactions before
+  anything is recorded, so a move or a resize is drawn the frame it
+  happens, not a frame late. The size goes in the frame's Desc, the place
+  in its root's anchor.
+- A window fits its content until it is resized, and then keeps its size.
+  Its body is a scroll pane that grows, so a fitted window that the screen
+  is too small for still scrolls.
+- The grips are thin boxes astride the frame's edges, recorded last so
+  they are hit first near an edge. The frame doesn't clip, so that they
+  can reach past it; its title bar rounds its own top corners instead.
+- A grip asks for a pointer shape, read by `cursor()`. gfx v1 can't change
+  the pointer's shape, so imgui only says which it wants.
+- A context menu is a menu popup at the pointer, opened by a right press
+  on the widget it is given. A right press anywhere else closes the menus,
+  as a left one does.
+
 ## Rich text
 
 - `rich(s)` reads BBCode-like markup (`[dmg]20[/]`, `[img=coin]`) rather
@@ -536,6 +571,7 @@ spills past the box.
 | `draw.goose` | the draw walk |
 | `widgets.goose` | buttons, toggles, sliders and the rest |
 | `scroll.goose`, `popup.goose`, `text_input.goose` | the larger widgets |
+| `window.goose` | windows: their own roots, kept state and order |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

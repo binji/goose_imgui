@@ -390,6 +390,35 @@ fn menu_check(label: const u8[:], v: bool&) -> bool {
     it.activated
 }
 
+// --- context menus ------------------------------------------------------------------------
+
+// A menu at the pointer when the widget `it` is the interaction of is
+// right-clicked; its items recorded by the block while it is open. True
+// while open.
+//   if imgui::selectable(name, chosen == k) { chosen = k; }
+//   imgui::context_menu(imgui::last_item()) {
+//       if imgui::menu_item("Rename") { … }
+//       if imgui::menu_item("Delete") { … }
+//   };
+fn context_menu<F>(it: Interaction, d: Desc = column().min_w(140)) -> bool {
+    let pid = Id { hash_combine(it.id, 0xC0273E) };
+    if it.id != 0 && hot == it.id && input.pointer.secondary {
+        let a = Anchor { kind: ANCHOR_POINT, at: input.pointer.pos, .. };
+        let lv = popup_level(pid.v);
+        if lv > 0 {
+            // Open already: again where the pointer is now.
+            close_popups_above(lv);
+            popups[lv - 1].anchor = a;
+        } else {
+            open_popup_at(pid, POPUP_MENU, a);
+        }
+    }
+    menu_stack.push(MenuCtx { 0, true });
+    popup_root(pid, POPUP_MENU, d, MENU) { F(); };
+    menu_stack.pop();
+    popup_level(pid.v) > 0
+}
+
 // --- dropdowns ----------------------------------------------------------------------------
 
 // One of `items`, shown in a button; the list in a popup under it.

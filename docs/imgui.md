@@ -67,6 +67,9 @@ The examples each show one part:
   bars that grow in, a gauge, a minimap, each filling a grid card;
 - `pixel`: a shop in pixel-art mode: the pixel font and theme, sprites
   drawn nearest at twice their size, slots framed by a nine-slice;
+- `windows`: developer windows over a running scene, in the dense dev
+  theme: moved, resized, collapsed, closed and raised, with a context
+  menu on each entity;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
   character at a time, each letter popping in, with spans that wave, glow,
   shake, shiver (an effect of the program's own) and cycle their hue.
@@ -218,8 +221,9 @@ state by state.
 | Themes and classes | |
 |---|---|
 | `theme_light()`, `theme_dark()`, `theme_game()` | the built-in themes; the light one is in place from the start |
+| `theme_dev()`, `theme_dev_light()`, `dev_palette(dark)` | for developers' tools: small text, short rows, thin padding, quick between states |
 | `theme_pixel()`, `theme_pixel(font, size[, palette])` | for pixel-art mode: every class's sizes scaled to the font and whole, corners square, shadows hard, borders and the ring a unit wide, a press moving a unit down, no easing between states; in `pixel_font()` at 6 by default |
-| `theme(Palette { … })` | every built-in class from a palette: surface, raised, hover, pressed, line, ink, muted, accent and their sizes |
+| `theme(Palette { … })` | every built-in class from a palette: surface, raised, hover, pressed, line, ink, muted, accent and their sizes; `space` scales the other paddings and gaps (below 1 is denser) |
 | `screen_color()` | the theme's color for the screen behind the UI, for a menu screen to clear to, so that it changes with the theme |
 | `class_style(C)`, `set_class(C, set)` | read and replace a class |
 | `add_class(set) -> StyleClass` | a class of the program's own (kept across theme changes) |
@@ -235,7 +239,10 @@ The classes are:
 - SEPARATOR, SELECTABLE, SCROLLBAR, SCROLL_THUMB;
 - TAB_BAR, TAB, TAB_PANEL, MENU_BAR, MENU_HEADER, MENU, MENU_ITEM;
 - POPUP, MODAL, BACKDROP, TOOLTIP, NOTICE;
-- INPUT, CARET, SELECTION, DROPDOWN.
+- INPUT, CARET, SELECTION, DROPDOWN;
+- WINDOW, WINDOW_TITLE (checked while its window is in front),
+  WINDOW_BODY, WINDOW_BUTTON, RESIZE_GRIP (its `min_size.x` is how thick
+  the grips are).
 
 ## Pixel art
 
@@ -317,12 +324,48 @@ damping)`, with or without `delay(seconds)`.
 | `open_popup(label)`, `popup(label, d) { … }`, `close_popup`, `close_current_popup` | a popup at the pointer |
 | `modal(label, open, d) { … }` | centered over a backdrop while `open`; inert below; cancel sets `open` false |
 | `tooltip(it, s)`, `tooltip(it) { … }` | under a widget the pointer rests on, or the focus is on |
+| `context_menu(it[, d]) { menu_item(…); … } -> bool` | a menu at the pointer when the widget is right-clicked; true while open. A right click elsewhere closes it |
+| `last_item() -> Interaction` | the last widget's interaction, for one that returns only its value: `if selectable(…) { … }; context_menu(last_item()) { … };` |
 | `drag_source(it, kind, payload) -> bool`, `drop_target(it, kind) -> Drop`, `drag_ghost(d) { … }` | drag and drop: a widget's payload (an `i64`) carried to a target that takes its `kind`, picked up by dragging it (or accepting it with the keys, carried by navigation, put down by accepting); `Drop { over, dropped, payload }`; the ghost drawn under the pointer, never in its way. Escape puts it back. `dragging(kind)`, `drag_payload()` |
 | `text_input(label, buf, d, max_len, placeholder) -> TextEdit` | one line, edited in place: a `u8[>..]` or a `u8[..N]`. Its caret is solid while typing, for half a second after it moves and on taking the focus, then blinks, fading |
 | `set_caret_blink(on)` | a caret that never blinks, for players who find blinking distracting |
 
 A label's `##` and what follows it are part of the ID but not shown:
 `"Play##dlc"`.
+
+## Windows
+
+```goose
+imgui::window("Stats", show_stats, imgui::column().size(260, 180).absolute(16, 16)) {
+    imgui::textf(imgui::column()) { out => format(out, "fps ", fps); };
+    imgui::checkbox("Wireframe", wireframe);
+};
+```
+
+A window is a root of its own:
+- **Drawn** over the main tree and under popups, back to front in the
+  order the windows were last pressed. A press anywhere in one puts it in
+  front, and a window opened again comes up in front.
+- **Moved** by dragging its title bar, and kept on the screen.
+- **Resized** by dragging any edge or corner, to no less than its title
+  bar needs.
+- **Collapsed** to its title bar by its arrow or a double click on the
+  title; its block isn't run while it is.
+- **Closed** by its cross, which sets `open` false; nothing is recorded
+  while `open` is false.
+- **Scoped:** its title is its ID, and the IDs inside it are under it, so
+  two windows can each have an "OK".
+- **Kept:** where it is, its size and whether it is collapsed last as long
+  as the program does, so a window closed and opened again is where it
+  was.
+
+| | |
+|---|---|
+| `window(title[, d][, flags]) { … }`, `window(title, open, d, flags) { … }` | `d` is the body's: a column's gap, padding and alignment (WINDOW_BODY's by default). Its size, in pixels, is the window's to start with, else it fits its content; its `absolute(x, y)` is where it starts, else each new one a little below and to the right of the last. The body scrolls when it is smaller than its content |
+| `WINDOW_NO_TITLE`, `WINDOW_NO_RESIZE`, `WINDOW_NO_MOVE`, `WINDOW_NO_COLLAPSE`, `WINDOW_NO_SCROLL` | flags, or-ed |
+| `window_rect(title)`, `set_window_rect(title, rect)` | where it was drawn; moved and sized by the program (a size of 0: its content's) |
+| `raise_window(title)`, `collapse_window(title, on)`, `is_window_collapsed(title)` | |
+| `cursor() -> i64` | the pointer's shape the UI wants, `CURSOR_DEFAULT` or a grip's `CURSOR_EW_RESIZE`, `NS`, `NWSE`, `NESW`, numbered as gfx's are. gfx v1 has no cursor shapes; a program on a gfx that does passes it on |
 
 ## Canvases
 
@@ -528,6 +571,10 @@ The tests are in three groups:
   - `scroll`: the wheel, clamping, scrolling to the focus, the thumb;
   - `text_input`: typing, caret and selection, words, cut and paste,
     limits, the caret held solid while typing and then blinking;
+  - `windows`: where windows start, moved and kept on the screen, resized
+    by edges and corners down to their least size, raised by a press,
+    collapsed and opened, closed and opened again in front, a press over
+    two windows reaching the front one only, a context menu;
   - `events`: UI events for sounds: a hover once and only by moving, a
     press, an activation, a denial, focus shown by navigation, slider
     ticks with and without steps, tabs, popups opening and closing, back.

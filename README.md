@@ -25,6 +25,9 @@ menus, settings, inventories, HUDs and dialogs. It is drawn through
   with the arrows (or a d-pad, through `nav_from_pad`) and Tab. They are
   used with Enter or A and backed out of with Escape or B. Focus is kept
   inside modals and menus.
+- **Developer tools.** Windows that move, resize, collapse and close over
+  the game, context menus, and a dense theme for debug overlays and
+  editors; more are on the way (docs/future_work.md).
 
 **Status:** the first set of widgets, layout, themes and motion are done.
 [docs/imgui.md](docs/imgui.md) is the reference,
@@ -80,10 +83,11 @@ fn main() {
 | `pixel.goose` | pixel-art mode: whole pixels, a pixel font and theme |
 | `events.goose` | UI events, for a game's sounds: hovers, clicks, ticks, popups opening |
 | `canvas.goose` | canvases: drawing of the program's own inside the layout |
+| `window.goose` | windows: moved, resized, collapsed, closed and raised |
 | `context.goose`, `id.goose` | the state kept between frames; IDs |
 | `docs/` | `imgui.md`, the reference; `design.md`, the plan and its reasoning; `future_work.md`, what is next |
 | `bench/` | `bench.goose`, and the latest `results.md` |
-| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`, `stats`, `hud`, `wayfinding`, `cards`, `dialogue`, `pixel`: programs using the package (`common` and `scene` are what they share), each a root file |
+| `examples/` | `hello`, `widgets`, `main_menu`, `motion`, `inventory`, `settings`, `stats`, `hud`, `wayfinding`, `cards`, `dialogue`, `pixel`, `windows`: programs using the package (`common` and `scene` are what they share), each a root file |
 | `test/run_tests.py` | runs `test/pure/` (no GPU) and `test/headless/` (drawn and read back), comparing with `test/expected/` |
 
 All the modules are in `namespace imgui`.

@@ -118,7 +118,12 @@ let METER_FILL = StyleClass { 39 };
 let METER_TRAIL = StyleClass { 40 };    // what a drop took, easing down behind the fill
 let FOCUS_CURSOR = StyleClass { 41 };   // set_focus_cursor's look: drawn ring_offset outside the focused box
 let NOTICE = StyleClass { 42 };         // a notice drawn by notices() without a block
-let CLASS_COUNT = 43;
+let WINDOW = StyleClass { 43 };         // a window's frame: its title bar, body and grips go inside
+let WINDOW_TITLE = StyleClass { 44 };   // its title bar; checked while it is the front window
+let WINDOW_BODY = StyleClass { 45 };    // its content's pane: padding and gap
+let WINDOW_BUTTON = StyleClass { 46 };  // the collapse and close buttons in the title bar
+let RESIZE_GRIP = StyleClass { 47 };    // an edge or corner dragged to resize; its min_size.x is its thickness
+let CLASS_COUNT = 48;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -331,6 +336,7 @@ struct Palette {
     padding: float2 = float2 { 14.0, 8.0 },             // a button's, across and down
     control: f32 = 20.0,                                // a checkbox's side, a slider thumb's
     transition: f32 = 0.1,                              // seconds between states
+    space: f32 = 1.0,                                   // the other paddings and gaps, times this: < 1 is denser
 }
 
 fn radii(r: f32) -> float4 { float4 { r, r, r, r } }
@@ -357,6 +363,9 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     for i in CLASS_COUNT { classes.push(StyleSet { .. }); }
     let move = tween(p.transition);
     let r = radii(p.radius);
+    let sp = p.space;
+    fn sq(v: f32) -> float4 { radii(v * sp) }
+    fn sp4(x: f32, y: f32) -> float4 { pad4(x * sp, y * sp) }
     let ring = Style { ring: gfx2d::with_alpha(p.accent, 0.9), ring_width: 2.0, ring_offset: 2.0, .. };
 
     fn focus_ring(s: Style) -> Style {
@@ -377,12 +386,12 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     }
 
     classes[PANEL.index] = style_set(Style { bg: p.surface, radius: radii(p.radius * 1.5),
-                                             padding: radii(16.0), border: p.line, border_width: 1.0,
+                                             padding: sq(16.0), border: p.line, border_width: 1.0,
                                              shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 4.0 }, blur: 16.0 },
-                                             ink: p.ink, font: p.font, text_size: p.text_size, gap: 10.0 });
+                                             ink: p.ink, font: p.font, text_size: p.text_size, gap: 10.0 * sp });
     classes[BUTTON.index] = clickable(Style { bg: p.raised, radius: r, border: p.line, border_width: 1.0,
                                               padding: pad4(p.padding.x, p.padding.y), ink: p.ink,
-                                              min_size: float2 { 0.0, p.control + p.padding.y }, gap: 8.0 },
+                                              min_size: float2 { 0.0, p.control + p.padding.y }, gap: 8.0 * sp },
                                       p.hover, p.pressed);
     classes[LABEL.index] = style_set(Style { ink: p.ink, font: p.font, text_size: p.text_size });
     classes[TITLE.index] = style_set(Style { ink: p.ink, text_size: p.title_size });
@@ -390,7 +399,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
 
     // The row a checkbox, toggle or radio and its label share: what takes
     // the pointer and the focus.
-    var choice = style_set(Style { radius: r, gap: 8.0, padding: pad4(2.0, 2.0) }, move);
+    var choice = style_set(Style { radius: r, gap: 8.0 * sp, padding: sp4(2.0, 2.0) }, move);
     choice.focused = focus_ring(choice.normal);
     choice.disabled.alpha = 0.45;
     classes[CHOICE.index] = choice;
@@ -422,7 +431,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[RADIO_DOT.index] = style_set(Style { bg: p.accent, radius: radii(side * 0.25) });
 
     classes[SLIDER_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(3.0),
-                                                    min_size: float2 { 160.0, 6.0 } });
+                                                    min_size: float2 { 160.0 * sp, 6.0 } });
     classes[SLIDER_FILL.index] = style_set(Style { bg: p.accent, radius: radii(3.0) });
     var thumb = style_set(Style { bg: gfx2d::WHITE, border: p.accent, border_width: 2.0, radius: radii(side * 0.5),
                                   shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 1.0 }, blur: 3.0 },
@@ -432,7 +441,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     thumb.focused = focus_ring(thumb.normal);
     classes[SLIDER_THUMB.index] = thumb;
     classes[PROGRESS_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(4.0),
-                                                      min_size: float2 { 160.0, 8.0 } });
+                                                      min_size: float2 { 160.0 * sp, 8.0 } });
     classes[PROGRESS_FILL.index] = style_set(Style { bg: p.accent, radius: radii(4.0) });
     classes[METER.index] = style_set(Style { gap: 3.0 });
     classes[FOCUS_CURSOR.index] = style_set(Style { border: p.accent, border_width: 2.0, radius: radii(p.radius + 4.0),
@@ -442,7 +451,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[METER_TRAIL.index] = style_set(Style { bg: gfx2d::with_alpha(p.ink, 0.45), radius: radii(3.0) });
     classes[SEPARATOR.index] = style_set(Style { bg: p.line, min_size: float2 { 1.0, 1.0 } });
 
-    var sel = clickable(Style { radius: r, padding: pad4(10.0, 6.0), ink: p.ink }, p.hover, p.pressed);
+    var sel = clickable(Style { radius: r, padding: sp4(10.0, 6.0), ink: p.ink }, p.hover, p.pressed);
     sel.active.zoom = 1.0;
     sel.checked.bg = gfx2d::with_alpha(p.accent, 0.16);
     sel.checked.ink = p.accent_hover;
@@ -456,8 +465,8 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     sthumb.active.bg = p.muted;
     classes[SCROLL_THUMB.index] = sthumb;
 
-    classes[TAB_BAR.index] = style_set(Style { gap: 4.0, border: p.line, padding: pad4(0.0, 0.0) });
-    var tab = clickable(Style { radius: float4 { p.radius, p.radius, 0.0, 0.0 }, padding: pad4(16.0, 8.0),
+    classes[TAB_BAR.index] = style_set(Style { gap: 4.0 * sp, border: p.line, padding: pad4(0.0, 0.0) });
+    var tab = clickable(Style { radius: float4 { p.radius, p.radius, 0.0, 0.0 }, padding: sp4(16.0, 8.0),
                                 ink: p.muted }, p.hover, p.pressed);
     tab.active.zoom = 1.0;
     tab.checked.bg = p.surface;
@@ -467,19 +476,19 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[TAB.index] = tab;
     classes[TAB_PANEL.index] = style_set(Style { bg: p.surface, border: p.line, border_width: 1.0,
                                                  radius: float4 { 0.0, p.radius, p.radius, p.radius },
-                                                 padding: radii(16.0), gap: 12.0 }, tween(p.transition * 1.5));
+                                                 padding: sq(16.0), gap: 12.0 * sp }, tween(p.transition * 1.5));
 
-    classes[MENU_BAR.index] = style_set(Style { bg: p.raised, padding: pad4(4.0, 2.0), gap: 2.0,
+    classes[MENU_BAR.index] = style_set(Style { bg: p.raised, padding: sp4(4.0, 2.0), gap: 2.0 * sp,
                                                 border: p.line });
-    var header = clickable(Style { radius: r, padding: pad4(10.0, 5.0), ink: p.ink }, p.hover, p.pressed);
+    var header = clickable(Style { radius: r, padding: sp4(10.0, 5.0), ink: p.ink }, p.hover, p.pressed);
     header.active.zoom = 1.0;
     header.checked.bg = p.pressed;
     classes[MENU_HEADER.index] = header;
-    let floating = Style { bg: p.surface, border: p.line, border_width: 1.0, radius: r, padding: pad4(4.0, 4.0),
+    let floating = Style { bg: p.surface, border: p.line, border_width: 1.0, radius: r, padding: sp4(4.0, 4.0),
                            shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 6.0 }, blur: 18.0 },
                            ink: p.ink, text_size: p.text_size, font: p.font };
     classes[MENU.index] = style_set(floating);
-    var item = clickable(Style { radius: radii(p.radius * 0.66), padding: pad4(12.0, 6.0), ink: p.ink, gap: 24.0 },
+    var item = clickable(Style { radius: radii(p.radius * 0.66), padding: sp4(12.0, 6.0), ink: p.ink, gap: 24.0 * sp },
                          p.hover, p.pressed);
     item.active.zoom = 1.0;
     item.hover.bg = p.accent;
@@ -489,25 +498,25 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     item.focused.ring_width = 0.0;
     classes[MENU_ITEM.index] = item;
     var pop = floating;
-    pop.padding = radii(12.0);
+    pop.padding = sq(12.0);
     classes[POPUP.index] = style_set(pop);
     var modal = floating;
-    modal.padding = radii(24.0);
+    modal.padding = sq(24.0);
     modal.radius = radii(p.radius * 2.0);
-    modal.gap = 14.0;
+    modal.gap = 14.0 * sp;
     classes[MODAL.index] = style_set(modal);
     classes[BACKDROP.index] = style_set(Style { bg: p.backdrop });
     var notice = floating;
-    notice.padding = pad4(18.0, 10.0);
-    notice.gap = 10.0;
+    notice.padding = sp4(18.0, 10.0);
+    notice.gap = 10.0 * sp;
     classes[NOTICE.index] = style_set(notice);
     classes[TOOLTIP.index] = style_set(Style { bg: gfx2d::with_alpha(p.ink, 0.92), radius: radii(4.0),
-                                               padding: pad4(8.0, 4.0), ink: p.surface,
+                                               padding: sp4(8.0, 4.0), ink: p.surface,
                                                text_size: p.text_size * 0.875 });
 
     var input = style_set(Style { bg: p.surface, border: p.line, border_width: 1.0, radius: r,
-                                  padding: pad4(10.0, p.padding.y), ink: p.ink,
-                                  min_size: float2 { 180.0, p.control + p.padding.y } }, move);
+                                  padding: pad4(10.0 * sp, p.padding.y), ink: p.ink,
+                                  min_size: float2 { 180.0 * sp, p.control + p.padding.y } }, move);
     input.hover.border = p.muted;
     input.focused.border = p.accent;
     input.focused.border_width = 2.0;
@@ -515,11 +524,32 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[CARET.index] = style_set(Style { bg: p.accent, min_size: float2 { 2.0, 0.0 } });
     classes[SELECTION.index] = style_set(Style { bg: gfx2d::with_alpha(p.accent, 0.3), radius: radii(2.0) });
     var dd = classes[BUTTON.index];
-    dd.normal.gap = 12.0;
-    dd.hover.gap = 12.0;
-    dd.active.gap = 12.0;
-    dd.focused.gap = 12.0;
+    dd.normal.gap = 12.0 * sp;
+    dd.hover.gap = 12.0 * sp;
+    dd.active.gap = 12.0 * sp;
+    dd.focused.gap = 12.0 * sp;
     classes[DROPDOWN.index] = dd;
+
+    // Windows: a frame holding a title bar and a body; grips on its edges.
+    // The frame doesn't clip, so the grips can reach past it; its title
+    // bar's top corners are the frame's.
+    classes[WINDOW.index] = style_set(Style { bg: p.surface, border: p.line, border_width: 1.0, radius: r,
+                                              shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 4.0 }, blur: 14.0 },
+                                              ink: p.ink, font: p.font, text_size: p.text_size });
+    var wt = style_set(Style { bg: p.raised, radius: float4 { p.radius, p.radius, 0.0, 0.0 },
+                               padding: sp4(10.0, 6.0), gap: 6.0 * sp, ink: p.muted });
+    wt.checked.bg = p.pressed;
+    wt.checked.ink = p.ink;
+    classes[WINDOW_TITLE.index] = wt;
+    classes[WINDOW_BODY.index] = style_set(Style { padding: sq(12.0), gap: 8.0 * sp });
+    var wb = clickable(Style { radius: radii(p.radius * 0.66), padding: sp4(3.0, 3.0), ink: p.muted }, p.hover, p.pressed);
+    wb.active.zoom = 1.0;
+    wb.hover.ink = p.ink;
+    classes[WINDOW_BUTTON.index] = wb;
+    var grip = style_set(Style { radius: radii(2.0), min_size: float2 { 6.0, 6.0 } }, move);
+    grip.hover.bg = gfx2d::with_alpha(p.accent, 0.35);
+    grip.active.bg = gfx2d::with_alpha(p.accent, 0.6);
+    classes[RESIZE_GRIP.index] = grip;
     classes
 }
 
@@ -533,6 +563,32 @@ fn dark_palette() -> Palette {
               shadow: gfx2d::rgba(0x000000, 0.5), .. }
 }
 fn theme_dark() { theme(dark_palette()); }
+
+// For developers' tools: dense (small text, short rows, thin padding),
+// quick between states, in dark or light.
+fn dev_palette(dark: bool = true) -> Palette {
+    var p = if dark {
+        Palette { screen: gfx2d::rgb(0x0F1115), surface: gfx2d::rgb(0x1B1E24), raised: gfx2d::rgb(0x262A31),
+                  hover: gfx2d::rgb(0x30353D), pressed: gfx2d::rgb(0x3A404A), line: gfx2d::rgb(0x363B44),
+                  ink: gfx2d::rgb(0xDCE0E6), muted: gfx2d::rgb(0x8A929E), accent: gfx2d::rgb(0x4C8DF6),
+                  accent_hover: gfx2d::rgb(0x6AA1FF), accent_ink: gfx2d::rgb(0x0B0D10),
+                  backdrop: gfx2d::rgba(0x000000, 0.5), shadow: gfx2d::rgba(0x000000, 0.45), .. }
+    } else {
+        Palette { screen: gfx2d::rgb(0xE6E8EB), surface: gfx2d::rgb(0xF7F8FA), raised: gfx2d::rgb(0xE9ECF0),
+                  hover: gfx2d::rgb(0xDDE1E7), pressed: gfx2d::rgb(0xCFD5DD), shadow: gfx2d::rgba(0x000000, 0.14),
+                  .. }
+    };
+    p.radius = 3.0;
+    p.text_size = 13.0;
+    p.title_size = 18.0;
+    p.padding = float2 { 8.0, 3.0 };
+    p.control = 14.0;
+    p.transition = 0.05;
+    p.space = 0.5;
+    p
+}
+fn theme_dev() { theme(dev_palette(true)); }
+fn theme_dev_light() { theme(dev_palette(false)); }
 
 // A game's look, to show how far a theme goes: deep blue panels with a
 // gold edge, buttons of gradients that glow when hovered and sink when
