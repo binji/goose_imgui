@@ -6,7 +6,8 @@
 // the one selected: property rows, number fields to drag or type in,
 // collapsing headers, a color for each; a table of them, sorted by its
 // headers, its rows selected by clicks (Ctrl and Shift for more); a plot
-// of frame times and a histogram of them.
+// of frame times and a histogram of them; a console that logs slow frames
+// and selections, and takes commands (type help).
 //
 //   goose examples/windows.goose [-- --theme dev-light|light|dark|game]
 import std;
@@ -22,6 +23,9 @@ var show_stats = true;
 var show_scene = true;
 var show_inspector = true;
 var show_entities = true;
+var show_console = true;
+var log = imgui::Log { .. };
+var cmd: u8[>..] = [];
 var picked: bool[7] = [false; 7];
 var order: i64[7] = [0, 1, 2, 3, 4, 5, 6];
 var speed: f64 = 1.0;
@@ -94,7 +98,7 @@ fn sort_entities(c: i64, descending: bool) {
 }
 
 fn entities() {
-    imgui::window("Entities", show_entities, imgui::column().size(330, 210).absolute(250, 360)) {
+    imgui::window("Entities", show_entities, imgui::column().size(330, 210).absolute(250, 360), imgui::WINDOW_NO_SCROLL) {
         let t = imgui::table("ents", ["Name", "Radius", "Color", "Hidden"], 7, picked, imgui::Table { .. },
                              imgui::column().grow()) { k, c =>
             let e = order[k];
@@ -108,9 +112,38 @@ fn entities() {
         if t.clicked >= 0 {
             imgui::select_row("ents", picked, t.clicked);
             chosen = order[t.clicked];
+            imgui::logf(log, imgui::LOG_DEBUG) { out => format(out, "selected ", names[chosen]); };
         }
         if t.sort >= 0 { sort_entities(t.sort, t.descending); }
     };
+}
+
+// A console command: help, speed N, spin N, count N, pause, clear.
+fn run_command() {
+    let words = split(cmd, ' ');
+    if words.len == 0 { return; }
+    let w = words[0];
+    let n, ok = parse_flt(if words.len > 1 { words[1] } else { "" });
+    if w == "help" {
+        imgui::log(log, "commands: speed N, spin N, count N (1-7), pause, clear");
+    } else if w == "speed" && ok {
+        speed = clamp(n, 0.0, 4.0);
+        imgui::logf(log) { out => format(out, "speed ", speed); };
+    } else if w == "spin" && ok {
+        spin = clamp(n, 0.0, 2.0);
+        imgui::logf(log) { out => format(out, "spin ", spin); };
+    } else if w == "count" && ok {
+        count = clamp(round(n) as i64, 1, 7);
+        imgui::logf(log) { out => format(out, "count ", count); };
+    } else if w == "pause" {
+        paused = !paused;
+        imgui::log(log, if paused { "paused" } else { "running" });
+    } else if w == "clear" {
+        imgui::log_clear(log);
+    } else {
+        imgui::logf(log, imgui::LOG_ERROR) { out => format(out, "unknown command: ", cmd); };
+    }
+    cmd.clear();
 }
 
 fn ui() {
@@ -122,6 +155,7 @@ fn ui() {
                 imgui::menu_check("Scene", show_scene);
                 imgui::menu_check("Inspector", show_inspector);
                 imgui::menu_check("Entities", show_entities);
+                imgui::menu_check("Console", show_console);
             };
         };
         scene();
@@ -152,6 +186,10 @@ fn ui() {
         };
     };
     entities();
+    // Its log scrolls itself, so the window's body doesn't: the log fills it.
+    imgui::window("Console", show_console, imgui::column().size(340, 220).absolute(610, 360), imgui::WINDOW_NO_SCROLL) {
+        if imgui::console("console", log, cmd, imgui::column().grow()) { run_command(); }
+    };
     imgui::window("Inspector", show_inspector, imgui::column().size(280, 290).absolute(664, 44)) {
         imgui::text(names[chosen], imgui::TITLE);
         imgui::collapsing("Transform", imgui::column(), true) {
@@ -172,6 +210,7 @@ fn ui() {
 
 fn main() {
     parse_args();
+    imgui::log(log, "type help for the commands");
     if theme_name == "dev-light" { imgui::theme_dev_light(); }
     else if theme_name == "light" { imgui::theme_light(); }
     else if theme_name == "dark" { imgui::theme_dark(); }
@@ -187,6 +226,7 @@ fn main() {
         // Frame times: the real ones, with a wobble so a fixed step shows something.
         let ms = dt * 1000.0 + sin(t * 3.1) * 2.5 + sin(t * 17.0) * 1.2;
         imgui::push_sample(frame_ms, ms, 120);
+        if ms > 20.0 { imgui::logf(log, imgui::LOG_WARN) { out => format(out, "slow frame: ", round(ms * 10.0) / 10.0, " ms"); }; }
         let b = clamp(((ms - 12.0) / 1.5) as i64, 0, 7);
         buckets[b] += 1.0;
         gfx2d::frame(imgui::screen_color()) {

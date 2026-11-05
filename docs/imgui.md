@@ -73,7 +73,8 @@ The examples each show one part:
   selected, of property rows, number fields, colors and collapsing
   headers; a table of the entities, sorted by its headers, rows selected
   with Ctrl and Shift; a plot of frame times, a histogram and a
-  sparkline;
+  sparkline; a console that logs slow frames and selections and takes
+  commands;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
   character at a time, each letter popping in, with spans that wave, glow,
   shake, shiver (an effect of the program's own) and cycle their hue.
@@ -252,6 +253,9 @@ The classes are:
 - TABLE, TABLE_HEADER, TABLE_HEAD (a column's header; checked: sorted
   by), TABLE_ROW (its `min_size.y` the rows' height; checked: selected),
   TABLE_ROW_ALT (every other row), TABLE_CELL (its padding);
+- LOG (the pane: its look, padding and text size), LOG_LINE,
+  LOG_DEBUG_LINE, LOG_WARN_LINE, LOG_ERROR_LINE, LOG_INPUT_LINE (each
+  level's ink);
 - PLOT (its ink and text size the scale's and readout's), PLOT_LINE (its
   bg the line's color, its `min_size.x` the line's width), PLOT_BAR (hover:
   the bar under the pointer), SWATCH, PICKER (its gap, and its square's
@@ -377,7 +381,7 @@ A window is a root of its own:
 | | |
 |---|---|
 | `window(title[, d][, flags]) { … }`, `window(title, open, d, flags) { … }` | `d` is the body's: a column's gap, padding and alignment (WINDOW_BODY's by default). Its size, in pixels, is the window's to start with, else it fits its content; its `absolute(x, y)` is where it starts, else each new one a little below and to the right of the last. The body scrolls when it is smaller than its content |
-| `WINDOW_NO_TITLE`, `WINDOW_NO_RESIZE`, `WINDOW_NO_MOVE`, `WINDOW_NO_COLLAPSE`, `WINDOW_NO_SCROLL` | flags, or-ed |
+| `WINDOW_NO_TITLE`, `WINDOW_NO_RESIZE`, `WINDOW_NO_MOVE`, `WINDOW_NO_COLLAPSE`, `WINDOW_NO_SCROLL` | flags, or-ed. A body that scrolls lays out its content at the content's height, so what should fill the window and scroll itself (a log, a table) wants `WINDOW_NO_SCROLL` |
 | `window_rect(title)`, `set_window_rect(title, rect)` | where it was drawn; moved and sized by the program (a size of 0: its content's) |
 | `raise_window(title)`, `collapse_window(title, on)`, `is_window_collapsed(title)` | |
 | `set_window_show(m, zoom = 0.95)`, `set_window_show(enter, exit)` | windows fade and grow from `zoom` of their size as they show (opened, or first recorded), and fade and shrink as they hide (closed, or no longer recorded), by `m`; or any `Enter` and `Exit`. Off (instant) by default. Hiding plays on a copy of the window as it was last drawn, in its place among the windows, taking no input; a window showing or hiding is drawn in a layer, so its parts don't show through each other. With it on, each window is copied every frame, as anything with an exit is: what of it is on the screen, not what is scrolled away. Set once at the start: set on windows already showing, their enter plays |
@@ -438,6 +442,26 @@ if t.sorted { sort_ents(t.sort, t.descending); }
 | `table(label, headers, count[, selected][, Table][, d]) { k, c => … } -> TableInfo` | a header, and `count` rows of a cell for each column, recorded by the block (row k, column c) only while in view, under the header, which stays as they scroll. A column is as wide as its header's right edge was dragged to, or a share of what the others leave (no less than `Table.least`); columns past the table's edge are cut off. A header clicked sorts by it, again the other way; the program sorts its rows. Rows in `selected` show selected; rows are striped. 8 rows high and as wide as there is room unless `d` says |
 | `Table { row_height, sortable, least }` | `row_height`: 0 for TABLE_ROW's `min_size.y` |
 | `TableInfo { clicked, double_clicked, hovered, sort, descending, sorted }` | the row clicked, double-clicked and under the pointer (-1: none); the column sorted by (-1: none) and which way; `sorted` the frame that changed |
+
+## Logs and consoles
+
+```goose
+var log = imgui::Log { .. };
+imgui::logf(log, imgui::LOG_WARN) { out => format(out, "slow frame: ", ms, " ms"); };
+var cmd: u8[>..] = [];
+imgui::window("Console", show, imgui::column().size(400, 240), imgui::WINDOW_NO_SCROLL) {
+    if imgui::console("console", log, cmd, imgui::column().grow()) { run(cmd); cmd.clear(); }
+};
+```
+
+| | |
+|---|---|
+| `Log { lines_kept, bytes_kept }` | the program's lines, in a ring: at most `lines_kept` lines (2,000) and `bytes_kept` of text (128 KiB), the oldest going first. Its arrays grow once and are written over, never shrunk, so logging is fine in a loop over string literals |
+| `log(l, s[, level])`, `logf(l[, level]) { out => format(out, …); }` | `s`, a line for each of its lines, at `LOG_DEBUG`, `LOG_INFO` (the default), `LOG_WARN` or `LOG_ERROR` |
+| `log_count(l)`, `log_text(l, k)`, `log_line(l, k)`, `log_clear(l)` | the lines held, line k's text and its `LogLine { level, time }` (0 the oldest); all of them gone |
+| `log_view(label, l[, d][, filter][, least])` | the lines in a pane, only those in view recorded, each in its level's color: those with `filter` in them (ignoring case), at `least` or above. It follows the newest line, unless scrolled back from the end; scrolled to the end, it follows again. Right-click: Copy (the newest of what is shown that fits the clipboard) and Clear. Ten lines high unless `d` says |
+| `console(label, l, cmd[, d][, filter]) -> bool` | a log view and a command line under it: Enter echoes the command into the log (`LOG_INPUT`), follows it, and returns true, for the program to run `cmd` and clear it. Up and Down step through the commands typed before, and back to what was being typed |
+| `has_text(s, part)` | whether `s` has `part` in it, ignoring case |
 
 ## Plots and colors
 
@@ -684,6 +708,11 @@ The tests are in three groups:
     and Shift; a table's columns sharing its width, one resized by its
     edge, the rest sharing what is left; sorting by a header, and the other
     way; a selected row shown so;
+  - `log`: the ring dropping the oldest past its count and its bytes; text
+    split into lines; a view following the newest, stopping when
+    scrolled back, following again at the end; filtered by text and by
+    level; a console running and echoing commands, its history by Up and
+    Down; logging from a loop over string literals;
   - `plots`: a rolling buffer; a line plot's range, fitted or fixed, and
     the value under the pointer; a bar plot's bar under it; hex written
     and read; a picker's square, hue and alpha dragged, its hue kept

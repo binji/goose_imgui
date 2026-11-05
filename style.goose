@@ -140,7 +140,13 @@ let TABLE_HEAD = StyleClass { 61 };     // a column's header: clicked to sort by
 let TABLE_ROW = StyleClass { 62 };      // a row (checked: selected); its min_size.y the rows' height
 let TABLE_ROW_ALT = StyleClass { 63 };  // every other row, for stripes
 let TABLE_CELL = StyleClass { 64 };     // a cell: its padding
-let CLASS_COUNT = 65;
+let LOG = StyleClass { 65 };            // a log's pane: its look, padding and text size
+let LOG_LINE = StyleClass { 66 };       // a line of LOG_INFO (its ink), and of each level:
+let LOG_DEBUG_LINE = StyleClass { 67 };
+let LOG_WARN_LINE = StyleClass { 68 };
+let LOG_ERROR_LINE = StyleClass { 69 };
+let LOG_INPUT_LINE = StyleClass { 70 }; // a console's command, echoed
+let CLASS_COUNT = 71;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -617,6 +623,14 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     alt.normal.bg = gfx2d::with_alpha(p.ink, 0.035);
     classes[TABLE_ROW_ALT.index] = alt;
     classes[TABLE_CELL.index] = style_set(Style { padding: sp4(8.0, 0.0) });
+
+    classes[LOG.index] = style_set(Style { bg: gfx2d::with_alpha(p.pressed, 0.35), border: p.line, border_width: 1.0,
+                                           radius: r, padding: sp4(8.0, 6.0), text_size: p.text_size * 0.92 });
+    classes[LOG_LINE.index] = style_set(Style { ink: p.ink });
+    classes[LOG_DEBUG_LINE.index] = style_set(Style { ink: p.muted });
+    classes[LOG_WARN_LINE.index] = style_set(Style { ink: gfx2d::rgb(0xD29922) });
+    classes[LOG_ERROR_LINE.index] = style_set(Style { ink: gfx2d::rgb(0xE5534B) });
+    classes[LOG_INPUT_LINE.index] = style_set(Style { ink: p.accent });
     classes
 }
 

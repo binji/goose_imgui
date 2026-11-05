@@ -544,6 +544,20 @@ spills past the box.
   hold it there), so it has `OVERFLOW_X`: its children are as wide as
   their content, and it clips them. Sorting is the program's, as the rows
   are: the table keeps the column and the way, and says when they change.
+- **A log** is the program's, a `root struct` (it owns two growing
+  arrays: its text and its lines). Both are rings, grown once to their
+  size and written over, oldest first, a line always in one piece (from
+  the start, if it would run past the end). Nothing is taken out of them,
+  so logging never shrinks an array, which Goose doesn't allow inside a
+  loop over string literals; `logf` formats into a buffer of its own for
+  the same reason.
+- **A log view** is a scroll pane of a row list, so a log of any length
+  costs what is on the screen; filtering makes the list of lines shown
+  each frame. Following the newest line is a flag of the view's own, not
+  "at the end last frame": the frame the content first grows, the pane
+  is at 0, which is no longer its end. While following, the view scrolls
+  to the end as it was last frame, not past it, so that a turn of the
+  wheel back leaves it short of the end, and that is what stops it.
 - **Plots** are canvases: a plot is the values drawn, and the readout
   under the pointer is drawn too, not a tooltip, so it follows the
   pointer at once. `f32` values are copied into a scratch `f64` array, so
@@ -677,6 +691,7 @@ spills past the box.
 | `devwidgets.goose` | property rows, collapsing headers, trees, number fields |
 | `plots.goose` | plots, sparklines, color swatches, pickers and fields |
 | `table.goose` | row lists (only the rows in view), selection, tables |
+| `log.goose` | logs (a ring of lines), log views and consoles |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

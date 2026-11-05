@@ -1,0 +1,19 @@
+five kept: [line 3][line 4][line 5][line 6][line 7] of 8
+by bytes: [a longer line, number 4][a longer line, number 5]
+split: [one][two][three][four][five]
+cleared: 0 lines
+following:
+  7 shown, entry 193 .. entry 199
+scrolled back, five more logged:
+  9 shown, entry 186 .. entry 194
+at the end again, five more:
+  7 shown, entry 203 .. entry 209
+filtered by "ENTRY 19":
+  7 shown, entry 193 .. entry 199
+errors only:
+  7 shown, entry 130 .. entry 190
+ran: spawn 3;help; log: [> spawn 3][> help], cmd now ""
+up: "help"
+up: "spawn 3"
+up again (the oldest): "spawn 3"
+down twice: ""

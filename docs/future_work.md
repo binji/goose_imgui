@@ -20,7 +20,8 @@ item here, by its title, at each workaround.
     (dragged, typed in, stepped; vectors), plots (lines, bars,
     sparklines), colors (a swatch, a picker, a field), row lists
     recording only the rows in view, rows selected with Ctrl and Shift,
-    and tables (resized, sorted, striped, selected). Left of them:
+    tables (resized, sorted, striped, selected), and logs and consoles.
+    Left of them:
     - a window raised when navigation moves the focus into it;
     - a context menu opened from the keyboard or a pad (Shift+F10, the
       menu key, a button);
@@ -32,17 +33,16 @@ item here, by its title, at each workaround.
       scroll across, a header's context menu, rows of more than one
       height; Shift with the arrows extending a selection; a box dragged
       out to select;
+    - a log's lines selected and copied, or wrapped; a console's commands
+      completed by Tab;
     - plots of several series, with a legend, axes marked along the
       bottom, zoomed and panned (as implot does); a picker's palette of
       recent colors.
 
     Common in tools:
-    1. A log and a console: lines that stay scrolled to the newest unless
-       scrolled back, colored by level, filtered, copied; a command line
-       with its history on Up and Down.
-    2. Splitters and side panels: panes resized by dragging the line
+    1. Splitters and side panels: panes resized by dragging the line
        between them.
-    3. Docking: windows dragged by their titles onto a dock space, to a
+    2. Docking: windows dragged by their titles onto a dock space, to a
        side of a pane (splitting it) or its middle (a tab with the others
        there), and dragged out again to float. The dock space is a tree of
        splits that lasts. It builds on windows, splitters, tabs, and drag
@@ -50,17 +50,17 @@ item here, by its title, at each workaround.
        it; an editor always does.
 
     Useful, less often:
-    4. Layouts saved and loaded: where the windows are, which are open,
+    3. Layouts saved and loaded: where the windows are, which are open,
        and the dock tree, in a file.
-    5. Multi-line text editing (under Text, below).
-    6. Small pieces: small and icon buttons, toolbars and a status bar, a
+    4. Multi-line text editing (under Text, below).
+    5. Small pieces: small and icon buttons, toolbars and a status bar, a
        label and its value, bullets, links, a spinner, vertical, angle
        and range sliders, a knob.
-    7. An image viewer: a texture panned and zoomed, with a pixel grid and
+    6. An image viewer: a texture panned and zoomed, with a pixel grid and
        the value under the pointer.
-    8. imgui's own tools: a window of its nodes, the one under the pointer
+    7. imgui's own tools: a window of its nodes, the one under the pointer
        outlined, with counts and timings; a style editor.
-    9. A memory viewer in hex, and a profiler's timeline (an example on a
+    8. A memory viewer in hex, and a profiler's timeline (an example on a
        canvas more than a widget).
 
     Not planned: windows of the OS's own (gfx has one), a code editor,

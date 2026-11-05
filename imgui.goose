@@ -56,6 +56,7 @@ import window;
 import devwidgets;
 import plots;
 import table;
+import log;
 
 // --- frames ---------------------------------------------------------------------------
 
