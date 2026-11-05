@@ -1,0 +1,30 @@
+labels start at 10.0 10.0; widgets at 108.0 108.0, past the widest label: true
+fields show: true true true
+hidden shown: false
+clicked: true; its short label's widget lined up with the others: true
+clicked again: false
+  speed 3.5, count 5, pos 1.0 2.0 3.0, lives 3
+  speed 3.75, count 5, pos 1.0 2.0 3.0, lives 3
+  speed 10.0, count 5, pos 1.0 2.0 3.0, lives 3
+  speed 10.0, count 1, pos 1.0 2.0 3.0, lives 3
+cursor over a field: true
+  speed 10.0, count 3, pos 1.0 2.0 3.0, lives 3
+editing: true, text "10.00"
+typed 4.5: editing false
+  speed 4.5, count 3, pos 1.0 2.0 3.0, lives 3
+escaped: editing false
+  speed 4.5, count 3, pos 1.0 2.0 3.0, lives 3
+clicked away: editing false
+  speed 3.33, count 3, pos 1.0 2.0 3.0, lives 3
+  speed 3.33, count 3, pos 1.0 4.0 3.0, lives 3
+tags: true true true false
+  speed 3.33, count 3, pos 1.0 4.0 3.0, lives 5
+tree: world true, player true, sword false
+arrow: sword true, chosen -1
+  indented: true, leaf lined up with a node: true
+double click: sword false, chosen 1
+right: sword true
+left: sword false
+left again: on world true
+world closed: player false
+opened after 200 frames: sword true

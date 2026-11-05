@@ -15,61 +15,55 @@ item here, by its title, at each workaround.
     Godot and Blender.
 
     Done: windows (moved, resized, collapsed, closed, raised by a press;
-    `examples/windows.goose`), the dense theme `theme_dev()`, and context
-    menus. Left of them: a window raised when navigation moves the focus
-    into it; a context menu opened from the keyboard or a pad (Shift+F10,
-    the menu key, a button); the pointer's shape from gfx, once it has
-    cursor shapes (`cursor()` says which).
-
-    Almost every developer UI needs these too:
-    1. Property rows: a label on the left and its widget on the right, the
-       labels as wide as each other in a window.
-    2. Collapsing headers and tree nodes: an arrow, an indent, leaves,
-       selected rows; Left and Right close and open them. For an
-       inspector's sections and a scene's hierarchy.
-    3. Number fields: dragged sideways to change (finer with Shift, coarser
-       with Alt), double-clicked or Ctrl-clicked to type in, clamped,
-       formatted, for each number type; a form with step buttons; and
-       vectors of two to four, their parts tagged X, Y, Z, W in color.
+    `examples/windows.goose`), the dense theme `theme_dev()`, context
+    menus, property rows, collapsing headers and trees, and number fields
+    (dragged, typed in, stepped; vectors). Left of them:
+    - a window raised when navigation moves the focus into it;
+    - a context menu opened from the keyboard or a pad (Shift+F10, the
+      menu key, a button);
+    - the pointer's shape from gfx, once it has cursor shapes (`cursor()`
+      says which);
+    - step buttons that repeat while held; a number field with a unit
+      ("ms"); a tree's open and close animated, as a window's roll is.
 
     Common in tools:
-    4. Plots, on canvases: lines from an array or a rolling buffer (frame
+    1. Plots, on canvases: lines from an array or a rolling buffer (frame
        times), bars, a fixed or fitted range, the value under the pointer,
        and a small sparkline.
-    5. A color field: a swatch that opens a picker, with a saturation and
+    2. A color field: a swatch that opens a picker, with a saturation and
        value square, hue and alpha bars, and RGB, HSV and hex fields.
-    6. Tables: a header, columns resized by dragging their edges, sorting by
+    3. Tables: a header, columns resized by dragging their edges, sorting by
        a header's click (the program sorts, by the order handed back),
        striped and selected rows, a header that stays as the rows scroll,
        and only the rows in view recorded. Reordering and hiding columns
        later.
-    7. A list clipper, recording only the rows of a long list that are in
+    4. A list clipper, recording only the rows of a long list that are in
        view, and selecting several rows with Shift and Ctrl, in lists, trees
        and tables.
-    8. A log and a console: lines that stay scrolled to the newest unless
+    5. A log and a console: lines that stay scrolled to the newest unless
        scrolled back, colored by level, filtered, copied; a command line
        with its history on Up and Down.
-    9. Splitters and side panels: panes resized by dragging the line
+    6. Splitters and side panels: panes resized by dragging the line
        between them.
-    10. Docking: windows dragged by their titles onto a dock space, to a
-        side of a pane (splitting it) or its middle (a tab with the others
-        there), and dragged out again to float. The dock space is a tree of
-        splits that lasts. It builds on windows, splitters, tabs, and drag
-        and drop. It is last of these only because an overlay seldom needs
-        it; an editor always does.
+    7. Docking: windows dragged by their titles onto a dock space, to a
+       side of a pane (splitting it) or its middle (a tab with the others
+       there), and dragged out again to float. The dock space is a tree of
+       splits that lasts. It builds on windows, splitters, tabs, and drag
+       and drop. It is last of these only because an overlay seldom needs
+       it; an editor always does.
 
     Useful, less often:
-    11. Layouts saved and loaded: where the windows are, which are open,
-        and the dock tree, in a file.
-    12. Multi-line text editing (under Text, below).
-    13. Small pieces: small and icon buttons, toolbars and a status bar, a
+    8. Layouts saved and loaded: where the windows are, which are open,
+       and the dock tree, in a file.
+    9. Multi-line text editing (under Text, below).
+    10. Small pieces: small and icon buttons, toolbars and a status bar, a
         label and its value, bullets, links, a spinner, vertical, angle
         and range sliders, a knob.
-    14. An image viewer: a texture panned and zoomed, with a pixel grid and
+    11. An image viewer: a texture panned and zoomed, with a pixel grid and
         the value under the pointer.
-    15. imgui's own tools: a window of its nodes, the one under the pointer
+    12. imgui's own tools: a window of its nodes, the one under the pointer
         outlined, with counts and timings; a style editor.
-    16. A memory viewer in hex, and a profiler's timeline (an example on a
+    13. A memory viewer in hex, and a profiler's timeline (an example on a
         canvas more than a widget).
 
     Not planned: windows of the OS's own (gfx has one), a code editor,

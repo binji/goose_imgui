@@ -96,7 +96,9 @@ fn insert_text<A>(buf: A&, at: i64, s: const u8[:], max_len: i64) -> i64 {
 }
 
 fn text_input<A>(label: const u8[:], buf: A&, d: Desc = row(), max_len: i64 = 256, placeholder: const u8[:] = "") -> TextEdit {
-    let i = id(label);
+    text_input(id(label), buf, d, max_len, placeholder)
+}
+fn text_input<A>(i: Id, buf: A&, d: Desc = row(), max_len: i64 = 256, placeholder: const u8[:] = "") -> TextEdit {
     let rd = clickable(d.skin(INPUT).with_bits(CAPTURE_X).align(CENTER)).clip();
     let it = interact(i, rd);
     var st = state_of(i.v);

@@ -479,6 +479,36 @@ spills past the box.
   on the widget it is given. A right press anywhere else closes the menus,
   as a left one does.
 
+## Developers' widgets
+
+- **Property rows** are a grid of two columns, the labels' fit and the
+  widgets' grow, so a group lines up without the program measuring
+  anything. Each window keeps its widest label from the frame before (a
+  label's width is known as it is recorded), and every group in it takes
+  that as its labels' column's least width, so groups under different
+  headers line up too.
+- A property's label is centered down its cell in a column of its own,
+  and its widget's cell stretches across with the widget centered down
+  it: a grid cell's `self_align` would center it both ways.
+- **Open state** of headers and tree nodes is kept in a dictionary of its
+  own, never swept. Widget state is dropped after 120 frames unseen, and
+  the nodes inside a closed one aren't recorded, so they would forget
+  that they were open.
+- A tree node's row takes Left and Right (`CAPTURE_X`): Right opens, Left
+  closes, or, on a closed node or a leaf, moves the focus to its parent,
+  found from the open nodes recorded around it.
+- **Number fields** change by the pointer's movement each frame, not by
+  where it was pressed, so pressing or letting go of Shift mid-drag
+  changes the rate from there on without a jump. The value before
+  rounding is kept in the widget's state as an `f64` (a slider's `f32` is
+  too coarse for a double), so slow drags of whole numbers add up.
+- Typing in one swaps the field for a `text_input` of one buffer shared
+  by all of them, as only one has the keyboard at a time. A click that
+  didn't drag starts it, as in Blender, rather than a double click or
+  Ctrl-click: easier to find, and a drag is never mistaken for it.
+- `Input.mods` is new: the modifiers held, not only those pressed with a
+  key, which a drag needs.
+
 ## Rich text
 
 - `rich(s)` reads BBCode-like markup (`[dmg]20[/]`, `[img=coin]`) rather
@@ -594,6 +624,7 @@ spills past the box.
 | `widgets.goose` | buttons, toggles, sliders and the rest |
 | `scroll.goose`, `popup.goose`, `text_input.goose` | the larger widgets |
 | `window.goose` | windows: their own roots, kept state and order |
+| `devwidgets.goose` | property rows, collapsing headers, trees, number fields |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

@@ -123,7 +123,13 @@ let WINDOW_TITLE = StyleClass { 44 };   // its title bar; checked while it is th
 let WINDOW_BODY = StyleClass { 45 };    // its content's pane: padding and gap
 let WINDOW_BUTTON = StyleClass { 46 };  // the collapse and close buttons in the title bar
 let RESIZE_GRIP = StyleClass { 47 };    // an edge or corner dragged to resize; its min_size.x is its thickness
-let CLASS_COUNT = 48;
+let HEADER = StyleClass { 48 };         // a collapsing header's row
+let TREE_ROW = StyleClass { 49 };       // a tree node's row (checked: selected)
+let TREE = StyleClass { 50 };           // a tree node's children: its left padding is the indent
+let NUMBER = StyleClass { 51 };         // a number field, dragged or typed in
+let PROPERTIES = StyleClass { 52 };     // a grid of properties: its gap
+let PROPERTY_LABEL = StyleClass { 53 }; // a property's label
+let CLASS_COUNT = 54;
 
 // The registry: the light theme to start with. Built by a global's
 // initializer, not on first use, so that no widget can reach the shrink a
@@ -550,6 +556,25 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     grip.hover.bg = gfx2d::with_alpha(p.accent, 0.35);
     grip.active.bg = gfx2d::with_alpha(p.accent, 0.6);
     classes[RESIZE_GRIP.index] = grip;
+
+    // Developers' widgets.
+    var hdr = clickable(Style { bg: p.raised, radius: r, padding: sp4(10.0, 6.0), gap: 6.0 * sp, ink: p.ink },
+                        p.hover, p.pressed);
+    hdr.active.zoom = 1.0;
+    classes[HEADER.index] = hdr;
+    var tr = clickable(Style { radius: r, padding: sp4(6.0, 3.0), gap: 4.0 * sp, ink: p.ink }, p.hover, p.pressed);
+    tr.active.zoom = 1.0;
+    tr.checked.bg = gfx2d::with_alpha(p.accent, 0.2);
+    tr.checked.ink = p.accent_hover;
+    classes[TREE_ROW.index] = tr;
+    classes[TREE.index] = style_set(Style { padding: float4 { p.text_size, 0.0, 0.0, 0.0 } });
+    var num = clickable(Style { bg: p.raised, border: p.line, border_width: 1.0, radius: r,
+                                padding: pad4(8.0 * sp, p.padding.y), gap: 4.0 * sp, ink: p.ink,
+                                min_size: float2 { 48.0, p.control + p.padding.y } }, p.hover, p.pressed);
+    num.active.zoom = 1.0;
+    classes[NUMBER.index] = num;
+    classes[PROPERTIES.index] = style_set(Style { gap: 8.0 * sp });
+    classes[PROPERTY_LABEL.index] = style_set(Style { ink: p.ink });
     classes
 }
 

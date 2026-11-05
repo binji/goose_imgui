@@ -71,6 +71,7 @@ struct WidgetState {
     content: float2 = float2 { 0.0, 0.0 },     // a scroll pane's content and view sizes, last frame
     view: float2 = float2 { 0.0, 0.0 },
     value: f32 = 0.0,
+    num: f64 = 0.0,                 // a number field's value as it is dragged, before rounding
     open: bool = false,
     index: i32 = -1,                // its place among its owner's: a tab's index
     owner: u64 = 0,

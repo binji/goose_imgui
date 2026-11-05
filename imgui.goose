@@ -53,6 +53,7 @@ import textfx;
 import events;
 import pixel;
 import window;
+import devwidgets;
 
 // --- frames ---------------------------------------------------------------------------
 

@@ -68,8 +68,9 @@ The examples each show one part:
 - `pixel`: a shop in pixel-art mode: the pixel font and theme, sprites
   drawn nearest at twice their size, slots framed by a nine-slice;
 - `windows`: developer windows over a running scene, in the dense dev
-  theme: moved, resized, collapsed, closed and raised, with a context
-  menu on each entity;
+  theme: moved, resized, collapsed, closed and raised; a tree of the
+  scene's entities, each with a context menu; an inspector of the one
+  selected, of property rows, number fields and collapsing headers;
 - `dialogue`: a speaker's portrait and name, and rich text typed out a
   character at a time, each letter popping in, with spans that wave, glow,
   shake, shiver (an effect of the program's own) and cycle their hue.
@@ -242,7 +243,9 @@ The classes are:
 - INPUT, CARET, SELECTION, DROPDOWN;
 - WINDOW, WINDOW_TITLE (checked while its window is in front),
   WINDOW_BODY, WINDOW_BUTTON, RESIZE_GRIP (its `min_size.x` is how thick
-  the grips are).
+  the grips are);
+- HEADER, TREE_ROW (checked: selected), TREE (its left padding is the
+  indent), NUMBER, PROPERTIES (its gap), PROPERTY_LABEL.
 
 ## Pixel art
 
@@ -368,6 +371,37 @@ A window is a root of its own:
 | `set_window_show(m, zoom = 0.95)`, `set_window_show(enter, exit)` | windows fade and grow from `zoom` of their size as they show (opened, or first recorded), and fade and shrink as they hide (closed, or no longer recorded), by `m`; or any `Enter` and `Exit`. Off (instant) by default. Hiding plays on a copy of the window as it was last drawn, in its place among the windows, taking no input; a window showing or hiding is drawn in a layer, so its parts don't show through each other. With it on, each window is copied every frame, as anything with an exit is: what of it is on the screen, not what is scrolled away. Set once at the start: set on windows already showing, their enter plays |
 | `set_window_roll(m)` | windows roll up into their title bars as they collapse, and down as they open, by `m` (a tween or a spring); `INSTANT`, the default, doesn't roll. The body keeps its height and is cut off at the bottom, its content still recorded until it has rolled away |
 | `cursor() -> i64` | the pointer's shape the UI wants, `CURSOR_DEFAULT` or a grip's `CURSOR_EW_RESIZE`, `NS`, `NWSE`, `NESW`, numbered as gfx's are. gfx v1 has no cursor shapes; a program on a gfx that does passes it on |
+
+## Developers' widgets
+
+```goose
+imgui::collapsing("Transform", imgui::column(), true) {
+    imgui::properties() {
+        imgui::property("Position") { imgui::drag_vec("", pos); };
+        imgui::property("Speed") { imgui::drag_number("", speed, imgui::Drag { lo: 0, hi: 10, decimals: 2 }); };
+        imgui::property("Lives") { imgui::input_number("", lives, imgui::Drag { lo: 0, hi: 9 }); };
+    };
+};
+let it = imgui::tree_node("Enemies", chosen == -1) {
+    for e, k in enemies { if imgui::tree_leaf(e.name, chosen == k).activated { chosen = k; } }
+};
+```
+
+| | |
+|---|---|
+| `properties([d]) { property(label) { … }; … }` | rows of a label and its widget: a grid, its labels' column as wide as the widest label in the window (in any `properties` there, from the frame before), the widgets as wide as the rest. A property's block is under its label's ID, so its widget can be labelled `""`. Outside `properties`, a row of its own |
+| `collapsing(label[, d][, open_at_first]) { … } -> bool` | a header that shows its block while open: clicked, or Right and Left while focused. True while open |
+| `tree_node(label[, selected][, open_at_first]) { … } -> Interaction` | an arrow and a label, its children (the block) indented under it while it is open. The arrow or a double click opens and closes it; Right opens it, Left closes it or goes up to its parent. Its row's interaction is the result: `activated` to select it, or for `tooltip` and `context_menu` |
+| `tree_leaf(label[, selected]) -> Interaction` | a node with no children, lined up with its siblings' labels |
+| `is_open_node(label)`, `set_open(label, on)`, `set_open(id, on)` | a header's or tree node's open state, in the scope it is recorded in. It lasts as long as the program, so a node inside a closed one keeps its own |
+| `drag_number(label, v[, Drag][, d]) -> bool` | `f64`, `f32`, `i64`, `i32`. Dragged sideways (finer with Shift, coarser with Alt), Left and Right by its step while focused; a click without a drag, or Enter, types in it: Enter or a click elsewhere keeps what was typed (clamped), Escape doesn't. True the frame it changes |
+| `input_number(label, v[, Drag][, d]) -> bool` | the same between − and + buttons, which step it |
+| `drag_vec(label, v[, Drag][, d]) -> bool` | a `float2`, `float3` or `float4`: a field for each part, tagged X, Y, Z, W in red, green, blue and gold |
+| `Drag { speed, lo, hi, decimals, step }` | `speed`: the change a pixel dragged (0: a 200th of the range, else 0.1, or 0.2 for whole numbers); `lo` and `hi`: its range; `decimals`: shown and kept to (-1: 3, or 0 for whole numbers); `step`: Left, Right and the buttons (0: 1 for whole numbers, else ten pixels' worth) |
+| `format_fixed(out, v, decimals)` | `v` written with that many digits after the point |
+
+`Input.mods` holds the `MOD_SHIFT`, `MOD_CTRL` and `MOD_ALT` held this
+frame (from gfx in `input_from_gfx`).
 
 ## Canvases
 
@@ -578,6 +612,12 @@ The tests are in three groups:
     collapsed and opened, closed and opened again in front, a press over
     two windows reaching the front one only, a context menu, rolling up
     and down, hiding (a copy in its place, taking no input) and showing;
+  - `devwidgets`: property rows lined up, in one group and across two; a
+    collapsing header; a tree opened and closed by its arrow, a double
+    click and the keys, Left going up to the parent, open nodes kept while
+    hidden; number fields dragged (finer with Shift), clamped, stepped by
+    the keys and the buttons, typed in (Enter keeps, Escape doesn't, a
+    click elsewhere keeps), a vector's parts;
   - `events`: UI events for sounds: a hover once and only by moving, a
     press, an activation, a denial, focus shown by navigation, slider
     ticks with and without steps, tabs, popups opening and closing, back.

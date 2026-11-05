@@ -55,6 +55,7 @@ struct Input {
     text: u8[..256] = [],           // typed (and pasted) this frame, UTF-8
     keys: EditKey[..32] = [],
     chords: Chord[..16] = [],       // keys pressed with Ctrl, Alt or Cmd: for shortcut()
+    mods: u8 = 0,                   // the MOD_ bits held now: a number field dragged finer or coarser
     viewport: float2 = float2 { 0.0, 0.0 },     // the UI's size; 0: keep the last
     from_gfx: bool = false,         // made by input_from_gfx: the frame gives gfx back text input and the clipboard
 }
@@ -378,6 +379,10 @@ fn input_from_gfx() -> Input {
     inp.pointer.pressed = gfx::mouse_pressed(gfx::MOUSE_LEFT);
     inp.pointer.released = gfx::mouse_released(gfx::MOUSE_LEFT);
     inp.pointer.secondary = gfx::mouse_pressed(gfx::MOUSE_RIGHT);
+    if gfx::key_down("Left Shift") || gfx::key_down("Right Shift") { inp.mods |= MOD_SHIFT; }
+    if gfx::key_down("Left Ctrl") || gfx::key_down("Right Ctrl") || gfx::key_down("Left GUI") ||
+       gfx::key_down("Right GUI") { inp.mods |= MOD_CTRL; }
+    if gfx::key_down("Left Alt") || gfx::key_down("Right Alt") { inp.mods |= MOD_ALT; }
     let size = gfx::screen_size();
     inp.viewport = float2 { size.x / scale, size.y / scale };
     var wheel = float2_0;
