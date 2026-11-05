@@ -628,6 +628,18 @@ spills past the box.
   floating dock's windows just over it, among the floating windows.
 - A window docked by a drag is recorded docked the frame it is let go,
   not a frame later: a frame with nothing recorded would play its hiding.
+- **A saved layout** is what lives outside widgets' states, which go when
+  a widget isn't recorded for a while: the windows, the dock nodes, the
+  panes' fractions (moved into a dictionary of their own for it) and the
+  headers' open states. IDs are written as 16 hex digits, since JSON's
+  numbers are f64s. Dock nodes are written by index, unused ones too, so
+  the links between them and from windows stay as they are; each space's
+  root is the used node with no parent, and the floating docks are the
+  windows marked as hosts, so neither is written. Everything is read and
+  checked (the links in range, each split's children naming it as their
+  parent, windows docked in leaves) before anything is replaced. Loaded
+  windows are marked as never called, so the first call doesn't raise
+  them as it does a window new to the program.
 - **Plots** are canvases: a plot is the values drawn, and the readout
   under the pointer is drawn too, not a tooltip, so it follows the
   pointer at once. `f32` values are copied into a scratch `f64` array, so
@@ -764,6 +776,7 @@ spills past the box.
 | `log.goose` | logs (a ring of lines), log views and consoles |
 | `split.goose` | splitters: panes and the handles between them |
 | `dock.goose` | dock spaces: a tree of splits whose leaves hold windows as tabs |
+| `save.goose` | layouts saved and loaded, as JSON |
 | `examples/` | programs, each a root file |
 | `test/` | `run_tests.py`: `pure/` (layout, input, motion; no GPU) and `headless/` (drawn and read back) |
 | `bench/` | `bench.goose` |

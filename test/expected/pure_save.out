@@ -1,0 +1,43 @@
+saved:
+  A docked 0.0 112.0 149.0 368.0; B 154.0 112.0 347.0 368.0
+  C 560.0 100.0 150.0 31.0 collapsed true; D 580.0 300.0 150.0 100.0; in front C
+  left pane 240.0; Section open true
+the same text twice: true
+{"version":1,
+"windows":[
+{"id":"de0ea443462c0487","title":"B","x":0.0,"y":0.0,"w":0.0,"h":0.0,"collapsed":false,"dock":1,"host":false,"open":true},
+{"id":"6aaa902b3412107a","title":"A","x":0.0,"y":0.0,"w":0.0,"h":0.0,"collapsed":false,"dock":2,"host":false,"open":true},
+{"id":"fdcbf41c07f47750","title":"D","x":580.0,"y":300.0,"w":150.0,"h":100.0,"collapsed":false,"dock":-1,"host":false,"open":true},
+{"id":"a6189114ae8801fc","title":"Shut","x":600.0,"y":450.0,"w":100.0,"h":60.0,"collapsed":false,"dock":-1,"host":false,"open":false},
+{"id":"cd4c50a299e17f62","title":"C","x":560.0,"y":100.0,"w":150.0,"h":100.0,"collapsed":true,"dock":-1,"host":false,"open":true}],
+"dock":[
+{"used":true,"space":"2a6eb16dbcd02472","parent":-1,"axis":0,"ratio":0.30000001192092896,"a":2,"b":1},
+{"used":true,"space":"2a6eb16dbcd02472","parent":0,"tabs":["de0ea443462c0487"],"selected":"de0ea443462c0487","hide_tabs":false},
+{"used":true,"space":"2a6eb16dbcd02472","parent":0,"tabs":["6aaa902b3412107a"],"selected":"6aaa902b3412107a","hide_tabs":false}],
+"panes":[
+{"id":"077c705af4202282","fraction":0.3}],
+"open":[
+{"id":"1957a16056a05a1e","open":true}]}
+
+changed:
+  A floating 16.0 96.0 160.0 400.0; B 0.0 112.0 500.0 368.0
+  C 20.0 500.0 200.0 80.0 collapsed false; D 580.0 300.0 150.0 100.0; in front D
+  left pane 480.0; Section open false
+loaded: true 
+  A docked 0.0 112.0 149.0 368.0; B 154.0 112.0 347.0 368.0
+  C 560.0 100.0 150.0 31.0 collapsed true; D 580.0 300.0 150.0 100.0; in front C
+  left pane 240.0; Section open true
+  Shut was open false; one not in it true
+refused true: json: expected '{' at byte 24
+refused true: layout: version 2, not 1
+refused true: layout: dock node 0 links outside the tree
+refused true: layout: an ID that isn't 16 hex digits
+refused true: layout: dock node 0's split is broken
+after them:
+  A docked 0.0 112.0 149.0 368.0; B 154.0 112.0 347.0 368.0
+  C 560.0 100.0 150.0 31.0 collapsed true; D 580.0 300.0 150.0 100.0; in front C
+  left pane 240.0; Section open true
+saved to a file true
+read back true, A docked true
+no file: false
+shown after loading: in front C true

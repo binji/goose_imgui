@@ -9,7 +9,8 @@
 // collapsing headers, a color for each; a table of them, sorted by its
 // headers, its rows selected by clicks (Ctrl and Shift for more); a plot
 // of frame times and a histogram of them; a console that logs slow frames
-// and selections, and takes commands (type help).
+// and selections, and takes commands (type help). The Layout menu saves
+// where everything is to windows_layout.json, and loads it back.
 //
 //   goose examples/windows.goose [-- --theme dev-light|light|dark|game]
 import std;
@@ -20,6 +21,7 @@ import gfx2d from "../../goose_gfx2d";
 import imgui from "..";
 import .common;
 
+let LAYOUT_FILE = "windows_layout.json";
 var show_tweaks = true;
 var show_stats = true;
 var show_scene = true;
@@ -158,6 +160,25 @@ fn ui() {
                 imgui::menu_check("Inspector", show_inspector);
                 imgui::menu_check("Entities", show_entities);
                 imgui::menu_check("Console", show_console);
+            };
+            // The layout, in a file beside where it runs.
+            imgui::menu("Layout") {
+                if imgui::menu_item("Save") {
+                    if imgui::save_layout(LAYOUT_FILE) { imgui::log(log, "layout saved to windows_layout.json"); }
+                }
+                if imgui::menu_item("Load") {
+                    if imgui::load_layout(LAYOUT_FILE) {
+                        show_tweaks = imgui::layout_open("Tweaks", show_tweaks);
+                        show_stats = imgui::layout_open("Stats", show_stats);
+                        show_scene = imgui::layout_open("Scene", show_scene);
+                        show_inspector = imgui::layout_open("Inspector", show_inspector);
+                        show_entities = imgui::layout_open("Entities", show_entities);
+                        show_console = imgui::layout_open("Console", show_console);
+                        imgui::log(log, "layout loaded");
+                    } else {
+                        imgui::log(log, "no layout in windows_layout.json", imgui::LOG_WARN);
+                    }
+                }
             };
         };
         // The windows dock here; the scene is in one of them.

@@ -28,6 +28,8 @@ import std;
 import vec;
 import math;
 import dictionary;
+import json;
+import os;
 import gfx;
 import gfx2d;
 import context;
@@ -59,6 +61,7 @@ import table;
 import log;
 import split;
 import dock;
+import save;
 
 // --- frames ---------------------------------------------------------------------------
 

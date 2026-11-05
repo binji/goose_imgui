@@ -98,6 +98,10 @@ fn raise_window_id(id: u64) {
     }
     if found { window_order[window_order.len - 1] = id; } else { window_order.push(id); }
 }
+fn in_window_order(id: u64) -> bool {
+    for w in window_order { if w == id { return true; } }
+    false
+}
 fn raise_window(title: const u8[:]) { raise_window_id(id(title).v); }
 
 // Where window `title` was drawn last frame.
@@ -178,6 +182,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     var w = window_state(wid.v);
     let last_st = state_of(wid.v);
     let last = last_st.rect;
+    let never_called = w.called < 0;
     w.called = frame_index;
     w.closable = closable;
     w.title.clear();
@@ -201,8 +206,9 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         w.size = float2 { if d.dim.w.kind == SIZE_PX { d.dim.w.value } else { 0.0 },
                           if d.dim.h.kind == SIZE_PX { d.dim.h.value } else { 0.0 } };
         raise_window_id(wid.v);
-    } else if last_st.seen < frame_index - 1 {
-        // Opened again: in front.
+    } else if last_st.seen < frame_index - 1 && !(never_called && in_window_order(wid.v)) {
+        // Opened again: in front. (Not one a layout loaded, which keeps its
+        // place.)
         raise_window_id(wid.v);
     }
     let has_title = flags & WINDOW_NO_TITLE == 0;

@@ -537,6 +537,34 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
 | `set_dock_preview(window[, m])` | while a dragged window is on a target, the window itself drawn in the area it would take (`true`), or that area outlined (`false`, the default); with `m`, it moves between the pointer and the target |
 | `set_tab_slide(m)` | tabs slide to their places by `m` (a tween or a spring) as a dragged tab passes them, and the dragged one when it is let go; `INSTANT`, the default, jumps |
 
+## Saving the layout
+
+```goose
+// At the start: the layout from last time, or one made in code.
+if !imgui::load_layout("layout.json") {
+    imgui::dock_window("Scene", "dock", imgui::DOCK_LEFT, 0.2);
+}
+show_log = imgui::layout_open("Log", true);
+// On the way out:
+imgui::save_layout("layout.json");
+```
+
+A layout is where the windows are and how big, which are collapsed and
+which were open, their order front to back, every dock space's tree
+(floating docks too), the panes' fractions, and which headers and tree
+nodes are open. It is JSON. Windows and the rest are kept by their IDs, so
+a layout fits a program whose labels are the same; a window it doesn't
+name keeps its place, floating. Windows first shown after it is loaded
+keep its order, rather than coming to the front as they first show.
+Tables' column widths aren't in it.
+
+| | |
+|---|---|
+| `save_layout(path) -> bool` | the layout written to the file at `path` (a new file beside it, renamed over it, so a failed write leaves the old one) |
+| `load_layout(path) -> bool` | the layout in the file in place of this one; false, and nothing changed, if there is no file or it isn't a layout (which is reported, as misuse is) |
+| `layout_json(out&)`, `load_layout_json(text) -> bool, error` | the same, as text: appended to `out`; read from `text`, with what is wrong if it isn't a layout (malformed, another version, an ID that isn't one, dock links out of range or a broken split) |
+| `layout_open(title, fallback) -> bool` | whether window `title` was open when the layout was saved; `fallback` if it isn't in it, or none was loaded. The program owns a closable window's open flag, so it starts it from this |
+
 ## Logs and consoles
 
 ```goose
@@ -806,6 +834,11 @@ The tests are in three groups:
     dragged, moving the pane before and, if it has a fraction, the one
     after; a pane no less than its least; a split in a pane; the split
     resized, its panes keeping their fractions;
+  - `save`: a layout saved and loaded, all of it changed in between:
+    docked and floating windows, a collapsed one, the order, a pane, an
+    open header, a closed window's flag; the text the same saved twice;
+    bad layouts refused, nothing changed; a file; windows first shown
+    after loading keeping its order;
   - `dock`: a layout made in code, each body in its leaf; tabs, one shown,
     another clicked, one dragged past another, and again with a slide, under
     the pointer as it goes; the shown tab the bar's one stop, Left and Right

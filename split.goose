@@ -12,6 +12,7 @@ namespace imgui;
 import std;
 import vec;
 import math;
+import dictionary;
 import gfx2d;
 
 struct SplitCtx {
@@ -28,18 +29,16 @@ var split_stack: SplitCtx[>..<] = [];
 
 let PANE_LEAST: f32 = 32.0;     // the least a pane is, along the split
 
-// A pane's fraction of the split's length, kept in its state: `num`, and
-// `open` once it has one (0: it shares what the others leave).
+// Each pane's fraction of its split's length, once it has one (none: it
+// shares what the others leave). Kept apart from its state, which goes
+// when the pane isn't recorded for a while, and saved with the layout.
+var pane_fractions = dictionary<u64, f64> {};
 fn pane_fraction(i: u64, at_first: f64) -> f64 {
-    let s = state_of(i);
-    if s.open { s.num } else { at_first }
+    let f = pane_fractions.get(i);
+    if f { return f; }
+    at_first
 }
-fn set_pane_fraction(i: u64, f: f64) {
-    var s = state_of(i);
-    s.num = f;
-    s.open = true;
-    put_state(i, s);
-}
+fn set_pane_fraction(i: u64, f: f64) { pane_fractions.insert(i, f); }
 
 // Panes along `axis` (ROW: side by side; COLUMN: one above another), each
 // recorded by pane(…) in the block, a handle between each two.
@@ -126,7 +125,7 @@ fn pane<F>(label: const u8[:], fraction: f64 = 0.0, d: Desc = column()) {
     }
     // Its fraction to start with, kept: the split reads it before the
     // panes are recorded.
-    if !state_of(i.v).open && fraction > 0.0 { set_pane_fraction(i.v, fraction); }
+    if !pane_fractions.contains(i.v) && fraction > 0.0 { set_pane_fraction(i.v, fraction); }
     let f = pane_fraction(i.v, fraction);
     let index = ctx.count;
     // Its length: its fraction's, or its share; or it grows: the last

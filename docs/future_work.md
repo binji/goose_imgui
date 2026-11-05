@@ -21,7 +21,7 @@ item here, by its title, at each workaround.
     sparklines), colors (a swatch, a picker, a field), row lists
     recording only the rows in view, rows selected with Ctrl and Shift,
     tables (resized, sorted, striped, selected), logs and consoles,
-    splitters, and docking.
+    splitters, docking, and layouts saved and loaded.
     Left of them:
     - a window raised when navigation moves the focus into it;
     - a context menu opened from the keyboard or a pad (Shift+F10, the
@@ -42,19 +42,18 @@ item here, by its title, at each workaround.
     - plots of several series, with a legend, axes marked along the
       bottom, zoomed and panned (as implot does); a picker's palette of
       recent colors.
+    - a saved layout: tables' column widths in it too.
 
     Useful, less often:
-    1. Layouts saved and loaded: where the windows are, which are open,
-       and the dock tree, in a file.
-    2. Multi-line text editing (under Text, below).
-    3. Small pieces: small and icon buttons, toolbars and a status bar, a
+    1. Multi-line text editing (under Text, below).
+    2. Small pieces: small and icon buttons, toolbars and a status bar, a
        label and its value, bullets, links, a spinner, vertical, angle
        and range sliders, a knob.
-    4. An image viewer: a texture panned and zoomed, with a pixel grid and
+    3. An image viewer: a texture panned and zoomed, with a pixel grid and
        the value under the pointer.
-    5. imgui's own tools: a window of its nodes, the one under the pointer
+    4. imgui's own tools: a window of its nodes, the one under the pointer
        outlined, with counts and timings; a style editor.
-    6. A memory viewer in hex, and a profiler's timeline (an example on a
+    5. A memory viewer in hex, and a profiler's timeline (an example on a
        canvas more than a widget).
 
     Not planned: windows of the OS's own (gfx has one), a code editor,
