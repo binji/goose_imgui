@@ -54,6 +54,10 @@ fn move_to(p: float2) {
     at = p;
     run_frame(imgui::Pointer { pos: at, down: true, .. });
 }
+fn nav(n: imgui::NavInput) {
+    imgui::frame(imgui::Input { pointer: imgui::Pointer { pos: at, .. }, nav: n, viewport: float2 { 800.0, 600.0 }, .. }, 1.0 / 60.0) { ui(); };
+    step();
+}
 fn step_down() { run_frame(imgui::Pointer { pos: at, down: true, .. }); }
 fn release() { run_frame(imgui::Pointer { pos: at, released: true, .. }); step(); }
 fn mid(r: gfx2d::Rect) -> float2 { float2 { r.x + r.w * 0.5, r.y + r.h * 0.5 } }
@@ -132,6 +136,22 @@ fn main() {
     release();
     click_at(tab("B"));
     print("D back: ", tabs_of("B"));
+    // The keys: the shown tab (B) the bar's one stop; right from it, round
+    // from the end, D shown and focused; left, B again.
+    var stops = 0;
+    for f in imgui::focusables {
+        if f.bits & imgui::NAV_SKIP != 0 { continue; }
+        if f.id == imgui::sub_id(imgui::id("B"), "tab").v || f.id == imgui::sub_id(imgui::id("D"), "tab").v { stops++; }
+    }
+    print("tab stops in B's bar: ", stops);
+    imgui::focus(imgui::sub_id(imgui::id("B"), "tab"), true);
+    nav(imgui::NavInput { right: true, .. });
+    print("right: shown D ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("D").v, ", focused ",
+          imgui::is_focused(imgui::sub_id(imgui::id("D"), "tab")));
+    nav(imgui::NavInput { left: true, .. });
+    print("left: shown B ", imgui::dock_nodes[leaf_of("B")].selected == imgui::id("B").v, ", focused ",
+          imgui::is_focused(imgui::sub_id(imgui::id("B"), "tab")));
+    imgui::blur();
     // A's button, docked.
     var bid = imgui::Id { 0 };
     for n, i in imgui::nodes { if n.kind == imgui::NODE_TEXT && imgui::node_text(i as i32) == "Press" { bid = imgui::Id { imgui::nodes[n.parent].id }; } }

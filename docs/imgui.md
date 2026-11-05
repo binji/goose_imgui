@@ -514,7 +514,9 @@ A dock space is a tree of splits, whose leaves each hold windows as tabs:
 - **Tabs:** clicked, the window is shown; dragged along the bar, it
   follows the pointer, over the others, and once its edge is past the
   middle of the tab beside it, the two change places (the other sliding,
-  with `set_tab_slide`). A window that can
+  with `set_tab_slide`). From the keys, the shown tab is the bar's one
+  stop (Tab reaches it); Left and Right show the tab beside it, round from
+  the ends, and the focus goes with it. A window that can
   close has a close button on its tab; closed, it keeps its place, for
   when it is opened again. A window not recorded (closed, or not called
   for) has no tab. Tabs that don't fit are cut off, the one shown first,
@@ -804,7 +806,8 @@ The tests are in three groups:
     resized, its panes keeping their fractions;
   - `dock`: a layout made in code, each body in its leaf; tabs, one shown,
     another clicked, one dragged past another, and again with a slide, under
-    the pointer as it goes; a button in a docked
+    the pointer as it goes; the shown tab the bar's one stop, Left and Right
+    showing the tabs beside it; a button in a docked
     window; the handle between two leaves; a tab dragged out, floating,
     still held; a floating window dragged over a leaf, its targets shown,
     let go off them and on one (the area shown first), docked; a target by

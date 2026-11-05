@@ -523,6 +523,32 @@ fn dock_space_of(i: Id, d: Desc) {
             var order: u64[..8] = [];
             if over && tab_live(sel) { order.push(sel); }
             for w in n.tabs { if tab_live(w) && !(over && w == sel) { order.push(w); } }
+            // Left or right on the shown tab, focused: the tab beside it
+            // shown, and focused, round from the ends. (In the bar's order,
+            // not as drawn: a full bar draws the shown one first.)
+            if tab_live(sel) {
+                let it = interact(tab_id(sel), tab_desc(true));
+                if it.focused && it.nav.x != 0 {
+                    var live: u64[..8] = [];
+                    var at = 0;
+                    for w in n.tabs {
+                        if !tab_live(w) { continue; }
+                        if w == sel { at = live.len; }
+                        live.push(w);
+                    }
+                    let next = live[(at + it.nav.x + live.len) % live.len];
+                    if next != sel {
+                        sel = next;
+                        dock_nodes[k].selected = next;
+                        focus(tab_id(next), true);
+                        if over {
+                            order.clear();
+                            order.push(sel);
+                            for w in n.tabs { if tab_live(w) && w != sel { order.push(w); } }
+                        }
+                    }
+                }
+            }
             // A tab dragged along the bar: drawn over the others, after them,
             // a gap where it goes. (Not while the bar is full: the one shown
             // goes first there.)
@@ -607,7 +633,12 @@ fn tab_arrive(w: u64, left: f32) {
     let k = sub_id(tab_id(w), "slide").v;
     animate_lanes(k, lanes(left), INSTANT, lanes(left), true);
 }
-fn tab_desc(on: bool) -> Desc { clickable(row().skin(DOCK_TAB).align(CENTER)).nav_skip().look(checked_look(on)) }
+// The shown tab is the bar's one stop for navigation (left and right go to
+// the bar); the others are skipped.
+fn tab_desc(on: bool) -> Desc {
+    let d = clickable(row().skin(DOCK_TAB).align(CENTER)).look(checked_look(on));
+    if on { d.with_bits(CAPTURE_X) } else { d.nav_skip() }
+}
 fn tab_dragging(w: u64) -> bool {
     let it = interact(tab_id(w), tab_desc(false));
     it.held && it.dragging
