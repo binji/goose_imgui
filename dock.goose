@@ -56,6 +56,16 @@ fn dock_host_of(n: i32) -> u64 {
 }
 fn host_space(h: u64) -> u64 { hash_combine(h, 0x5ACE) }
 
+// The leaf under n with the biggest share of it, and that share.
+recursive fn biggest_leaf(n: i32, share: f64) -> i32, f64 {
+    let d = dock_nodes[n];
+    if d.axis < 0 { return n, share; }
+    let a, sa = biggest_leaf(d.a, share * d.ratio);
+    let b, sb = biggest_leaf(d.b, share * (1.0 - d.ratio));
+    if sa >= sb { return a, sa; }
+    return b, sb;
+}
+
 fn new_dock_node(space: u64) -> i32 {
     for n, k in dock_nodes {
         if !n.used {
@@ -170,11 +180,7 @@ fn dock_into(w: u64, n: i32, side: i64, ratio: f64, at: i64 = -1) {
     let empty = dock_nodes[n].axis < 0 && dock_nodes[n].tabs.len == 0;
     if side == DOCK_CENTER || empty {
         // Into a split: its leaf with the most room.
-        var leaf = n;
-        while dock_nodes[leaf].axis >= 0 {
-            let p = dock_nodes[leaf];
-            leaf = if p.ratio >= 0.5 { p.a } else { p.b };
-        }
+        let leaf, share = biggest_leaf(n, 1.0);
         dock_into_leaf(w, leaf, if leaf == n { at } else { -1 });
         return;
     }
