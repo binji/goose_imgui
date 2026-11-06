@@ -67,8 +67,8 @@ struct LayoutDesc {
     row: i8 = -1,
     col_span: u8 = 1,
     row_span: u8 = 1,
-    self_align: u8 = 255,               // INHERIT: across the parent's main axis; in a stack, vertical
-    self_justify: u8 = 0,               // in a stack: horizontal
+    self_align: u8 = 255,               // INHERIT: the parent's align; in a stack or grid, vertical
+    self_justify: u8 = 255,             // horizontal, in a stack or grid; INHERIT: a stack's START, a grid's justify or self_align
     absolute: bool = false,             // out of the flow, at `at` in the parent's padding box
     pivot_x: i16 = 0,                   // the point of its own put at `at`, in 1/PIVOT_UNIT of its size
     pivot_y: i16 = 0,

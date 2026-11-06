@@ -68,6 +68,13 @@ fn track_desc(n: Node&, a: i64, k: i64) -> Size {
     if k < n.d.lay.rows.len { return n.d.lay.rows[k]; }
     fit()
 }
+fn stack_justify(c: Node&) -> u8 { if c.d.lay.self_justify != INHERIT { c.d.lay.self_justify } else { START as u8 } }
+// How a grid's child sits in its cell along axis a: place()'s for that axis,
+// or self_align() for both, or `grid`'s (its justify or align).
+fn cell_align(c: Node&, a: i64, grid: u8) -> u8 {
+    if a == 0 && c.d.lay.self_justify != INHERIT { return c.d.lay.self_justify; }
+    if c.d.lay.self_align != INHERIT { c.d.lay.self_align } else { grid }
+}
 fn cell_pos(c: Node&, a: i64) -> i64 { if a == 0 { c.col } else { c.row } }
 fn cell_span(c: Node&, a: i64) -> i64 { if a == 0 { c.d.lay.col_span } else { c.d.lay.row_span } }
 
@@ -292,7 +299,7 @@ fn resolve_node(i: i32, a: i64) {
         while c >= 0 {
             let k .= nodes[c];
             if in_flow(k) {
-                let al = if n.d.lay.kind == STACK && a == 0 { k.d.lay.self_justify } else { child_align(n, k) };
+                let al = if n.d.lay.kind == STACK && a == 0 { stack_justify(k) } else { child_align(n, k) };
                 set_rsize(k.rect, a, cross_size(k, a, inner, al, scrolls(n, a)));
             }
             c = k.next;
@@ -518,8 +525,7 @@ fn resolve_grid(i: i32, a: i64, inner: f32) {
             var cell: f32 = 0.0;
             for s in at..min(at + span, count) { cell += track_at(g, a, s); }
             if span > 1 { cell += gap * (min(at + span, count) - at - 1); }
-            set_rsize(k.rect, a, cross_size(k, a, cell, if k.d.lay.self_align != INHERIT { k.d.lay.self_align } else { al },
-                                            false));
+            set_rsize(k.rect, a, cross_size(k, a, cell, cell_align(k, a, al), false));
         }
         c = k.next;
     }
@@ -568,7 +574,7 @@ fn position_node(i: i32) {
         while c >= 0 {
             let k .= nodes[c];
             if in_flow(k) {
-                let h = k.d.lay.self_justify;
+                let h = stack_justify(k);
                 let v = if k.d.lay.self_align != INHERIT { k.d.lay.self_align } else { n.d.lay.align };
                 k.rect.x = at.x + offset_in(inner.x, k.rect.w, h);
                 k.rect.y = at.y + offset_in(inner.y, k.rect.h, v);
@@ -658,8 +664,8 @@ fn place_cells(i: i32, at: float2) {
             let r1 = min(k.row as i64 + k.d.lay.row_span, g.nrows);
             for s in k.row..r1 { ch += track_at(g, 1, s); }
             if r1 - k.row > 1 { ch += gy * (r1 - k.row - 1); }
-            let h = if k.d.lay.self_align != INHERIT { k.d.lay.self_align } else { g.d.lay.justify };
-            let v = if k.d.lay.self_align != INHERIT { k.d.lay.self_align } else { g.d.lay.align };
+            let h = cell_align(k, 0, g.d.lay.justify);
+            let v = cell_align(k, 1, g.d.lay.align);
             k.rect.x = x + offset_in(cw, k.rect.w, h);
             k.rect.y = y + offset_in(ch, k.rect.h, v);
         }
