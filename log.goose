@@ -84,6 +84,8 @@ fn log_one(l: Log&, s: const u8[:], level: i64) {
 fn log(l: Log&, s: const u8[:], level: i64 = LOG_INFO) {
     var at = 0;
     for k in s.len + 1 {
+        // (Text ending in a newline has no empty last line.)
+        if k == s.len && at == s.len && at > 0 { break; }
         if k == s.len || s[k] == '\n' {
             let end = if k > at && s[k - 1] == '\r' { k - 1 } else { k };
             log_one(l, s[at..end], level);
