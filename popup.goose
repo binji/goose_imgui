@@ -169,6 +169,14 @@ fn sweep_popups() {
     var k = popups.len - 1;
     while k >= 0 {
         if popups[k].seen < frame_index - 1 {
+            // A modal not recorded opens again when it is: `open` says.
+            for j in k..popups.len {
+                if popups[j].kind == POPUP_MODAL {
+                    var ms = state_of(popups[j].id);
+                    ms.open = false;
+                    put_state(popups[j].id, ms);
+                }
+            }
             close_popups_above(k as i32);
         }
         k--;
