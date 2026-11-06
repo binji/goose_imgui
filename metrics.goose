@@ -48,6 +48,7 @@ struct MetricNode {
     rank: i32 = 0,          // its root's place in the drawing order
     root_id: u64 = 0,       // its root's window (or popup), if any
     screen: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },
+    clip: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },
     text: u8[..40] = [],
 }
 var metric_nodes: MetricNode[>..<] = [];
@@ -72,7 +73,7 @@ fn note_frame() {
     for n, i in nodes {
         var m = MetricNode { id: n.id, parent: n.parent, kind: n.kind, kids: n.kids, class: n.d.vis.class.index,
                              named: n.named, bits: n.d.bits, rank: rank[n.root as i64],
-                             root_id: roots[n.root as i64].popup, screen: n.screen, .. };
+                             root_id: roots[n.root as i64].popup, screen: n.screen, clip: n.clip, .. };
         if n.parent >= 0 { m.depth = metric_nodes[n.parent].depth + 1; }
         if n.kind == NODE_TEXT {
             for c in node_text(i as i32) { if m.text.len < m.text.cap { m.text.push(c); } }
@@ -116,7 +117,7 @@ fn id_text(v: u64) -> u8[>..] {
 fn metric_node_at(p: float2) -> i64 {
     var best: i64 = -1;
     for m, k in metric_nodes {
-        if m.root_id == metrics_id || m.root_id == METRICS_OUTLINE || !inside(m.screen, p) { continue; }
+        if m.root_id == metrics_id || m.root_id == METRICS_OUTLINE || !inside(m.screen, p) || !inside(m.clip, p) { continue; }
         if best < 0 || m.rank >= metric_nodes[best].rank { best = k; }
     }
     best
