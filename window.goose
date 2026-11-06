@@ -243,7 +243,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         // Dragged over a dock space: where it would go shown; let go
         // there, docked.
         // (A floating dock isn't docked itself: its windows are, one by one.)
-        if tb.held && tb.dragging && !w.host {
+        if tb.held && tb.dragging && !w.host && flags & WINDOW_NO_MOVE == 0 {
             let t = dock_preview(input.pointer.pos, wid.v);
             if t.node >= 0 || t.window != 0 { aimed = true; aim = t.rect; }
             // On a tab bar: into its tab there, fading as its tab shows.
