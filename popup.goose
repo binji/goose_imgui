@@ -471,18 +471,25 @@ fn dropdown(label: const u8[:], items: const u8[:][:], selected: i64&, d: Desc) 
         icon(ICON_CHEVRON_DOWN, column().opacity(0.7));
     };
     let before = selected;
+    // No taller than the screen: it scrolls.
+    let m = class_style(MENU).normal.padding;
+    let room = max(viewport.h - m.y - m.w - 8.0, 32.0);
     popup_root(pid, POPUP_MENU, column().min_w(width), MENU, header) {
         id_scope(pid) {
-            for item, k in items {
-                let ok = box(k, clickable(row().skin(MENU_ITEM).grow_w().align(CENTER))
-                                    .look(checked_look(k == selected))) {
-                    text(label_text(item));
+            scroll("items", column().grow_w().max_h(room)) {
+                id_scope(pid) {
+                    for item, k in items {
+                        let ok = box(k, clickable(row().skin(MENU_ITEM).grow_w().align(CENTER))
+                                            .look(checked_look(k == selected))) {
+                            text(label_text(item));
+                        };
+                        if ok.activated {
+                            selected = k;
+                            close_popup(pid);
+                        }
+                    }
                 };
-                if ok.activated {
-                    selected = k;
-                    close_popup(pid);
-                }
-            }
+            };
         };
     };
     selected != before
