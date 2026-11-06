@@ -198,10 +198,12 @@ fn begin_nav() {
         if take_left { left = false; }
         if take_right { right = false; }
     }
-    if f.bits & CAPTURE_Y != 0 {
-        nav_captured.y = ((if down { 1 } else { 0 }) - (if up { 1 } else { 0 })) as i32;
-        up = false;
-        down = false;
+    let take_up = f.bits & (CAPTURE_Y | CAPTURE_UP) != 0 && up;
+    let take_down = f.bits & (CAPTURE_Y | CAPTURE_DOWN) != 0 && down;
+    if take_up || take_down {
+        nav_captured.y = ((if take_down { 1 } else { 0 }) - (if take_up { 1 } else { 0 })) as i32;
+        if take_up { up = false; }
+        if take_down { down = false; }
     }
     if nav.accept { accept_id = f.id; }
     // In a submenu, left goes back to the menu it opened from.

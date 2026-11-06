@@ -287,7 +287,13 @@ fn knob(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc 
     let kid = sub_id(i, "knob");
     let size = class_style(KNOB).normal.min_size;
     let off = d.bits & DISABLED != 0;
-    let kd = clickable(column().skin(KNOB).with_bits(CAPTURE_X | CAPTURE_Y)).size(size.x, size.y).disabled(off);
+    // The arrows turn it until it can turn no further; then they leave it,
+    // or a pad, which has no Tab, could never get off it.
+    let now: f64 = v;
+    let shown = clamp(now, min(lo, hi), max(lo, hi));
+    let downs = if shown > min(lo, hi) { CAPTURE_LEFT | CAPTURE_DOWN } else { 0 };
+    let ups = if shown < max(lo, hi) { CAPTURE_RIGHT | CAPTURE_UP } else { 0 };
+    let kd = clickable(column().skin(KNOB).with_bits((downs | ups) as u32)).size(size.x, size.y).disabled(off);
     let it = interact(kid, kd);
     let span = if hi > lo { hi - lo } else { 1.0 };
     let start: f64 = v;

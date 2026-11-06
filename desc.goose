@@ -163,6 +163,8 @@ let SHRINKS = 32768;        // it can be narrower than its content: what doesn't
                             // clips (CSS's min-width: 0). Its children are laid out as ever
 let CAPTURE_LEFT = 65536;   // when focused, left goes to the widget (CAPTURE_X: left and right)
 let CAPTURE_RIGHT = 131072; // right
+let CAPTURE_UP = 262144;    // up (CAPTURE_Y: up and down)
+let CAPTURE_DOWN = 524288;  // down
 
 struct Desc {
     lay: LayoutDesc = LayoutDesc { .. },

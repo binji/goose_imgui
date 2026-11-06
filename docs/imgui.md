@@ -463,7 +463,7 @@ imgui::status_bar("status") { imgui::spinner("busy"); imgui::text("loading"); };
 | `vslider(label, v, lo, hi[, step][, d]) -> bool` | a slider standing up, lo at the bottom; Up and Down step it; its label under it |
 | `slider_angle(label, radians, lo_deg = -180, hi_deg = 180) -> bool` | an angle kept in radians, slid in whole degrees, shown beside it |
 | `range_slider(label, from, to, lo, hi[, step][, d]) -> bool` | two thumbs that don't cross: a press takes the nearer; Left and Right move the one taken last, and accept changes which |
-| `knob(label, v, lo, hi[, step][, d]) -> bool` | a dial (KNOB, in the slider's colors): dragged up or right turns it up, the whole range in 200 pixels; the arrows step it; its label under it |
+| `knob(label, v, lo, hi[, step][, d]) -> bool` | a dial (KNOB, in the slider's colors): dragged up or right turns it up, the whole range in 200 pixels; the arrows step it, and past its ends move the focus on; its label under it |
 
 ## Long lists and tables
 

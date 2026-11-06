@@ -327,7 +327,12 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
     let sv_id = sub_id(i, "sv");
     let hue_id = sub_id(i, "hue");
     let alpha_id = sub_id(i, "alpha");
-    let fd = clickable(column().with_bits(CAPTURE_X | CAPTURE_Y).clip()).radius(3);
+    let fd = clickable(column().clip()).radius(3);
+    // The arrows move what they can; past its ends they leave it, or a pad,
+    // which has no Tab, could never get off it.
+    fn edges(lo_keys: i64, at_lo: bool, hi_keys: i64, at_hi: bool) -> i64 {
+        (if at_lo { 0 } else { lo_keys }) | (if at_hi { 0 } else { hi_keys })
+    }
     let sv = interact(sv_id, fd.size(side, side));
     let hb = interact(hue_id, fd.size(bar_w, side));
     let ab = interact(alpha_id, fd.size(bar_w, side));
@@ -351,7 +356,8 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
     box(i, d.skin(PICKER)) {
         box(row().gap(gap)) {
             let hue = gfx2d::hsv(h.x, 1.0, 1.0);
-            canvas(sv_id, fd.size(side, side).look(look_of(sv))) { size =>
+            let sv_keys = edges(CAPTURE_LEFT, h.y <= 0.0, CAPTURE_RIGHT, h.y >= 1.0) | edges(CAPTURE_DOWN, h.z <= 0.0, CAPTURE_UP, h.z >= 1.0);
+            canvas(sv_id, fd.with_bits(sv_keys as u32).size(side, side).look(look_of(sv))) { size =>
                 gradient_rect(0, 0, size.x, size.y, gfx2d::WHITE, hue, false);
                 gradient_rect(0, 0, size.x, size.y, gfx2d::rgba(0x000000, 0.0), gfx2d::BLACK, true);
                 let x = h.y * size.x;
@@ -359,7 +365,8 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
                 stroke_circle(x, y, 5, 3, gfx2d::rgba(0x000000, 0.6));
                 stroke_circle(x, y, 5, 1.5, gfx2d::WHITE);
             };
-            canvas(hue_id, fd.size(bar_w, side).look(look_of(hb))) { size =>
+            let hue_keys = edges(CAPTURE_UP, h.x <= 0.0, CAPTURE_DOWN, h.x >= 0.9999);
+            canvas(hue_id, fd.with_bits(hue_keys as u32).size(bar_w, side).look(look_of(hb))) { size =>
                 for k in 6 {
                     let y0 = size.y * k / 6.0;
                     gradient_rect(0, y0, size.x, size.y / 6.0 + 0.5, gfx2d::hsv(k / 6.0, 1.0, 1.0),
@@ -369,7 +376,8 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
                 stroke_rect(0.5, y - 2.0, size.x - 1.0, 4, 1.5, gfx2d::WHITE, 1);
             };
             if alpha {
-                canvas(alpha_id, fd.size(bar_w, side).look(look_of(ab))) { size =>
+                let alpha_keys = edges(CAPTURE_DOWN, h.w <= 0.0, CAPTURE_UP, h.w >= 1.0);
+                canvas(alpha_id, fd.with_bits(alpha_keys as u32).size(bar_w, side).look(look_of(ab))) { size =>
                     checker(0, 0, size.x, size.y, size.x * 0.5);
                     let solid = hsv_color(float4 { h.x, h.y, h.z, 1.0 });
                     gradient_rect(0, 0, size.x, size.y, solid, gfx2d::with_alpha(solid, 0.0), true);
