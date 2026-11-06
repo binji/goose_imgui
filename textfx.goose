@@ -110,7 +110,15 @@ fn rich_glyphs_of(i: i32) {
     let l = look_of(n);
     var count = 0;
     for k in n.text_off..n.text_off + n.text_len { count += piece_chars(pieces[k]); }
-    let seed = text_seed(i, text_arena[pieces[n.text_off].off..pieces[n.text_off].off + pieces[n.text_off].len]);
+    // From its first word: an image's piece is no text.
+    var seed = text_seed(i, "");
+    for k in n.text_off..n.text_off + n.text_len {
+        let p = pieces[k];
+        if p.kind == PIECE_WORD {
+            seed = text_seed(i, text_arena[p.off..p.off + p.len]);
+            break;
+        }
+    }
     n.cmd_first = glyphs.len as i32;
     var index = 0;
     for k in n.text_off..n.text_off + n.text_len {
