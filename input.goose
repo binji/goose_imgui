@@ -192,13 +192,13 @@ fn begin_input(inp: Input) {
         }
     }
     // The wheel: the innermost scroll pane under the pointer, in the level
-    // the pointer is in.
+    // the pointer is in, that has anywhere to scroll.
     wheel_id = 0;
     if input.pointer.wheel != float2_0 {
         var j = hits.len - 1;
         while j >= 0 {
             let h = hits[j];
-            if h.level == hot_level && h.bits & (SCROLLS_X | SCROLLS_Y) != 0 && hit_at(h, p) {
+            if h.level == hot_level && can_scroll(h.id, h.bits) && hit_at(h, p) {
                 wheel_id = h.id;
                 break;
             }
@@ -207,6 +207,12 @@ fn begin_input(inp: Input) {
     }
     begin_nav();
     begin_drag();
+}
+
+fn can_scroll(id: u64, bits: u32) -> bool {
+    if bits & (SCROLLS_X | SCROLLS_Y) == 0 { return false; }
+    let st = state_of(id);
+    (bits & SCROLLS_Y != 0 && st.content.y > st.view.y + 0.5) || (bits & SCROLLS_X != 0 && st.content.x > st.view.x + 0.5)
 }
 
 fn hit_bits(id: u64) -> u32 {
