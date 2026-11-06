@@ -1,0 +1,10 @@
+text: "Clear (3)" "Play" ""
+### same: true true
+### apart: true
+## apart: true
+sub_id: true
+found by ###: true
+clicked 1, focused true
+window before: 200.0 50.0
+window after: 200.0 50.0
+collapsed by ###: true

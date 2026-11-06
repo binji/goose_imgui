@@ -2,6 +2,9 @@
 // hash of a label (or an integer) and the IDs of the scopes it is in, so
 // "OK" in one dialog and "OK" in another differ. A label's "##" and what
 // follows it are part of its ID but not shown: "Play##main", "Play##dlc".
+// A label's "###" and what follows it are the whole of its ID, so the text
+// before them can change and the widget stays the same one, as can another
+// call name it by that part alone: "Clear (3)###clear", "###clear".
 //
 //   for item, i in items {
 //       imgui::id_scope(i) { if imgui::button("Use") { use(item); } };
@@ -31,10 +34,20 @@ fn label_text(s: const u8[:]) -> const u8[:] {
     s
 }
 
-fn id(s: const u8[:]) -> Id { Id { hash_combine(scope_id(), hash(s)) } }
+// What of a label its ID is made from: from any "###" on, else all of it.
+fn label_key(s: const u8[:]) -> const u8[:] {
+    var i = 0;
+    while i + 2 < s.len {
+        if s[i] == '#' && s[i + 1] == '#' && s[i + 2] == '#' { return s[i..]; }
+        i++;
+    }
+    s
+}
+
+fn id(s: const u8[:]) -> Id { Id { hash_combine(scope_id(), hash(label_key(s))) } }
 fn id(n: i64) -> Id { Id { hash_combine(scope_id(), hash(n) ^ 0x51ED27) } }
 // An ID derived from another: a widget's parts.
-fn sub_id(parent: Id, part: const u8[:]) -> Id { Id { hash_combine(parent.v, hash(part)) } }
+fn sub_id(parent: Id, part: const u8[:]) -> Id { Id { hash_combine(parent.v, hash(label_key(part))) } }
 fn sub_id(parent: Id, n: i64) -> Id { Id { hash_combine(parent.v, hash(n) ^ 0x51ED27) } }
 
 fn id_scope<F>(s: const u8[:]) {

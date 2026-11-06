@@ -360,7 +360,11 @@ damping)`, with or without `delay(seconds)`.
 | `set_caret_blink(on)` | a caret that never blinks, for players who find blinking distracting |
 
 A label's `##` and what follows it are part of the ID but not shown:
-`"Play##dlc"`.
+`"Play##dlc"`. A label's `###` and what follows it are the whole of the ID,
+so the text before them can change and the widget stays the same one,
+with its focus, its press and its state: `str("Clear (", n, ")###clear")`.
+A window's title works the same way, and other calls can name it by that
+part alone: `raise_window("###score")`.
 
 ## Windows
 
