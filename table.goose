@@ -61,7 +61,10 @@ fn row_list<F>(label: const u8[:], count: i64, row_height: f64, d: Desc = column
     } else {
         last = min(count, ceil(viewport.h / step) as i64 + 1);
     }
-    box(i, d.height(total).with_bits(ROW_LIST)) {
+    // Its rows are out of the flow: with no width of its own, as wide as
+    // it can be, for them to have one.
+    let ld = if d.dim.w.kind == SIZE_FIT { d.grow_w() } else { d };
+    box(i, ld.height(total).with_bits(ROW_LIST)) {
         for k in first..last {
             box(k, row().absolute(0, k * step).width(pct(1)).height(row_height).align(CENTER)) { F(k); };
         }
