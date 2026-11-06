@@ -383,6 +383,20 @@ fn push_key(inp: Input&, key: i64, shift: bool, word: bool) {
 // This frame's input from gfx: the mouse and the keyboard, in the UI's
 // units: under gfx2d's base scale and imgui's own (set_scale). (gfx's v1 has no gamepads; a program
 // reading one passes what it holds to nav_from_pad.)
+// Pasted text added to what was typed, without its line ends: whole
+// characters, as far as there is room.
+fn add_pasted(inp: Input&, s: const u8[:]) {
+    var at = 0;
+    while at < s.len {
+        let end = utf8_next(s, at);
+        if s[at] != '\n' && s[at] != '\r' {
+            if inp.text.len + end - at > inp.text.cap { return; }
+            for c in s[at..end] { inp.text.push(c); }
+        }
+        at = end;
+    }
+}
+
 fn input_from_gfx() -> Input {
     scan_codes();
     var inp = Input { from_gfx: true, .. };
@@ -440,8 +454,7 @@ fn input_from_gfx() -> Input {
                 else if e.keycode == 'x' { push_key(inp, KEY_CUT, false, false); }
                 else if e.keycode == 'v' {
                     push_key(inp, KEY_PASTE, false, false);
-                    let clip = gfx::clipboard();
-                    for c in clip { if c != '\n' && c != '\r' && inp.text.len < inp.text.cap { inp.text.push(c); } }
+                    add_pasted(inp, gfx::clipboard());
                 }
             }
         }
