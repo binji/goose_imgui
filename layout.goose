@@ -535,11 +535,12 @@ fn resolve_grid(i: i32, a: i64, inner: f32) {
 fn measure_wrapped(i: i32) {
     let n .= nodes[i];
     guard n.kind == NODE_TEXT || n.kind == NODE_RICH;
-    if n.kind == NODE_RICH && n.d.lay.wrap && n.rect.w + 0.5 < n.natural.x {
-        n.content.y = rich_height(i, n.rect.w);
-    } else if n.kind == NODE_TEXT && n.d.lay.wrap && n.rect.w + 0.5 < n.natural.x {
+    let room = inner_size(n, 0);
+    if n.kind == NODE_RICH && n.d.lay.wrap && room + 0.5 < n.natural.x {
+        n.content.y = rich_height(i, room);
+    } else if n.kind == NODE_TEXT && n.d.lay.wrap && room + 0.5 < n.natural.x {
         var style = text_style_of(n);
-        style.wrap_width = n.rect.w;
+        style.wrap_width = room;
         n.content.y = gfx2d::measure_text(node_text(i), style).y;
     } else {
         n.content.y = n.natural.y;
