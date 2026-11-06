@@ -278,7 +278,7 @@ fn was(h: SpanHit, key: const u8[:]) -> bool { h.last != 0 && h.last == hash(key
 // Where each keyed span was on the screen, last frame: a box per line it
 // is on, with the rich text's ID and the widget it was in (its nearest
 // ancestor that takes the pointer).
-struct SpanBox { node: u64, owner: u64, key: u64, rect: gfx2d::Rect }
+struct SpanBox { node: u64, owner: u64, key: u64, rect: gfx2d::Rect, clip: gfx2d::Rect, level: i32, window: u64 }
 var span_boxes: SpanBox[>..<] = [];
 
 // Whether s has a keyed span: a tag with '=' that is not an image.
@@ -305,7 +305,10 @@ fn span_hit(i: i32) -> SpanHit {
     var h = SpanHit { it: Interaction { id: hash_combine(n.id, 0x5BA7), rect: st.span_rect, .. } };
     let p = input.pointer.pos;
     for b in span_boxes {
-        if b.node == n.id && b.owner == hot && gfx2d::contains(b.rect, p) {
+        // Where it can be seen: not clipped away, not under a modal, a popup
+        // or another window.
+        if b.node == n.id && b.owner == hot && b.level == hot_level && b.window == hot_window &&
+           inside(b.clip, p) && gfx2d::contains(b.rect, p) {
             h.key = b.key;
             h.it.hovered = true;
             h.it.rect = b.rect;
@@ -328,6 +331,7 @@ fn place_span_boxes() {
         let n .= nodes[i];
         guard n.kind == NODE_RICH && n.named && n.ghost == 0 else { continue; }
         let owner = if n.owner >= 0 { nodes[n.owner].id } else { 0 };
+        let root = roots[n.root as i64];
         let b = box_of(n);
         let x0 = b.x + n.d.lay.padding.x;
         let w = b.w - pad_sum(n, 0);
@@ -342,7 +346,8 @@ fn place_span_boxes() {
             fn close() {
                 if key != 0 {
                     let r = gfx2d::Rect { kx, y, x - kx, ascent + below };
-                    span_boxes.push(SpanBox { n.id, owner, key, gfx2d::transformed_bounds(n.m, r) });
+                    span_boxes.push(SpanBox { n.id, owner, key, gfx2d::transformed_bounds(n.m, r), n.clip, root.level,
+                                              if root.kind == ROOT_WINDOW { root.popup } else { 0 } });
                 }
             }
             for k in from..to {
