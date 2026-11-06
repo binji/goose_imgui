@@ -1,0 +1,25 @@
+--- a console's history
+up: older
+down: spa
+--- log lines
+hello\n: 1
+a\n\nb: 4
+lines_kept down: oldest still reads line 4
+then one more: 3 lines, line 10 to new
+--- format_fixed
+NaN isn't 0.000: true
+--- a canvas in a class with padding
+given 68.0 68.0
+--- enter after a drag
+typing true
+--- a small move in a dark color
+changed true, said so true
+--- an i32 past its range
+wide 2147483647
+--- a knob's end
+gain 1.0, left it true
+--- default sizes
+console height under the box's true
+row list width 300.0
+--- scrolled back, the ring full
+moved up five lines with them: true
