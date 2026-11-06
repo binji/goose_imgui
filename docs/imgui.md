@@ -706,7 +706,7 @@ The parts inside a widget that have looks of their own (a toggle's
 track, a slider's thumb, the gem in an inventory slot) are hit as the
 widget: the pointer on any of them hovers, presses and drags the widget.
 | `with_bits(CAPTURE_X)` | left and right go to the widget while it is focused (`it.nav.x`); `CAPTURE_LEFT` or `CAPTURE_RIGHT`, only one of them (the other navigates): a widget with nothing more that way |
-| `interact(id, d) -> Interaction` | the interaction a widget recorded with `id` and `d` will have, asked before recording it so its look can follow |
+| `interact(id, d) -> Interaction` | the interaction a widget recorded with `id` and `d` will have, asked before recording it so its look can follow. Its events and easing go by `d`'s class, so recording the widget with another class is misuse (with none, `skin(NONE)`, is fine: the widget eases by `d`'s and draws nothing) |
 | `look_of(it)`, `checked_look(on)` | the look state of an interaction, or of on/off |
 | `id(label)`, `id(key)`, `sub_id(id, part)`, `id_scope(…) { … }` | IDs |
 

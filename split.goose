@@ -55,7 +55,7 @@ fn split<F>(label: const u8[:], axis: i64 = ROW, d: Desc = row()) {
     for k in 1..count {
         let hid = sub_id(i, k);
         var hs = state_of(hid.v);
-        let it = interact(hid, column().hit());
+        let it = interact(hid, column().skin(SPLITTER).hit());
         if it.pressed {
             let before = rsize(state_of(hs.owner).rect, a);
             hs.num = before;
@@ -118,7 +118,7 @@ fn pane<F>(label: const u8[:], fraction: f64 = 0.0, d: Desc = column()) {
         hs.span = i.v;
         put_state(hid.v, hs);
         let t = class_style(SPLITTER).normal.min_size.x;
-        let it = interact(hid, column().hit());
+        let it = interact(hid, column().skin(SPLITTER).hit());
         var hd = column().skin(SPLITTER).hit().look(look_of(it));
         hd = if a == 0 { hd.width(t).grow_h() } else { hd.height(t).grow_w() };
         panel(hid, hd);

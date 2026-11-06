@@ -38,12 +38,12 @@ fn scroll<F>(label: const u8[:], d: Desc, axes: i64 = SCROLLS_Y) -> ScrollInfo {
     }
     // Dragging a thumb: the content follows, by the ratio of the content to
     // the view.
-    let ty = interaction_for(thumb_id.v, column().hit());
+    let ty = interaction_for(thumb_id.v, column().skin(SCROLL_THUMB).hit());
     if ty.pressed { st.value = st.scroll.y; }
     if ty.held && st.view.y > 0.0 {
         st.scroll_to.y = st.value + ty.drag.y * (st.rect.h / max(st.screen.h, 0.0001)) * (st.content.y / st.view.y);
     }
-    let tx = interaction_for(thumb_x_id.v, column().hit());
+    let tx = interaction_for(thumb_x_id.v, column().skin(SCROLL_THUMB).hit());
     if tx.pressed { st.value = st.scroll.x; }
     if tx.held && st.view.x > 0.0 {
         st.scroll_to.x = st.value + tx.drag.x * (st.content.x / st.view.x) * (st.rect.w / max(st.screen.w, 0.0001));

@@ -229,7 +229,7 @@ var last_interaction = Interaction { .. };
 // The interaction of the node with ID `nid` and Desc `d`, its eased
 // amounts moved once a frame by its class's transition.
 fn interaction_for(nid: u64, d: Desc) -> Interaction {
-    var st = state_of(nid);
+    let st = state_of(nid);
     let p = input.pointer.pos;
     var it = Interaction { id: nid, rect: st.screen, .. };
     let enabled = d.bits & DISABLED == 0;
@@ -247,35 +247,45 @@ fn interaction_for(nid: u64, d: Desc) -> Interaction {
         it.dragging = length(it.drag) > 2.0;
     }
     if it.focused { it.nav = nav_captured; }
-    let m = class_transition(d.vis.class);
-    if st.stamp < 0 {
+    let c = d.vis.class;
+    var am = Amounts { .. };
+    let kept = amounts.get(nid);
+    if kept {
+        am = kept;
+    } else {
         // New: at its checked state already, not easing into it.
-        st.checked_p = if d.vis.state.checked > 0.5 { 1.0 } else { 0.0 };
-        st.checked = st.checked_p;
+        am.checked_p = if d.vis.state.checked > 0.5 { 1.0 } else { 0.0 };
+        am.checked = am.checked_p;
     }
-    if st.stamp != frame_index {
+    if am.stamp == frame_index {
+        // Its amounts moved, and its events went, by the first call's class.
+        // (A node with none of its own is fine: a slider's track eases by
+        // its thumb's class and draws nothing.)
+        if c.index != 0 && am.class.index != c.index { misuse("interact: two classes for one ID in a frame; give interact the Desc the widget is recorded with"); }
+    } else {
         // Its events, once a frame: a hover or a shown focus only as it
         // begins, a hover only by the pointer moving onto it.
-        let c = d.vis.class;
+        let m = class_transition(c);
         let shown_focus = it.focused && focus_visible;
-        if it.hovered && !st.heard_hover && pointer_moved { ui_event(UI_HOVER, nid, c); }
-        if shown_focus && !st.heard_focus { ui_event(UI_FOCUS, nid, c); }
+        if it.hovered && !am.heard_hover && pointer_moved { ui_event(UI_HOVER, nid, c); }
+        if shown_focus && !am.heard_focus { ui_event(UI_FOCUS, nid, c); }
         if it.pressed { ui_event(UI_PRESS, nid, c); }
         if it.activated { ui_event(UI_ACTIVATE, nid, c); }
         if !enabled && denied_id == nid { ui_event(UI_DENIED, nid, c); }
-        st.heard_hover = it.hovered;
-        st.heard_focus = shown_focus;
-        st.hover = ease_toward(st.hover_p, it.hovered || it.held, m, delta);
-        st.press = ease_toward(st.press_p, it.held && hot == nid, m, delta);
-        st.focus = ease_toward(st.focus_p, it.focused && focus_visible, m, delta);
-        st.checked = ease_toward(st.checked_p, d.vis.state.checked > 0.5, m, delta);
-        st.stamp = frame_index;
-        put_state(nid, st);
+        am.heard_hover = it.hovered;
+        am.heard_focus = shown_focus;
+        am.hover = ease_toward(am.hover_p, it.hovered || it.held, m, delta);
+        am.press = ease_toward(am.press_p, it.held && hot == nid, m, delta);
+        am.focus = ease_toward(am.focus_p, it.focused && focus_visible, m, delta);
+        am.checked = ease_toward(am.checked_p, d.vis.state.checked > 0.5, m, delta);
+        am.stamp = frame_index;
+        am.class = c;
+        amounts.insert(nid, am);
     }
-    it.hover_t = st.hover;
-    it.press_t = st.press;
-    it.focus_t = st.focus;
-    it.checked_t = st.checked;
+    it.hover_t = am.hover;
+    it.press_t = am.press;
+    it.focus_t = am.focus;
+    it.checked_t = am.checked;
     last_interaction = it;
     it
 }

@@ -291,7 +291,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     let least = float2 { max(title_h * 3.0, 96.0), title_h + 32.0 };
     if resizable {
         for g in 8 {
-            let it = interaction_for(sub_id(wid, g).v, column().hit());
+            let it = interaction_for(sub_id(wid, g).v, column().skin(RESIZE_GRIP).hit());
             let dir = grip_dir(g);
             if it.pressed {
                 w.grab = w.pos;

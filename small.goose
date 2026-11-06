@@ -45,7 +45,7 @@ fn button_icon(kind: i64) {
 fn icon_toggle(label: const u8[:], kind: i64, v: bool&, d: Desc = row()) -> bool {
     let i = id(label);
     let bd = clickable(d.skin(ICON_BUTTON)).center();
-    let changed = interact(i, bd).activated;
+    let changed = interact(i, bd.look(checked_look(v))).activated;
     if changed { v = !v; }
     let it = box(i, bd.look(checked_look(v))) { button_icon(kind); };
     let tip = label_text(label);

@@ -491,7 +491,7 @@ fn dock_space_of(i: Id, d: Desc) {
             if n.axis >= 0 {
                 // The handle between its two: dragged, its ratio.
                 let hid = sub_id(i, k as i64);
-                let it = interact(hid, column().hit());
+                let it = interact(hid, column().skin(SPLITTER).hit());
                 var hs = state_of(hid.v);
                 let len = if n.axis == 0 { r.w - t } else { r.h - t };
                 if it.pressed { hs.num = n.ratio * len; put_state(hid.v, hs); }

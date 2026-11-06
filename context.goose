@@ -63,8 +63,6 @@ struct WidgetState {
     rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },     // where it was laid out, last frame
     screen: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },   // where it was drawn, last frame
     shown: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },    // gliding: where it is on its way
-    hover: f32 = 0.0, press: f32 = 0.0, focus: f32 = 0.0, checked: f32 = 0.0,   // eased amounts
-    hover_p: f32 = 0.0, press_p: f32 = 0.0, focus_p: f32 = 0.0, checked_p: f32 = 0.0,  // their progress
     entered: f32 = 0.0,             // seconds since it appeared
     scroll: float2 = float2 { 0.0, 0.0 },
     scroll_to: float2 = float2 { 0.0, 0.0 },
@@ -82,13 +80,24 @@ struct WidgetState {
     span_rect: gfx2d::Rect = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 },
     seen: i64 = -1,                 // the frame it was last recorded in
     born: i64 = -1,                 // the frame it first was
-    stamp: i64 = -1,                // the frame its amounts last moved in
     laid: bool = false,             // laid out at least once
+}
+
+var states = dictionary<u64, WidgetState> {};
+
+// What interaction_for moves once a frame. Apart from WidgetState, which
+// widgets copy, change and put back: a copy taken before interact would undo
+// the frame's move, and the next call would make it again, events and all.
+struct Amounts {
+    hover: f32 = 0.0, press: f32 = 0.0, focus: f32 = 0.0, checked: f32 = 0.0,   // eased
+    hover_p: f32 = 0.0, press_p: f32 = 0.0, focus_p: f32 = 0.0, checked_p: f32 = 0.0,  // their progress
+    stamp: i64 = -1,                // the frame they last moved in
+    class: StyleClass = StyleClass { 0 },   // the class they moved by
     heard_hover: bool = false,      // hovered, and showing focus, last frame: for its events
     heard_focus: bool = false,
 }
 
-var states = dictionary<u64, WidgetState> {};
+var amounts = dictionary<u64, Amounts> {};
 
 fn state_of(id: u64) -> WidgetState {
     let s = states.get(id);
@@ -103,6 +112,9 @@ fn sweep_states() {
     var stale: u64[>..<] = [];
     states.each() { k, s => if s.seen < frame_index - 120 { stale.push(k); } };
     for k in stale { states.remove(k); }
+    stale.clear();
+    amounts.each() { k, a => if a.stamp < frame_index - 120 { stale.push(k); } };
+    for k in stale { amounts.remove(k); }
 }
 
 // Whether `id` was recorded last frame: present, not newly appeared.

@@ -1,0 +1,10 @@
+--- a number field
+press: press NUMBER
+release: activate NUMBER
+--- a split's handle
+onto it: hover SPLITTER
+hover after a frame: true
+hover after a second: 1.0
+press: press SPLITTER
+--- an icon toggle
+on true, checked 1.0

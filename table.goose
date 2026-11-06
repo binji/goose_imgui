@@ -161,7 +161,7 @@ fn table_of<F, A>(i: Id, headers: const u8[:][:], count: i64, selected: const A&
     for c in n {
         let hid = sub_id(i, c);
         let gid = sub_id(hid, "grip");
-        let g = interact(gid, column().hit());
+        let g = interact(gid, column().skin(RESIZE_GRIP).hit());
         if g.pressed { var hs = state_of(hid.v); hs.num = widths[c]; put_state(hid.v, hs); }
         if g.held {
             var hs = state_of(hid.v);
