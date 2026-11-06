@@ -89,7 +89,10 @@ fn set_window_show(e: Enter, x: Exit) {
 fn set_window_show(m: Motion, zoom: f64 = 0.95) { set_window_show(pop_in(zoom, m), pop_out(zoom, m)); }
 
 // Window `id` put in front of the others.
-fn raise_window_id(id: u64) {
+fn raise_window_id(raised: u64) {
+    // One in a floating dock goes with its dock.
+    let held = dock_host_of(window_state(raised).dock);
+    let id = if held != 0 { held } else { raised };
     var found = false;
     var k = 0;
     while k < window_order.len {
