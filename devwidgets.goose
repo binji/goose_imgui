@@ -255,7 +255,8 @@ fn format_fixed(out: u8[>..]&, v: f64, decimals: i64) {
     var scale: f64 = 1.0;
     for k in d { scale *= 10.0; }
     let n = round(abs(v) * scale);
-    if n >= 9.0e18 { format(out, v); return; }
+    // (Not n >= 9.0e18: NaN is neither.)
+    if !(n < 9.0e18) { format(out, v); return; }
     let whole = (n / scale) as! i64;
     let frac = (n - whole * scale) as! i64;
     if v < 0.0 && n > 0.0 { out.push('-'); }
