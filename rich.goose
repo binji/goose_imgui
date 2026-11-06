@@ -493,7 +493,12 @@ fn draw_rich(i: i32, a: f32) {
                         if p.underline {
                             let t = max(p.size / 14.0, 1.0);
                             let uw = if whole { p.w } else { gfx2d::measure_text(s, style).x as f32 };
-                            gfx2d::rect(x, base + p.size * 0.12, uw, t, ink);
+                            if pixel_art {
+                                // On the grid, a unit under the baseline.
+                                gfx2d::rect(round(x), round(base) + 1.0, round(uw), round(t), ink);
+                            } else {
+                                gfx2d::rect(x, base + p.size * 0.12, uw, t, ink);
+                            }
                         }
                     }
                 }
