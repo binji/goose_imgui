@@ -109,7 +109,7 @@ fn text_input<A>(i: Id, buf: A&, d: Desc = row(), max_len: i64 = 256, placeholde
     if it.focused && !st.open { st.value = clock as f32; }
     st.open = it.focused;
     let up = inherited[inherited.len - 1];
-    let cs = class_style(INPUT).normal;
+    let cs = apply_overrides(class_style(INPUT).normal, rd.vis, rd.lay);
     let style = gfx2d::TextStyle { font: if cs.font.id != 0 { cs.font } else { up.font },
                                    size: if cs.text_size > 0.0 { cs.text_size } else { up.size },
                                    letter_spacing: over_look(text_look_of(cs.text_look),
