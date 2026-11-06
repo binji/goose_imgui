@@ -1,0 +1,20 @@
+--- collapsed first
+at 16.0 16.0, width 260.0, collapsed true
+--- a floating dock
+in a dock true
+a new dock true, the first stayed true, B in it true
+--- a press in its body
+in front true
+--- neighbors
+not floating for its first frame: true
+D1 docked true, D2 docked true
+--- the biggest leaf
+with D2: true
+--- a layout loaded
+loaded true
+its tab kept: true
+a pane not in it: 0.0
+--- edges
+stopped at min_w true, height still its content's true
+--- no move
+targets 0
