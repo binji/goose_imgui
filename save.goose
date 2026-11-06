@@ -403,6 +403,8 @@ fn load_layout_json(text: const u8[:]) -> bool, u8[>..] {
     }
     window_order.clear();
     for w in order { window_order.push(w); }
+    pane_fractions.clear();
+    opened.clear();
     for p in saved_panes { pane_fractions.insert(p.id, p.fraction); }
     for o in saved_open { opened.insert(o.id, if o.open { 1 } else { 2 }); }
     return true, str("");
