@@ -783,7 +783,9 @@ fn tab_list(space: Id, n: i32, r: gfx2d::Rect) {
 // a window of imgui's where `other` was, holding a dock space; `other`
 // fills it, and w goes on `side` of it (or as a tab, DOCK_CENTER).
 fn dock_into_window(w: u64, other: u64, side: i64, ratio: f64) {
-    let h = hash_combine(other, 0xD0C7);
+    // Not the dock an earlier pair made here, if it still holds windows.
+    var h = hash_combine(other, 0xD0C7);
+    while dock_holds_windows(host_space(h)) { h = hash_combine(h, 0xD0C7); }
     let os = window_state(other);
     let ost = state_of(other);
     var hs = window_state(h);
@@ -802,6 +804,11 @@ fn dock_into_window(w: u64, other: u64, side: i64, ratio: f64) {
     let root = dock_root(space);
     dock_into(other, root, DOCK_CENTER, 1.0);
     dock_into(w, root, side, ratio);
+}
+
+fn dock_holds_windows(space: u64) -> bool {
+    for n in dock_nodes { if n.used && n.space == space && n.tabs.len > 0 { return true; } }
+    false
 }
 
 // Floating dock h recorded, once a frame: a window whose title is its
