@@ -37,6 +37,7 @@ struct WindowState {
     called: i64 = -1,                           // the frame window() was last called for it
     closable: bool = false,                     // it has a close button: so does its tab, docked
     host: bool = false,                         // a floating dock: imgui's window holding a dock space
+    unplaced: bool = false,                     // known only by a setting: its Desc still says where it goes
     title: u8[..48] = [],                       // its title, for its tab
 }
 
@@ -118,7 +119,10 @@ fn set_window_rect(title: const u8[:], r: gfx2d::Rect) {
 fn collapse_window(title: const u8[:], on: bool) {
     let i = id(title).v;
     var w = window_state(i);
-    if !windows.contains(i) { window_order.push(i); }
+    if !windows.contains(i) {
+        window_order.push(i);
+        w.unplaced = true;
+    }
     w.collapsed = on;
     windows.insert(i, w);
 }
@@ -178,8 +182,9 @@ fn window<F>(title: const u8[:], open: bool&, d: Desc = column(), flags: i64 = 0
 }
 
 fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: Desc, flags: i64) {
-    let known = windows.contains(wid.v);
     var w = window_state(wid.v);
+    let known = windows.contains(wid.v) && !w.unplaced;
+    w.unplaced = false;
     let last_st = state_of(wid.v);
     let last = last_st.rect;
     let never_called = w.called < 0;
