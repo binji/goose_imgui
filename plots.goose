@@ -399,7 +399,7 @@ fn color_picker(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Des
         if now.z <= 0.0001 { now.y = h.y; }
         picker_hsv.insert(i.v, now);
     }
-    let changed = !close_colors(c, start) || c.a != start.a;
+    let changed = !(c == start);
     if changed { ui_event(UI_CHANGE, i.v, PICKER); }
     changed
 }
@@ -448,6 +448,5 @@ fn color_edit(label: const u8[:], c: gfx2d::Color&, alpha: bool = true, d: Desc 
             };
         };
     };
-    let changed = !close_colors(c, start) || c.a != start.a;
-    changed
+    !(c == start)
 }
