@@ -372,6 +372,8 @@ fn tabs<F>(label: const u8[:], selected: i64&, d: Desc = column(), shoulders: bo
     };
     st.seen = frame_index;
     put_state(i.v, st);
+    // Past its tabs, as a list that shrank leaves it: its last.
+    if st.index > 0 { sel = clamp(sel, 0, st.index as i64 - 1); }
     selected = sel;
 }
 
