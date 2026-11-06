@@ -390,13 +390,13 @@ fn drag_number(label: const u8[:], v: i64&, o: Drag = Drag { .. }, d: Desc = row
     var changed = false;
     let fd = if label_text(label).len > 0 { row().grow_w() } else { d };
     labelled(label, d) { changed = number_field(id(label), x, o, true, fd, -1); };
-    if changed { v = x as! i64; }
+    if changed { v = clamp(x, -9.2e18, 9.2e18) as! i64; }
     changed
 }
 fn drag_number(label: const u8[:], v: i32&, o: Drag = Drag { .. }, d: Desc = row()) -> bool {
     var x: i64 = v;
     let changed = drag_number(label, x, o, d);
-    if changed { v = x as! i32; }
+    if changed { v = clamp(x, -2147483648, 2147483647) as! i32; }
     changed
 }
 
@@ -407,13 +407,13 @@ fn input_number(label: const u8[:], v: f64&, o: Drag = Drag { .. }, d: Desc = ro
 fn input_number(label: const u8[:], v: i64&, o: Drag = Drag { .. }, d: Desc = row()) -> bool {
     var x: f64 = v;
     let changed = input_number_of(label, x, o, d, true);
-    if changed { v = x as! i64; }
+    if changed { v = clamp(x, -9.2e18, 9.2e18) as! i64; }
     changed
 }
 fn input_number(label: const u8[:], v: i32&, o: Drag = Drag { .. }, d: Desc = row()) -> bool {
     var x: f64 = v;
     let changed = input_number_of(label, x, o, d, true);
-    if changed { v = x as! i32; }
+    if changed { v = clamp(x, -2147483648.0, 2147483647.0) as! i32; }
     changed
 }
 fn input_number_of(label: const u8[:], v: f64&, o: Drag, d: Desc, whole: bool) -> bool {
