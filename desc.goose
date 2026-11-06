@@ -306,7 +306,12 @@ fn rows(var d: Desc, ts: const Size[:]) -> Desc {
     for t in ts { if d.lay.rows.len < MAX_TRACKS { d.lay.rows.push(t); } }
     d
 }
-fn cell(var d: Desc, col: i64, row: i64) -> Desc { d.lay.col = col as i8; d.lay.row = row as i8; d }
+fn cell(var d: Desc, col: i64, row: i64) -> Desc {
+    if col > 127 || row > 127 { misuse(str("cell: ", col, ", ", row, " is past 127")); }
+    d.lay.col = clamp(col, -1, 127) as i8;
+    d.lay.row = clamp(row, -1, 127) as i8;
+    d
+}
 fn span(var d: Desc, cols: i64, rows: i64) -> Desc {
     d.lay.col_span = max(cols, 1) as u8;
     d.lay.row_span = max(rows, 1) as u8;

@@ -131,7 +131,7 @@ the starting points.
 | `align(START, CENTER, END, STRETCH)`, `center()` | across it; `center()` is both |
 | `self_align(a)`, `place(h, v)` | a child's own: across its parent; in a stack, both ways |
 | `wrap()` | a row onto more lines; text at spaces to fit its width |
-| `columns(ts)`, `rows(ts)`, `cell(col, row)`, `span(cols, rows)` | grids: up to 8 tracks given each way; rows past those fit their content |
+| `columns(ts)`, `rows(ts)`, `cell(col, row)`, `span(cols, rows)` | grids: up to 8 tracks given each way; rows past those fit their content. A `cell` past the last column, or past 127, is misuse |
 | `absolute(x, y)` | out of the flow, at (x, y) in the parent's inner box, not scrolled |
 | `pivot(px, py)` | an absolute node's own point put at (x, y), as fractions of its size: (0.5, 1) is its bottom center, for a bar over a character's head |
 

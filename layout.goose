@@ -101,7 +101,10 @@ fn place_grid(i: i32) {
         if in_flow(k) {
             let span = min(k.d.lay.col_span as i64, ncols);
             if k.d.lay.col >= 0 || k.d.lay.row >= 0 {
-                k.col = max(k.d.lay.col as i64, 0) as i16;
+                // Past the last column: fatal at the end of the frame, but
+                // the layout has to get there first.
+                if k.d.lay.col >= ncols { misuse(str("cell: column ", k.d.lay.col, " of a grid with ", ncols)); }
+                k.col = clamp(k.d.lay.col as i64, 0, ncols - 1) as i16;
                 k.row = max(k.d.lay.row as i64, 0) as i16;
             } else {
                 if col + span > ncols { col = 0; row++; }
