@@ -195,6 +195,8 @@ fn log_view(label: const u8[:], l: Log&, d: Desc = column(), filter: const u8[:]
 
 // The commands typed into consoles, oldest first, for Up and Down.
 var console_history = Log { lines_kept: 200, bytes_kept: 16384, .. };
+// The line being typed, kept aside while the history is stepped through.
+var console_draft: u8[>..] = [];
 // How far back each console is in them: 0 and up from the newest; -1 (or
 // not here), the line being typed. Kept however long it is hidden.
 var console_back = dictionary<u64, i32> {};
@@ -219,8 +221,16 @@ fn console<A>(label: const u8[:], l: Log&, cmd: A&, d: Desc = column(), filter: 
             let n = console_history.count;
             let at = clamp(back - nav_captured.y, -1, n - 1);
             if at != back {
+                if back < 0 {
+                    console_draft.clear();
+                    console_draft.append(cmd[..]);
+                }
                 erase_text(cmd, 0, cmd.len);
-                if at >= 0 { insert_text(cmd, 0, log_text(console_history, n - 1 - at), 4096); }
+                if at >= 0 {
+                    insert_text(cmd, 0, log_text(console_history, n - 1 - at), text_room(cmd, 4096));
+                } else {
+                    insert_text(cmd, 0, console_draft[..], text_room(cmd, 4096));
+                }
                 var es = state_of(input_id.v);
                 es.caret = cmd.len as i32;
                 es.anchor = es.caret;
