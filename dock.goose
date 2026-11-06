@@ -510,7 +510,8 @@ fn dock_space_of(i: Id, d: Desc) {
             if !tab_live(sel) {
                 sel = 0;
                 for w in n.tabs { if sel == 0 && tab_live(w) { sel = w; } }
-                dock_nodes[k].selected = sel;
+                // None live, as after loading a layout: kept for when they are.
+                if sel != 0 { dock_nodes[k].selected = sel; }
             }
             if n.hide_tabs { continue; }
             // Tabs past the bar's end: a button lists them all, and the
