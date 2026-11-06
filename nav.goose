@@ -62,6 +62,7 @@ var cancel_pressed = false;
 // Something in hand since the last frame wants cancel for itself, as a
 // number being typed does: it isn't for the popups or the program.
 var cancel_held = false;
+var focus_away = 0;         // frames the focused widget hasn't been recorded
 var scroll_into: u64 = 0;           // focused by navigation: to be scrolled into view
 var wanted_default: u64 = 0;        // default_focus's, this frame
 var default_id: u64 = 0;            // and last frame's
@@ -140,8 +141,13 @@ fn begin_nav() {
     // The focused widget is gone: nothing is focused.
     var cur = -1;
     for f, k in focusables { if f.id == focused { cur = k; } }
-    if focused != 0 && cur < 0 && frame_index > 1 {
-        if !node_was_kept(focused) { focused = 0; }
+    // (A widget focused as it is made, as a typed number's field is, gets a
+    // frame or two to be recorded.)
+    if focused != 0 && cur < 0 && !was_seen(focused) {
+        focus_away++;
+        if focus_away > 2 { focused = 0; }
+    } else {
+        focus_away = 0;
     }
     let moving = nav.up || nav.down || nav.left || nav.right || nav.next || nav.prev;
     if moving || nav.accept { focus_visible = true; }
@@ -258,7 +264,6 @@ fn first_candidate(floor: i32, top: i32) -> u64 {
 
 // A focused widget that was not drawn last frame (it is being recorded
 // for the first time, focused by the program) keeps its focus a frame.
-fn node_was_kept(id: u64) -> bool { !was_seen(id) }
 
 // Called at the end of the frame: this frame's scopes are the next's.
 fn end_nav() {
