@@ -204,6 +204,9 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
         w = window_state(wid.v);
         if w.dock >= 0 && !dock_shown(w.dock) { return; }
     }
+    // Docked before its space was first shown: it waits a frame for it,
+    // rather than float for one. (A space that doesn't come, it floats.)
+    if never_called && w.dock >= 0 && !dock_shown(w.dock) { return; }
     // Docked, in a dock space being shown: its body in its node, if its tab
     // is the one selected (dock.goose).
     if w.dock >= 0 && dock_shown(w.dock) {
