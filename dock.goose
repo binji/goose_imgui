@@ -418,8 +418,10 @@ fn find_dock_aims(p: float2, dragged: u64) {
 // The target under p, if any, of a window dragged there.
 fn dock_target_at(p: float2, dragged: u64) -> DockTarget {
     find_dock_aims(p, dragged);
-    for a in dock_aims { if inside(a.at, p) { return a.target; } }
-    dock_bar
+    // The last, as the preview shows: it is drawn over the others.
+    var hit = dock_bar;
+    for a in dock_aims { if inside(a.at, p) { hit = a.target; } }
+    hit
 }
 
 // How the area a dragged window would take is shown: outlined, or (with
