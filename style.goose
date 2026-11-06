@@ -484,15 +484,19 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[RADIO.index] = radio;
     classes[RADIO_DOT.index] = style_set(Style { bg: p.accent, radius: radii(side * 0.25) });
 
-    classes[SLIDER_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(3.0),
-                                                    min_size: float2 { 160.0 * sp, 6.0 } });
-    classes[SLIDER_FILL.index] = style_set(Style { bg: p.accent, radius: radii(3.0) });
+    var strack = style_set(Style { bg: p.pressed, radius: radii(3.0), min_size: float2 { 160.0 * sp, 6.0 } });
+    strack.disabled.alpha = 0.45;
+    classes[SLIDER_TRACK.index] = strack;
+    var sfill = style_set(Style { bg: p.accent, radius: radii(3.0) });
+    sfill.disabled.alpha = 0.45;
+    classes[SLIDER_FILL.index] = sfill;
     var thumb = style_set(Style { bg: gfx2d::WHITE, border: p.accent, border_width: 2.0, radius: radii(side * 0.5),
                                   shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 1.0 }, blur: 3.0 },
                                   min_size: float2 { side, side } }, move);
     thumb.hover.zoom = 1.12;
     thumb.active.zoom = 1.2;
     thumb.focused = focus_ring(thumb.normal);
+    thumb.disabled.alpha = 0.45;
     classes[SLIDER_THUMB.index] = thumb;
     classes[PROGRESS_TRACK.index] = style_set(Style { bg: p.pressed, radius: radii(4.0),
                                                       min_size: float2 { 160.0 * sp, 8.0 } });
@@ -720,6 +724,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
                                                min_size: float2 { p.text_size * 1.1, p.text_size * 1.1 } });
     var knob = style_set(Style { radius: radii(p.control * 1.2), min_size: float2 { p.control * 2.2, p.control * 2.2 } }, move);
     knob.focused = focus_ring(knob.normal);
+    knob.disabled.alpha = 0.45;
     classes[KNOB.index] = knob;
     classes
 }
@@ -846,8 +851,8 @@ fn theme_game() {
     let groove = gfx2d::rgba(0xF3E9D2, 0.14);
     for c in [SLIDER_TRACK, PROGRESS_TRACK, METER_TRACK] {
         var t = classes[c.index];
-        t.normal.bg = groove;
-        classes[c.index] = style_set(t.normal);
+        each_state(t) { s => s.bg = groove; };
+        classes[c.index] = t;
     }
     var tog = classes[TOGGLE.index];
     tog.normal.bg = groove;

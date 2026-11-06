@@ -141,8 +141,9 @@ fn slider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64, d: Desc) -> 
     let track_id = sub_id(i, "track");
     let thumb = class_style(SLIDER_THUMB).normal.min_size;
     let line = class_style(SLIDER_TRACK).normal.min_size;
+    let off = d.bits & DISABLED != 0;
     let td = clickable(column().skin(SLIDER_THUMB).with_bits(CAPTURE_X)).height(thumb.y).grow_w()
-             .min_w(line.x);
+             .min_w(line.x).disabled(off);
     let it = interact(track_id, td);
     let span = if hi > lo { hi - lo } else { 1.0 };
     let start: f64 = v;
@@ -180,9 +181,9 @@ fn slider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64, d: Desc) -> 
         box(track_id, td.skin(NONE).look(look_of(it))) {
             let lw = st.rect.w;
             let y = (thumb.y - line.y) * 0.5;
-            panel(column().skin(SLIDER_TRACK).absolute(thumb.x * 0.5, y).size(max(lw - thumb.x, 0.0), line.y));
-            panel(column().skin(SLIDER_FILL).absolute(thumb.x * 0.5, y).size(max(lw - thumb.x, 0.0) * f, line.y));
-            panel(column().skin(SLIDER_THUMB).look(look_of(it)).absolute(w * f, 0).size(thumb.x, thumb.y));
+            panel(column().skin(SLIDER_TRACK).disabled(off).absolute(thumb.x * 0.5, y).size(max(lw - thumb.x, 0.0), line.y));
+            panel(column().skin(SLIDER_FILL).disabled(off).absolute(thumb.x * 0.5, y).size(max(lw - thumb.x, 0.0) * f, line.y));
+            panel(column().skin(SLIDER_THUMB).look(look_of(it, false, off)).absolute(w * f, 0).size(thumb.x, thumb.y));
         };
     };
     changed

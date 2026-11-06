@@ -246,7 +246,7 @@ fn interaction_for(nid: u64, d: Desc) -> Interaction {
         it.drag = p - press_pos;
         it.dragging = length(it.drag) > 2.0;
     }
-    if it.focused { it.nav = nav_captured; }
+    if it.focused && enabled { it.nav = nav_captured; }
     let c = d.vis.class;
     var am = Amounts { .. };
     let kept = amounts.get(nid);

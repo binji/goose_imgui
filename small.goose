@@ -129,7 +129,9 @@ fn vslider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: De
     let track_id = sub_id(i, "track");
     let thumb = class_style(SLIDER_THUMB).normal.min_size;
     let line = class_style(SLIDER_TRACK).normal.min_size;
-    let td = clickable(column().skin(SLIDER_THUMB).with_bits(CAPTURE_Y)).width(thumb.x).grow_h().min_h(thumb.y * 3.0);
+    let off = d.bits & DISABLED != 0;
+    let td = clickable(column().skin(SLIDER_THUMB).with_bits(CAPTURE_Y)).width(thumb.x).grow_h().min_h(thumb.y * 3.0)
+             .disabled(off);
     let it = interact(track_id, td);
     let span = if hi > lo { hi - lo } else { 1.0 };
     let start: f64 = v;
@@ -166,9 +168,9 @@ fn vslider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: De
             let lh = st.rect.h;
             let x = (thumb.x - line.y) * 0.5;
             let len = max(lh - thumb.y, 0.0);
-            panel(column().skin(SLIDER_TRACK).absolute(x, thumb.y * 0.5).size(line.y, len));
-            panel(column().skin(SLIDER_FILL).absolute(x, thumb.y * 0.5 + len * (1.0 - f)).size(line.y, len * f));
-            panel(column().skin(SLIDER_THUMB).look(look_of(it)).absolute(0, h * (1.0 - f)).size(thumb.x, thumb.y));
+            panel(column().skin(SLIDER_TRACK).disabled(off).absolute(x, thumb.y * 0.5).size(line.y, len));
+            panel(column().skin(SLIDER_FILL).disabled(off).absolute(x, thumb.y * 0.5 + len * (1.0 - f)).size(line.y, len * f));
+            panel(column().skin(SLIDER_THUMB).look(look_of(it, false, off)).absolute(0, h * (1.0 - f)).size(thumb.x, thumb.y));
         };
         if shown_label.len > 0 { text(shown_label); }
     };
@@ -210,7 +212,9 @@ fn range_slider(label: const u8[:], from: f64&, to: f64&, lo: f64, hi: f64, step
     let track_id = sub_id(i, "track");
     let thumb = class_style(SLIDER_THUMB).normal.min_size;
     let line = class_style(SLIDER_TRACK).normal.min_size;
-    let td = clickable(column().skin(SLIDER_THUMB).with_bits(CAPTURE_X)).height(thumb.y).grow_w().min_w(line.x);
+    let off = d.bits & DISABLED != 0;
+    let td = clickable(column().skin(SLIDER_THUMB).with_bits(CAPTURE_X)).height(thumb.y).grow_w().min_w(line.x)
+             .disabled(off);
     let it = interact(track_id, td);
     let span = if hi > lo { hi - lo } else { 1.0 };
     let a0: f64 = from;
@@ -232,7 +236,7 @@ fn range_slider(label: const u8[:], from: f64&, to: f64&, lo: f64, hi: f64, step
         let p: f64 = at_pointer;
         which = if abs(p - fa) < abs(p - fb) || (fa == fb && p < fa) { 0 } else { 1 };
     }
-    if accept_id == track_id.v { which = 1 - which; }
+    if accept_id == track_id.v && !off { which = 1 - which; }
     range_thumbs.insert(track_id.v, which);
     let by = if step > 0.0 { step } else { span / 20.0 };
     // Only what the player does changes them: values just shown are left
@@ -260,13 +264,13 @@ fn range_slider(label: const u8[:], from: f64&, to: f64&, lo: f64, hi: f64, step
             let lw = st.rect.w;
             let y = (thumb.y - line.y) * 0.5;
             let len = max(lw - thumb.x, 0.0);
-            panel(column().skin(SLIDER_TRACK).absolute(thumb.x * 0.5, y).size(len, line.y));
-            panel(column().skin(SLIDER_FILL).absolute(thumb.x * 0.5 + len * fa, y).size(len * (fb - fa), line.y));
+            panel(column().skin(SLIDER_TRACK).disabled(off).absolute(thumb.x * 0.5, y).size(len, line.y));
+            panel(column().skin(SLIDER_FILL).disabled(off).absolute(thumb.x * 0.5 + len * fa, y).size(len * (fb - fa), line.y));
             // The one taken last drawn over the other, and looking held.
-            let held = look_of(it);
+            let held = look_of(it, false, off);
             let fo = if which == 0 { fb } else { fa };
             let ft = if which == 0 { fa } else { fb };
-            panel(column().skin(SLIDER_THUMB).absolute(w * fo, 0).size(thumb.x, thumb.y));
+            panel(column().skin(SLIDER_THUMB).disabled(off).absolute(w * fo, 0).size(thumb.x, thumb.y));
             panel(column().skin(SLIDER_THUMB).look(held).absolute(w * ft, 0).size(thumb.x, thumb.y));
         };
     };
@@ -282,7 +286,8 @@ fn knob(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc 
     let i = id(label);
     let kid = sub_id(i, "knob");
     let size = class_style(KNOB).normal.min_size;
-    let kd = clickable(column().skin(KNOB).with_bits(CAPTURE_X | CAPTURE_Y)).size(size.x, size.y);
+    let off = d.bits & DISABLED != 0;
+    let kd = clickable(column().skin(KNOB).with_bits(CAPTURE_X | CAPTURE_Y)).size(size.x, size.y).disabled(off);
     let it = interact(kid, kd);
     let span = if hi > lo { hi - lo } else { 1.0 };
     let start: f64 = v;
@@ -313,7 +318,7 @@ fn knob(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc 
     let face = class_style(SLIDER_THUMB).normal;
     let shown_label = label_text(label);
     box(i, d.align(CENTER).gap(4)) {
-        canvas(kid, kd.look(look_of(it))) { sz =>
+        canvas(kid, kd.look(look_of(it, false, off))) { sz =>
             let cx = sz.x * 0.5;
             let cy = sz.y * 0.5;
             let r = min(sz.x, sz.y) * 0.5;
