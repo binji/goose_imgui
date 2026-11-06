@@ -111,13 +111,14 @@ fn push_block<F>(m: gfx2d::Affine, clip: bool, at: float2, radius: f32) {
 
 fn canvas_size(i: Id, d: Desc) -> float2 {
     let st = state_of(i.v);
+    // Its padding: its class's, unless the Desc gives one.
+    let inset = apply_overrides(class_style(d.vis.class).normal, d.vis, d.lay).padding;
     if st.laid {
-        return float2 { max(st.rect.w - d.lay.padding.x - d.lay.padding.z, 0.0),
-                        max(st.rect.h - d.lay.padding.y - d.lay.padding.w, 0.0) };
+        return float2 { max(st.rect.w - inset.x - inset.z, 0.0), max(st.rect.h - inset.y - inset.w, 0.0) };
     }
     // The first frame: its px size, less its padding, if it has one.
-    float2 { if d.dim.w.kind == SIZE_PX { max(d.dim.w.value - d.lay.padding.x - d.lay.padding.z, 0.0) } else { 0.0 },
-             if d.dim.h.kind == SIZE_PX { max(d.dim.h.value - d.lay.padding.y - d.lay.padding.w, 0.0) } else { 0.0 } }
+    float2 { if d.dim.w.kind == SIZE_PX { max(d.dim.w.value - inset.x - inset.z, 0.0) } else { 0.0 },
+             if d.dim.h.kind == SIZE_PX { max(d.dim.h.value - inset.y - inset.w, 0.0) } else { 0.0 } }
 }
 
 // A canvas: a box (with its Desc's look and size, and children if the block
