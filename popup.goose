@@ -116,6 +116,13 @@ fn close_current_popup() {
     if lv > 0 { close_popups_above(lv - 1); }
 }
 fn close_all_popups() { close_popups_above(0); }
+// The menu being recorded and the menus it opened from: chosen, an item is
+// done with them, not with a modal or popup they are over.
+fn close_menus() {
+    var lv = current_level();
+    while lv >= 2 && popups[lv - 2].kind == POPUP_MENU { lv--; }
+    if lv > 0 { close_popups_above(lv - 1); }
+}
 
 // Every popup above `level` closed; the focus goes back to the lowest
 // one's opener.
@@ -376,7 +383,7 @@ fn menu_item(label: const u8[:], shortcut: const u8[:] = "") -> bool {
     if it.hovered && pointer_moved && lv > 0 && popups.len > lv {
         close_popups_above(lv);
     }
-    if it.activated { close_all_popups(); }
+    if it.activated { close_menus(); }
     it.activated
 }
 // An item with a check mark, toggling `v`.
@@ -386,7 +393,10 @@ fn menu_check(label: const u8[:], v: bool&) -> bool {
         icon(ICON_CHECK, column().opacity(if v { 1.0 } else { 0.0 }));
         text(label_text(label), column().grow_w());
     };
-    if it.activated { v = !v; close_all_popups(); }
+    if it.activated {
+        v = !v;
+        close_menus();
+    }
     it.activated
 }
 
