@@ -149,6 +149,7 @@ fn slider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64, d: Desc) -> 
     var value = clamp(start, min(lo, hi), max(lo, hi));
     let st = state_of(track_id.v);
     let w = max(st.rect.w - thumb.x, 1.0);
+    let moved = it.held || it.nav.x != 0;
     if it.held {
         let f = clamp((it.pointer.x * (st.rect.w / max(it.rect.w, 1.0)) - thumb.x * 0.5) / w, 0.0, 1.0);
         value = lo + f * span;
@@ -157,15 +158,19 @@ fn slider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64, d: Desc) -> 
         let by = if step > 0.0 { step } else { span / 20.0 };
         value = clamp(value + it.nav.x * by, min(lo, hi), max(lo, hi));
     }
-    if step > 0.0 { value = lo + round((value - lo) / step) * step; }
-    value = clamp(value, min(lo, hi), max(lo, hi));
-    let changed = value != start;
+    // Only what the player does changes it: a value just shown is left as
+    // it is, out of range or between steps.
+    if moved {
+        if step > 0.0 { value = lo + round((value - lo) / step) * step; }
+        value = clamp(value, min(lo, hi), max(lo, hi));
+    }
+    let changed = moved && value != start;
     // A tick a step, or a twentieth of the way along without one.
     let tick = if step > 0.0 { step } else { span / 20.0 };
     if changed && tick_of(value, lo, tick) != tick_of(clamp(start, min(lo, hi), max(lo, hi)), lo, tick) {
         ui_event(UI_CHANGE, track_id.v, SLIDER_THUMB);
     }
-    v = value;
+    if changed { v = value; }
     let f = ((value - lo) / span) as f32;
     let shown_label = label_text(label);
     box(i, d.align(CENTER).gap(12)) {
@@ -185,20 +190,26 @@ fn slider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64, d: Desc) -> 
 fn slider(label: const u8[:], v: f32&, lo: f64, hi: f64, step: f64 = 0.0) -> bool {
     var x: f64 = v;
     let changed = slider(label, x, lo, hi, step, row());
-    v = x as f32;
-    changed
+    let y = x as f32;
+    let moved = changed && y != v;
+    if moved { v = y; }
+    moved
 }
 fn slider(label: const u8[:], v: i64&, lo: i64, hi: i64) -> bool {
     var x: f64 = v;
     let changed = slider(label, x, lo, hi, 1.0, row());
-    v = round(x) as i64;
-    changed
+    let y = round(x) as i64;
+    let moved = changed && y != v;
+    if moved { v = y; }
+    moved
 }
 fn slider(label: const u8[:], v: i32&, lo: i64, hi: i64) -> bool {
     var x: f64 = v;
     let changed = slider(label, x, lo, hi, 1.0, row());
-    v = round(x) as i32;
-    changed
+    let y = round(x) as i32;
+    let moved = changed && y != v;
+    if moved { v = y; }
+    moved
 }
 
 // --- progress -------------------------------------------------------------------------------

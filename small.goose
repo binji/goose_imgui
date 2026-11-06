@@ -136,6 +136,7 @@ fn vslider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: De
     var value = clamp(start, min(lo, hi), max(lo, hi));
     let st = state_of(track_id.v);
     let h = max(st.rect.h - thumb.y, 1.0);
+    let moved = it.held || it.nav.y != 0;
     if it.held {
         let f = 1.0 - clamp((it.pointer.y * (st.rect.h / max(it.rect.h, 1.0)) - thumb.y * 0.5) / h, 0.0, 1.0);
         value = lo + f * span;
@@ -144,14 +145,18 @@ fn vslider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: De
         let by = if step > 0.0 { step } else { span / 20.0 };
         value = clamp(value - it.nav.y * by, min(lo, hi), max(lo, hi));
     }
-    if step > 0.0 { value = lo + round((value - lo) / step) * step; }
-    value = clamp(value, min(lo, hi), max(lo, hi));
-    let changed = value != start;
+    // Only what the player does changes it: a value just shown is left as
+    // it is, out of range or between steps.
+    if moved {
+        if step > 0.0 { value = lo + round((value - lo) / step) * step; }
+        value = clamp(value, min(lo, hi), max(lo, hi));
+    }
+    let changed = moved && value != start;
     let tick = if step > 0.0 { step } else { span / 20.0 };
     if changed && tick_of(value, lo, tick) != tick_of(clamp(start, min(lo, hi), max(lo, hi)), lo, tick) {
         ui_event(UI_CHANGE, track_id.v, SLIDER_THUMB);
     }
-    v = value;
+    if changed { v = value; }
     let f = ((value - lo) / span) as f32;
     let shown_label = label_text(label);
     var bd = d.align(CENTER).gap(6);
@@ -172,8 +177,10 @@ fn vslider(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: De
 fn vslider(label: const u8[:], v: f32&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc = column()) -> bool {
     var x: f64 = v;
     let changed = vslider(label, x, lo, hi, step, d);
-    v = x as f32;
-    changed
+    let y = x as f32;
+    let moved = changed && y != v;
+    if moved { v = y; }
+    moved
 }
 
 // An angle, kept in radians, slid in whole degrees from lo_deg to hi_deg,
@@ -185,8 +192,10 @@ fn slider_angle(label: const u8[:], radians: f64&, lo_deg: f64 = -180.0, hi_deg:
         changed = slider(label, deg, lo_deg, hi_deg, 1.0, row());
         text(str(round(deg) as i64, " deg"), MUTED);
     };
-    if changed { radians = deg * PI / 180.0; }
-    changed
+    let r = deg * PI / 180.0;
+    let moved = changed && r != radians;
+    if moved { radians = r; }
+    moved
 }
 
 // Which thumb a range slider moves by the keys: 0 `from`, 1 `to`. Kept
@@ -226,15 +235,22 @@ fn range_slider(label: const u8[:], from: f64&, to: f64&, lo: f64, hi: f64, step
     if accept_id == track_id.v { which = 1 - which; }
     range_thumbs.insert(track_id.v, which);
     let by = if step > 0.0 { step } else { span / 20.0 };
-    var moved: f64 = if which == 0 { a } else { b };
-    if it.held { moved = lo + at_pointer * span; }
-    if it.nav.x != 0 { moved = moved + it.nav.x * by; }
-    if step > 0.0 { moved = lo + round((moved - lo) / step) * step; }
-    if which == 0 { a = clamp(moved, min(lo, hi), b); } else { b = clamp(moved, a, max(lo, hi)); }
-    let changed = a != a0 || b != b0;
+    // Only what the player does changes them: values just shown are left
+    // as they are, out of range or between steps.
+    let moved = it.held || it.nav.x != 0;
+    if moved {
+        var to_be: f64 = if which == 0 { a } else { b };
+        if it.held { to_be = lo + at_pointer * span; }
+        if it.nav.x != 0 { to_be = to_be + it.nav.x * by; }
+        if step > 0.0 { to_be = lo + round((to_be - lo) / step) * step; }
+        if which == 0 { a = clamp(to_be, min(lo, hi), b); } else { b = clamp(to_be, a, max(lo, hi)); }
+    }
+    let changed = moved && (a != a0 || b != b0);
     if changed { ui_event(UI_CHANGE, track_id.v, SLIDER_THUMB); }
-    from = a;
-    to = b;
+    if changed {
+        from = a;
+        to = b;
+    }
     let fa = ((a - lo) / span) as f32;
     let fb = ((b - lo) / span) as f32;
     let shown_label = label_text(label);
@@ -276,16 +292,21 @@ fn knob(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc 
         ks.num = value;
         put_state(kid.v, ks);
     }
+    let moved = (it.held && it.dragging) || it.nav.x != 0 || it.nav.y != 0;
     if it.held && it.dragging { value = ks.num + (it.drag.x - it.drag.y) * span / 200.0; }
     let by = if step > 0.0 { step } else { span / 20.0 };
     if it.nav.x != 0 || it.nav.y != 0 { value = value + (it.nav.x - it.nav.y) * by; }
-    if step > 0.0 { value = lo + round((value - lo) / step) * step; }
-    value = clamp(value, min(lo, hi), max(lo, hi));
-    let changed = value != start;
+    // Only what the player does changes it: a value just shown is left as
+    // it is, out of range or between steps.
+    if moved {
+        if step > 0.0 { value = lo + round((value - lo) / step) * step; }
+        value = clamp(value, min(lo, hi), max(lo, hi));
+    }
+    let changed = moved && value != start;
     if changed && tick_of(value, lo, by) != tick_of(clamp(start, min(lo, hi), max(lo, hi)), lo, by) {
         ui_event(UI_CHANGE, kid.v, KNOB);
     }
-    v = value;
+    if changed { v = value; }
     let f = (value - lo) / span;
     let track = class_style(SLIDER_TRACK).normal.bg;
     let fill = class_style(SLIDER_FILL).normal.bg;
@@ -317,6 +338,8 @@ fn knob(label: const u8[:], v: f64&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc 
 fn knob(label: const u8[:], v: f32&, lo: f64, hi: f64, step: f64 = 0.0, d: Desc = column()) -> bool {
     var x: f64 = v;
     let changed = knob(label, x, lo, hi, step, d);
-    v = x as f32;
-    changed
+    let y = x as f32;
+    let moved = changed && y != v;
+    if moved { v = y; }
+    moved
 }

@@ -340,7 +340,7 @@ damping)`, with or without `delay(seconds)`.
 | `button(label[, d]) -> bool`, `button_with(label, d) { … } -> bool` | clicked or accepted; the second with any content |
 | `checkbox(label, v[, d])`, `toggle(label, v[, d])` | true the frame `v` changes |
 | `radio(label, selected, value[, d])` | `selected` becomes `value` |
-| `slider(label, v, lo, hi, step[, d])` | `f64`, `f32`, `i64`, `i32`; dragged, clicked along, or left/right while focused |
+| `slider(label, v, lo, hi, step[, d])` | `f64`, `f32`, `i64`, `i32`; dragged, clicked along, or left/right while focused. Only that changes `v`: a value just shown is left as it is, out of range or between steps |
 | `progress(value[, d])` | a bar from 0 to 1 |
 | `meter(label, value[, d][, m])` | a bar from 0 to 1 for health, stamina or a boss: `Meter { vertical, segments, trail, … }`; a trail (a Motion) eases down after a drop, showing what it took |
 | `radial_meter(label, value[, d][, m])` | the same round a circle from the top, clockwise: a ring `m.thickness` wide, or a sweep (for a cooldown over an icon) |
