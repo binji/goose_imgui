@@ -11,7 +11,7 @@ the same text twice: true
 {"id":"a6189114ae8801fc","title":"Shut","x":600.0,"y":450.0,"w":100.0,"h":60.0,"collapsed":false,"dock":-1,"host":false,"open":false},
 {"id":"cd4c50a299e17f62","title":"C","x":560.0,"y":100.0,"w":150.0,"h":100.0,"collapsed":true,"dock":-1,"host":false,"open":true}],
 "dock":[
-{"used":true,"space":"2a6eb16dbcd02472","parent":-1,"axis":0,"ratio":0.30000001192092896,"a":2,"b":1},
+{"used":true,"space":"2a6eb16dbcd02472","parent":-1,"axis":0,"ratio":0.3,"a":2,"b":1},
 {"used":true,"space":"2a6eb16dbcd02472","parent":0,"tabs":["de0ea443462c0487"],"selected":"de0ea443462c0487","hide_tabs":false},
 {"used":true,"space":"2a6eb16dbcd02472","parent":0,"tabs":["6aaa902b3412107a"],"selected":"6aaa902b3412107a","hide_tabs":false}],
 "panes":[

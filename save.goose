@@ -49,7 +49,10 @@ fn format_id(out: u8[>..]&, v: u64) {
     out.push('"');
 }
 // An f32, to 6 places: as an f64 it would be written to 17 digits.
-fn format_f32(out: u8[>..]&, v: f32) { json::format_number(out, round(v * 1000000.0) / 1000000.0); }
+fn format_f32(out: u8[>..]&, v: f32) {
+    let x: f64 = v;
+    json::format_number(out, round(x * 1000000.0) / 1000000.0);
+}
 fn format_member(out: u8[>..]&, key: const u8[:], first: bool) {
     if !first { out.push(','); }
     json::format_key(out, key);
