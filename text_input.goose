@@ -7,8 +7,8 @@
 //   let e = imgui::text_input("Name", name, imgui::row().width(240));
 //   if e.submitted { start(name); }
 //
-// The buffer is the program's: a u8[>..] or a u8[..N] (keep max_len at
-// most N).
+// The buffer is the program's: a u8[>..] or a u8[..N] (no longer than N,
+// whatever max_len says).
 
 namespace imgui;
 
@@ -94,6 +94,10 @@ fn insert_text<A>(buf: A&, at: i64, s: const u8[:], max_len: i64) -> i64 {
     for j in n { buf[at + j] = s[j]; }
     n
 }
+
+// How long a buffer may get: a fixed one, no longer than it holds.
+fn text_room(buf: u8[>..]&, max_len: i64) -> i64 { max_len }
+fn text_room<A>(buf: A&, max_len: i64) -> i64 { min(max_len, buf.cap) }
 
 fn text_input<A>(label: const u8[:], buf: A&, d: Desc = row(), max_len: i64 = 256, placeholder: const u8[:] = "") -> TextEdit {
     text_input(id(label), buf, d, max_len, placeholder)
@@ -186,7 +190,7 @@ fn text_input<A>(i: Id, buf: A&, d: Desc = row(), max_len: i64 = 256, placeholde
             let s0 = min(caret, anchor);
             let s1 = max(caret, anchor);
             if s1 > s0 { erase_text(buf, s0, s1); caret = s0; }
-            caret += insert_text(buf, caret, input.text, max_len);
+            caret += insert_text(buf, caret, input.text, text_room(buf, max_len));
             anchor = caret;
             e.changed = true;
             st.value = clock as f32;
