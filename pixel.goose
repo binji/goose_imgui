@@ -116,12 +116,7 @@ fn theme_pixel(font: gfx2d::Font, size: f64, var p: Palette) {
     theme(p);
     for c in CLASS_COUNT {
         var s = classes[c];
-        s.normal = pixel_style(s.normal, k, size);
-        s.hover = pixel_style(s.hover, k, size);
-        s.active = pixel_style(s.active, k, size);
-        s.focused = pixel_style(s.focused, k, size);
-        s.checked = pixel_style(s.checked, k, size);
-        s.disabled = pixel_style(s.disabled, k, size);
+        each_state(s) { st => st = pixel_style(st, k, size); };
         s.transition = INSTANT;
         classes[c] = s;
     }

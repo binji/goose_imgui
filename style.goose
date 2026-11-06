@@ -73,6 +73,20 @@ fn style_set(s: Style, transition: Motion = INSTANT) -> StyleSet {
     StyleSet { normal: s, hover: s, active: s, focused: s, checked: s, disabled: s, transition: transition }
 }
 
+// The same change to every state. A state's look is its difference from
+// normal, so a change to normal alone is a change the other way in all the
+// states it missed: this is how to change what isn't a state's to change.
+//
+//   each_state(set) { s => s.radius = radii(12.0); };
+fn each_state<F>(set: StyleSet&) {
+    F(&set.normal);
+    F(&set.hover);
+    F(&set.active);
+    F(&set.focused);
+    F(&set.checked);
+    F(&set.disabled);
+}
+
 struct StyleClass { index: u16 }
 
 let NONE = StyleClass { 0 };
@@ -464,9 +478,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
                                                    shadow: Shadow { color: p.shadow, offset: float2 { 0.0, 1.0 }, blur: 3.0 },
                                                    min_size: float2 { side - 4.0, side - 4.0 } });
     var radio = box;
-    radio.normal.radius = radii(side * 0.5);
-    radio.hover.radius = radio.normal.radius;
-    radio.checked.radius = radio.normal.radius;
+    each_state(radio) { s => s.radius = radii(side * 0.5); };
     radio.checked.bg = p.surface;
     radio.checked.border_width = 2.0;
     classes[RADIO.index] = radio;
@@ -566,10 +578,7 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     classes[CARET.index] = style_set(Style { bg: p.accent, min_size: float2 { 2.0, 0.0 } });
     classes[SELECTION.index] = style_set(Style { bg: gfx2d::with_alpha(p.accent, 0.3), radius: radii(2.0) });
     var dd = classes[BUTTON.index];
-    dd.normal.gap = 12.0 * sp;
-    dd.hover.gap = 12.0 * sp;
-    dd.active.gap = 12.0 * sp;
-    dd.focused.gap = 12.0 * sp;
+    each_state(dd) { s => s.gap = 12.0 * sp; };
     classes[DROPDOWN.index] = dd;
 
     // Windows: a frame holding a title bar and a body; grips on its edges.
@@ -633,14 +642,15 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
     th.checked.ink = p.ink;
     classes[TABLE_HEAD.index] = th;
     var row_h = p.text_size * 1.5 + 4.0 * sp;
-    var trow = clickable(Style { min_size: float2 { 0.0, row_h } }, p.hover, p.pressed);
-    trow.active.zoom = 1.0;
-    trow.checked.bg = gfx2d::with_alpha(p.accent, 0.22);
-    trow.focused.ring_offset = -1.0;
-    classes[TABLE_ROW.index] = trow;
-    var alt = trow;
-    alt.normal.bg = gfx2d::with_alpha(p.ink, 0.035);
-    classes[TABLE_ROW_ALT.index] = alt;
+    fn table_row(bg: gfx2d::Color) -> StyleSet {
+        var t = clickable(Style { bg: bg, min_size: float2 { 0.0, row_h } }, p.hover, p.pressed);
+        t.active.zoom = 1.0;
+        t.checked.bg = gfx2d::with_alpha(p.accent, 0.22);
+        t.focused.ring_offset = -1.0;
+        t
+    }
+    classes[TABLE_ROW.index] = table_row(gfx2d::TRANSPARENT);
+    classes[TABLE_ROW_ALT.index] = table_row(gfx2d::with_alpha(p.ink, 0.035));
     classes[TABLE_CELL.index] = style_set(Style { padding: sp4(8.0, 0.0) });
 
     classes[LOG.index] = style_set(Style { bg: gfx2d::with_alpha(p.pressed, 0.35), border: p.line, border_width: 1.0,
@@ -681,18 +691,10 @@ fn theme_classes(p: Palette) -> StyleSet[>..] {
 
     // A small button: the button's look, less padded, in every state.
     var small = classes[BUTTON.index];
-    fn less(st: Style) -> Style {
-        var t = st;
-        t.padding = sp4(7.0, 2.0);
-        t.min_size = float2 { 0.0, 0.0 };
-        t
-    }
-    small.normal = less(small.normal);
-    small.hover = less(small.hover);
-    small.active = less(small.active);
-    small.focused = less(small.focused);
-    small.checked = less(small.checked);
-    small.disabled = less(small.disabled);
+    each_state(small) { s =>
+        s.padding = sp4(7.0, 2.0);
+        s.min_size = float2 { 0.0, 0.0 };
+    };
     classes[SMALL_BUTTON.index] = small;
     let ib = p.control + 4.0 * sp;
     var icon_b = clickable(Style { radius: r, padding: sq(3.0), ink: p.ink, min_size: float2 { ib, ib } }, p.hover, p.pressed);
@@ -820,8 +822,10 @@ fn theme_game() {
     classes[TITLE.index] = style_set(title.normal);
 
     var thumb = classes[SLIDER_THUMB.index];
-    thumb.normal.bg = gold;
-    thumb.normal.border = gfx2d::rgb(0xFFF1C9);
+    each_state(thumb) { s =>
+        s.bg = gold;
+        s.border = gfx2d::rgb(0xFFF1C9);
+    };
     thumb.hover = thumb.normal;
     thumb.hover.zoom = 1.15;
     thumb.hover.shadow = Shadow { color: glow, blur: 10.0, .. };
@@ -835,12 +839,7 @@ fn theme_game() {
     choice.hover.bg = gfx2d::with_alpha(gold, 0.08);
     choice.focused.bg = gfx2d::with_alpha(gold, 0.12);
     choice.focused.ring = gfx2d::with_alpha(gold, 0.7);
-    choice.normal.padding = pad4(8.0, 4.0);
-    choice.hover.padding = choice.normal.padding;
-    choice.focused.padding = choice.normal.padding;
-    choice.active.padding = choice.normal.padding;
-    choice.checked.padding = choice.normal.padding;
-    choice.disabled.padding = choice.normal.padding;
+    each_state(choice) { s => s.padding = pad4(8.0, 4.0); };
     classes[CHOICE.index] = choice;
 
     // Tracks: faint light over the dark panel, not a darker blue lost in it.

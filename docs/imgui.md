@@ -217,11 +217,14 @@ A `Style` has:
 A `StyleSet` has one Style for each state (`normal`, `hover`, `active`,
 `focused`, `checked`, `disabled`) and a `transition` Motion for the
 amounts. It is made with `style_set(normal, transition)` and changed
-state by state.
+state by state, or in every state at once with
+`each_state(set) { s => s.radius = radii(12.0); };`.
 - A node's look is its class's normal style, plus each state's difference
   from normal, scaled by the state's amount.
 - So a checked box hovered keeps its checked fill and gains its hover
   border.
+- And a change to `normal` alone is the opposite change in each state that
+  didn't get it, so anything that isn't a state's own goes in `each_state`.
 - Focus counts only while it shows, after navigation.
 
 | Themes and classes | |

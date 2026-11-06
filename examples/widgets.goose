@@ -106,7 +106,7 @@ fn main() {
     let shade = fill(0x000000);
     let clear = imgui::add_class(imgui::style_set(imgui::Style { .. }));
     var dark = imgui::class_style(shade);
-    dark.normal.bg = gfx2d::rgba(0x000000, 0.6);
+    imgui::each_state(dark) { s => s.bg = gfx2d::rgba(0x000000, 0.6); };
     imgui::set_class(shade, dark);
     run("imgui: widgets", 1120, 640, false) {
         let bg = imgui::screen_color();
