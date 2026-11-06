@@ -590,8 +590,8 @@ Tables' column widths aren't in it.
 | | |
 |---|---|
 | `save_layout(path) -> bool` | the layout written to the file at `path` (a new file beside it, renamed over it, so a failed write leaves the old one) |
-| `load_layout(path) -> bool` | the layout in the file in place of this one; false, and nothing changed, if there is no file or it isn't a layout (which is reported, as misuse is) |
-| `layout_json(out&)`, `load_layout_json(text) -> bool, error` | the same, as text: appended to `out`; read from `text`, with what is wrong if it isn't a layout (malformed, another version, an ID that isn't one, dock links out of range or a broken split) |
+| `load_layout(path) -> bool` | the layout in the file in place of this one; false, and nothing changed, if there is no file or it isn't a layout (which is written to stderr, and is not misuse: the program goes on) |
+| `layout_json(out&)`, `load_layout_json(text) -> bool, error` | the same, as text: appended to `out`; read from `text`, with what is wrong if it isn't a layout (malformed, another version, an ID that isn't one, a number out of range, or a dock tree that isn't a tree or doesn't match its windows) |
 | `layout_open(title, fallback) -> bool` | whether window `title` was open when the layout was saved; `fallback` if it isn't in it, or none was loaded. The program owns a closable window's open flag, so it starts it from this |
 
 ## Logs and consoles

@@ -224,6 +224,13 @@ fn load_layout_json(text: const u8[:]) -> bool, u8[>..] {
         if !ok { bad = "an ID that isn't 16 hex digits"; }
         v
     }
+    fn read_in(least: i64, most: i64) -> i64 {
+        let v = json::read_int(r);
+        if v >= least && v <= most { return v; }
+        bad = "a number out of range";
+        -1
+    }
+    let LINK_MOST: i64 = 0x7fffffff;
     json::each_member(r) { key =>
         if key == "version" { version = json::read_int(r); }
         else if key == "windows" {
@@ -237,7 +244,7 @@ fn load_layout_json(text: const u8[:]) -> bool, u8[>..] {
                     else if k == "w" { w.size.x = json::read_number(r) as f32; }
                     else if k == "h" { w.size.y = json::read_number(r) as f32; }
                     else if k == "collapsed" { w.collapsed = json::read_bool(r); }
-                    else if k == "dock" { w.dock = json::read_int(r) as i32; }
+                    else if k == "dock" { w.dock = read_in(-1, LINK_MOST) as i32; }
                     else if k == "host" { w.host = json::read_bool(r); }
                     else if k == "open" { w.open = json::read_bool(r); }
                     else { json::skip(r); }
@@ -251,11 +258,11 @@ fn load_layout_json(text: const u8[:]) -> bool, u8[>..] {
                 json::each_member(r) { k =>
                     if k == "used" { n.used = json::read_bool(r); }
                     else if k == "space" { n.space = read_id(); }
-                    else if k == "parent" { n.parent = json::read_int(r) as i32; }
-                    else if k == "axis" { n.axis = json::read_int(r) as i8; }
+                    else if k == "parent" { n.parent = read_in(-1, LINK_MOST) as i32; }
+                    else if k == "axis" { n.axis = read_in(-1, 1) as i8; }
                     else if k == "ratio" { n.ratio = json::read_number(r) as f32; }
-                    else if k == "a" { n.a = json::read_int(r) as i32; }
-                    else if k == "b" { n.b = json::read_int(r) as i32; }
+                    else if k == "a" { n.a = read_in(-1, LINK_MOST) as i32; }
+                    else if k == "b" { n.b = read_in(-1, LINK_MOST) as i32; }
                     else if k == "tabs" {
                         json::each_element(r) {
                             let t = read_id();
@@ -296,21 +303,61 @@ fn load_layout_json(text: const u8[:]) -> bool, u8[>..] {
     guard json::finish(r) else { return false, json::message(r); }
     guard version == LAYOUT_VERSION else { return false, str("layout: version ", version, ", not ", LAYOUT_VERSION); }
     guard bad.len == 0 else { return false, str("layout: ", bad); }
-    // The links all in range, and the tree a tree: each node's children
-    // name it as their parent.
+    // The links all in range, ...
     let count = saved_nodes.len as i32;
     fn link(k: i32) -> bool { k >= -1 && k < count }
     for n, k in saved_nodes {
         if !n.used { continue; }
         guard link(n.parent) && link(n.a) && link(n.b) else { return false, str("layout: dock node ", k, " links outside the tree"); }
-        if n.axis >= 0 {
-            guard n.axis <= 1 && n.a >= 0 && n.b >= 0 && saved_nodes[n.a].parent == k as i32 && saved_nodes[n.b].parent == k as i32
-                else { return false, str("layout: dock node ", k, "'s split is broken"); }
-        }
     }
     for w in saved_windows {
         guard link(w.dock) && (w.dock < 0 || (saved_nodes[w.dock].used && saved_nodes[w.dock].axis < 0))
             else { return false, str("layout: a window docked outside a leaf"); }
+    }
+    // ... each split with two used children that name it as their parent,
+    // each child listed by its parent, each space with one root, ...
+    fn child_of(c: i32, k: i32) -> bool { c >= 0 && saved_nodes[c].used && saved_nodes[c].parent == k }
+    for n, k in saved_nodes {
+        if !n.used { continue; }
+        let at = k as i32;
+        if n.axis >= 0 {
+            guard n.a != n.b && child_of(n.a, at) && child_of(n.b, at) && n.ratio >= 0.0 && n.ratio <= 1.0
+                else { return false, str("layout: dock node ", k, "'s split is broken"); }
+        }
+        if n.parent >= 0 {
+            let p = saved_nodes[n.parent];
+            guard p.used && p.axis >= 0 && (p.a == at || p.b == at) && p.space == n.space
+                else { return false, str("layout: dock node ", k, " isn't a child of its parent"); }
+        } else {
+            for o, j in saved_nodes {
+                guard j >= k || !o.used || o.parent >= 0 || o.space != n.space
+                    else { return false, str("layout: dock node ", k, " is a second root of a space"); }
+            }
+        }
+        // ... a leaf's tabs its windows, once each ...
+        for t, j in n.tabs {
+            var there = false;
+            for w in saved_windows { if w.id == t && w.dock == at { there = true; } }
+            for o in n.tabs[..j] { if o == t { there = false; } }
+            guard there else { return false, str("layout: dock node ", k, " has a tab that isn't its window"); }
+        }
+    }
+    for w in saved_windows {
+        if w.dock < 0 { continue; }
+        var there = false;
+        for t in saved_nodes[w.dock].tabs { if t == w.id { there = true; } }
+        guard there else { return false, str("layout: a docked window with no tab"); }
+    }
+    // ... and every node's way up ending at a root, not going round.
+    for n, k in saved_nodes {
+        if !n.used { continue; }
+        var up = n.parent;
+        var left = count;
+        while up >= 0 && left > 0 {
+            up = saved_nodes[up].parent;
+            left--;
+        }
+        guard up < 0 else { return false, str("layout: dock node ", k, " is in a loop"); }
     }
 
     // In place of what there is. Every window not in it floats.
@@ -359,11 +406,13 @@ fn load_layout_json(text: const u8[:]) -> bool, u8[>..] {
 }
 
 // The layout in the file at `path`: false, and nothing changed, if there
-// is none or it isn't one.
+// is none or it isn't one. A file left by another version is an ordinary
+// thing for a program to meet, so that isn't misuse: what's wrong with it
+// goes to stderr, and the program goes on to its default layout.
 fn load_layout(path: const u8[:]) -> bool {
     var text: u8[>..] = [];
     guard read_file(path, text) else { return false; }
     let ok, err = load_layout_json(text[..]);
-    if !ok { misuse(err[..]); }
+    if !ok { write_stderr(str("imgui: ", path, ": ", err, "\n")); }
     ok
 }

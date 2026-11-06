@@ -33,6 +33,18 @@ refused true: layout: version 2, not 1
 refused true: layout: dock node 0 links outside the tree
 refused true: layout: an ID that isn't 16 hex digits
 refused true: layout: dock node 0's split is broken
+refused true: layout: dock node 3 isn't a child of its parent
+refused true: layout: dock node 0's split is broken
+refused true: layout: dock node 0's split is broken
+refused true: layout: dock node 1 isn't a child of its parent
+refused true: layout: dock node 0 is in a loop
+refused true: layout: dock node 1 is a second root of a space
+refused true: layout: dock node 0's split is broken
+refused true: layout: a number out of range
+refused true: layout: a number out of range
+refused true: layout: dock node 0 has a tab that isn't its window
+refused true: layout: a docked window with no tab
+refused true: layout: dock node 0 has a tab that isn't its window
 after them:
   A docked 0.0 112.0 149.0 368.0; B 154.0 112.0 347.0 368.0
   C 560.0 100.0 150.0 31.0 collapsed true; D 580.0 300.0 150.0 100.0; in front C
@@ -40,4 +52,5 @@ after them:
 saved to a file true
 read back true, A docked true
 no file: false
+not a layout: false
 shown after loading: in front C true

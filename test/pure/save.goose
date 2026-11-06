@@ -100,6 +100,33 @@ fn main() {
     bad("{\"version\":1,\"dock\":[{\"used\":true,\"space\":\"0000000000000001\",\"parent\":7}]}");
     bad("{\"version\":1,\"windows\":[{\"id\":\"xyz\"}]}");
     bad("{\"version\":1,\"dock\":[{\"used\":true,\"space\":\"0000000000000001\",\"parent\":-1,\"axis\":0,\"a\":0,\"b\":0}]}");
+    // Trees that would abort or loop later on.
+    let S = "\"space\":\"0000000000000001\"";
+    fn node(rest: const u8[:]) -> u8[>..] { str("{\"used\":true,", S, ",", rest, "}") }
+    fn dock(nodes: const u8[:]) -> u8[>..] { str("{\"version\":1,\"dock\":[", nodes, "]}") }
+    let kid = node("\"parent\":0");
+    let root = node("\"parent\":-1");
+    // A leaf its parent doesn't list; a split's child that isn't used.
+    bad(dock(str(node("\"parent\":-1,\"axis\":0,\"a\":1,\"b\":2"), ",", kid, ",", kid, ",", kid)));
+    bad(dock(str(node("\"parent\":-1,\"axis\":0,\"a\":1,\"b\":2"), ",", kid, ",{\"used\":false}")));
+    // Both sides the same child; a parent that isn't a split.
+    bad(dock(str(node("\"parent\":-1,\"axis\":0,\"a\":1,\"b\":1"), ",", kid)));
+    bad(dock(str(root, ",", kid)));
+    // A loop, with nothing out of place but that.
+    bad(dock(str(node("\"parent\":1,\"axis\":0,\"a\":1,\"b\":2"), ",",
+                 node("\"parent\":0,\"axis\":0,\"a\":0,\"b\":3"), ",", kid, ",", node("\"parent\":1"))));
+    // Two roots of a space; a split's ratio past its end.
+    bad(dock(str(root, ",", root)));
+    bad(dock(str(node("\"parent\":-1,\"axis\":0,\"ratio\":3,\"a\":1,\"b\":2"), ",", kid, ",", kid)));
+    // Numbers too big for what holds them.
+    bad(dock(node("\"parent\":99999999999")));
+    bad(dock(node("\"parent\":-1,\"axis\":300")));
+    // Tabs and windows that don't agree.
+    let W = "\"id\":\"0000000000000002\"";
+    bad(str("{\"version\":1,\"dock\":[", node("\"parent\":-1,\"tabs\":[\"0000000000000002\"]"), "]}"));
+    bad(str("{\"version\":1,\"windows\":[{", W, ",\"dock\":0}],\"dock\":[", root, "]}"));
+    bad(str("{\"version\":1,\"windows\":[{", W, ",\"dock\":0}],\"dock\":[",
+            node("\"parent\":-1,\"tabs\":[\"0000000000000002\",\"0000000000000002\"]"), "]}"));
     steps(2);
     print("after them:");
     report();
@@ -112,6 +139,11 @@ fn main() {
     print("read back ", imgui::load_layout(path), ", A docked ", imgui::is_docked("A"));
     delete_file(path);
     print("no file: ", imgui::load_layout(path));
+    // A file that isn't a layout: false, as if there were none, and the
+    // frames go on (misuse would abort at the end of the next one).
+    if write_file(path, "{\"version\":2}") { print("not a layout: ", imgui::load_layout(path)); }
+    delete_file(path);
+    steps(2);
     // As a program starting: C and D not shown, D in front, the layout
     // loaded (C in front), then both shown, C recorded first: C stays in
     // front, not raised in the order they are first called.
