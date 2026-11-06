@@ -296,7 +296,7 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
 
     // The grips: an edge dragged moves it, the opposite one staying put.
     let resizable = flags & WINDOW_NO_RESIZE == 0 && !w.collapsed && roll == 1.0 && last_st.laid;
-    let least = float2 { max(title_h * 3.0, 96.0), title_h + 32.0 };
+    let least = float2 { max(max(title_h * 3.0, 96.0), d.dim.w.lo), max(title_h + 32.0, d.dim.h.lo) };
     if resizable {
         for g in 8 {
             let it = interaction_for(sub_id(wid, g).v, column().skin(RESIZE_GRIP).hit());
@@ -306,8 +306,10 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
                 w.grab_size = float2 { last.w, last.h };
             }
             if it.held {
-                var size = w.grab_size;
-                var pos = w.grab;
+                // Only the axes this grip moves: the other stays as it is,
+                // its content's size if that's what it was.
+                var size = w.size;
+                var pos = w.pos;
                 for a in 2 {
                     let s = if a == 0 { dir.x } else { dir.y };
                     if s == 0 { continue; }
