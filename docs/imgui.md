@@ -355,7 +355,7 @@ damping)`, with or without `delay(seconds)`.
 | `tooltip(it, s)`, `tooltip(it) { … }` | under a widget the pointer rests on, or the focus is on |
 | `context_menu(it[, d]) { menu_item(…); … } -> bool` | a menu at the pointer when the widget is right-clicked; true while open. A right click elsewhere closes it |
 | `last_item() -> Interaction` | the last widget's interaction, for one that returns only its value: `if selectable(…) { … }; context_menu(last_item()) { … };` |
-| `drag_source(it, kind, payload) -> bool`, `drop_target(it, kind) -> Drop`, `drag_ghost(d) { … }` | drag and drop: a widget's payload (an `i64`) carried to a target that takes its `kind`, picked up by dragging it (or accepting it with the keys, carried by navigation, put down by accepting); `Drop { over, dropped, payload }`; the ghost drawn under the pointer, never in its way. Escape puts it back. `dragging(kind)`, `drag_payload()` |
+| `drag_source(it, kind, payload) -> bool`, `drop_target(it, kind) -> Drop`, `drag_ghost(d) { … }` | drag and drop: a widget's payload (an `i64`) carried to a target that takes its `kind`, picked up by dragging it (or accepting it with the keys, carried by navigation, put down by accepting); `Drop { over, dropped, payload }`; the ghost drawn under the pointer, never in its way. Escape puts it back, as `cancel_drag()` does. Carried by navigation, a press drops it too. `dragging(kind)`, `drag_payload()` |
 | `text_input(label, buf, d, max_len, placeholder) -> TextEdit` | one line, edited in place: a `u8[>..]` or a `u8[..N]`. Its caret is solid while typing, for half a second after it moves and on taking the focus, then blinks, fading |
 | `set_caret_blink(on)` | a caret that never blinks, for players who find blinking distracting |
 

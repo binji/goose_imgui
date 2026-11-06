@@ -47,11 +47,17 @@ fn begin_drag() {
     if !input.pointer.down { drag_held_off = false; }
     guard drag_on;
     if input.nav.cancel {
-        drag_on = false;
-        drag_held_off = !drag_by_nav && input.pointer.down;
+        cancel_drag();
         return;
     }
     if drag_by_nav {
+        // A press ends it too, as a drop on what it lands on: not a click.
+        if input.pointer.pressed {
+            drop_now = true;
+            drop_to = hot;
+            pressed_id = 0;
+            active = 0;
+        }
         if input.nav.accept {
             // A drop, not an activation of what it lands on.
             drop_now = true;
@@ -65,6 +71,13 @@ fn begin_drag() {
         clicked_id = 0;
         double_id = 0;
     }
+}
+// What is carried put back, nothing dropped. (A press still held starts no
+// new drag until it is let go.)
+fn cancel_drag() {
+    drag_on = false;
+    drop_now = false;
+    drag_held_off = !drag_by_nav && input.pointer.down;
 }
 // At the end of a frame: a drop is over.
 fn end_drag() { if drop_now { drag_on = false; } }
