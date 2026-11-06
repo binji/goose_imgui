@@ -94,7 +94,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `begin_frame(input, dt)`, `end_frame()`, `draw()` | the parts: `draw` inside a gfx2d frame, after `end_frame` |
 | `input_from_gfx() -> Input` | gfx's mouse and keyboard, and the ordered events for typed text and the clipboard |
 | `nav_from_pad(input, PadState)` | a gamepad's held buttons and stick, as navigation, with repeat (gfx v1 has no gamepads; a program reading one passes what it holds) |
-| `set_viewport(rect)` | the UI's area; by default the screen, under the scales |
+| `set_viewport(rect)` | the UI's area from now on; by default the screen, under the scales, which an empty rect goes back to |
 | `set_scale(s)`, `ui_scale_of()` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE`. `ui_scale_of()` is the scale it is drawn at (whole in pixel-art mode) |
 | `edge_clamp(p, inset)`, `edge_clamp(p, rect)` | where to put a marker for p: p, if it is in the viewport inset by `inset` (or in `rect`); else where the line from the center to p leaves it. Also the angle to p, and whether it is in |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over something that takes it or has a background, not in a `passthrough()` box, or holds a press) or the keyboard (a text field has focus) this frame |

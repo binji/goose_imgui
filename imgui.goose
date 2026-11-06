@@ -67,13 +67,17 @@ import metrics;
 
 // --- frames ---------------------------------------------------------------------------
 
+var chosen_viewport = gfx2d::Rect { 0.0, 0.0, 0.0, 0.0 };
+
 // Starts a frame with this input, `dt` seconds after the last.
 fn begin_frame(inp: Input, dt: f64) {
     if in_frame { misuse("begin_frame: already in a frame"); }
     frame_index++;
     delta = clamp(dt, 0.0, 0.25);
     clock += delta;
-    if inp.viewport.x > 0.0 && inp.viewport.y > 0.0 {
+    if chosen_viewport.w > 0.0 && chosen_viewport.h > 0.0 {
+        viewport = chosen_viewport;
+    } else if inp.viewport.x > 0.0 && inp.viewport.y > 0.0 {
         viewport = gfx2d::Rect { 0.0, 0.0, inp.viewport.x, inp.viewport.y };
     }
     sweep_popups();
@@ -152,7 +156,12 @@ fn sync_gfx() {
     }
 }
 
-fn set_viewport(r: gfx2d::Rect) { viewport = r; }
+// The UI's area from now on, whatever the screen; an empty one goes back to
+// the screen.
+fn set_viewport(r: gfx2d::Rect) {
+    chosen_viewport = r;
+    if r.w > 0.0 && r.h > 0.0 { viewport = r; }
+}
 
 // --- after layout ----------------------------------------------------------------------
 
