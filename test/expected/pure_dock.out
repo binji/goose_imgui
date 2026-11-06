@@ -72,3 +72,8 @@ off it: 160.0 by 400.0, as before true
 let go off it: docked false
 E on B's tab bar: drawn as its tab true by true; in the room made for it true; its tab shown there true
 let go: tabs Q E B 
+R's tab dragged out of a floating dock:
+  R floating: 360.0 44.0 200.0 120.0
+  S docked: 300.0 263.0 200.0 87.0
+  R floating: 360.0 44.0 200.0 120.0
+  S docked: 300.0 263.0 200.0 87.0

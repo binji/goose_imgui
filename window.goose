@@ -192,7 +192,9 @@ fn window_with<F>(wid: Id, title: const u8[:], open: bool&, closable: bool, d: D
     // the frame it first is, it isn't laid out yet, so this one waits.
     if w.dock >= 0 && dock_host_of(w.dock) != 0 {
         record_host(dock_host_of(w.dock));
-        if !dock_shown(w.dock) { return; }
+        // Which may have undocked it (its tab dragged out), or moved it.
+        w = window_state(wid.v);
+        if w.dock >= 0 && !dock_shown(w.dock) { return; }
     }
     // Docked, in a dock space being shown: its body in its node, if its tab
     // is the one selected (dock.goose).

@@ -29,8 +29,13 @@ fn ui() {
     imgui::window("Sixth window") { imgui::text("gee"); };
     imgui::window("P", imgui::column().size(170, 120).absolute(620, 20)) { imgui::text("pea"); };
     imgui::window("Q", imgui::column().size(170, 120).absolute(620, 300)) { imgui::text("queue"); };
+    if pair_on {
+        imgui::window("R", imgui::column().size(170, 120).absolute(300, 200)) { imgui::text("are"); };
+        imgui::window("S", imgui::column().size(170, 120).absolute(300, 340)) { imgui::text("ess"); };
+    }
 }
 
+var pair_on = false;
 var at = float2 { -100.0, -100.0 };
 fn run_frame(p: imgui::Pointer) { imgui::frame(imgui::Input { pointer: p, viewport: float2 { 800.0, 600.0 }, .. }, 1.0 / 60.0) { ui(); }; }
 fn step() { run_frame(imgui::Pointer { pos: at, .. }); }
@@ -367,4 +372,22 @@ fn main() {
     step();
     print("let go: tabs ", tabs_of("B"));
     imgui::set_dock_preview(false);
+    // Two tabs of a floating dock: the tab of the one recorded first dragged
+    // out, in the frame it is recorded from.
+    pair_on = true;
+    at = float2 { -100.0, -100.0 };
+    step();
+    step();
+    imgui::dock_window_with("S", "R", imgui::DOCK_CENTER);
+    step();
+    step();
+    press(tab("R"));
+    move_to(float2 { 400.0, 60.0 });
+    print("R's tab dragged out of a floating dock:");
+    show("R");
+    show("S");
+    release();
+    step();
+    show("R");
+    show("S");
 }
