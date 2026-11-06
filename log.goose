@@ -89,6 +89,7 @@ fn log_one(l: Log&, s: const u8[:], level: i64) {
     while l.count > 0 && (log_line(l, 0).at < l.written - cap || l.count >= kept) {
         l.first = (l.first + 1) % kept;
         l.count--;
+        l.gone++;
     }
     let line = LogLine { at: at, len: n as i32, level: level as u8, time: clock };
     let slot = (l.first + l.count) % kept;
@@ -169,12 +170,21 @@ fn log_view(label: const u8[:], l: Log&, d: Desc = column(), filter: const u8[:]
     var vs = state_of(i.v);
     var ps = state_of(pane.v);
     let limit = max(ps.content.y - ps.view.y, 0.0);
+    let size = class_style(LOG).normal.text_size;
+    let line_h = (if size > 0.0 { size } else { class_style(LABEL).normal.text_size }) * 1.4;
+    // Lines gone from the top of a view scrolled back: it stays on the same
+    // lines. (`num`: the log's `gone` as of last frame. Filtered, how many
+    // of them it showed isn't known.)
+    let dropped = l.gone - vs.num as i64;
+    vs.num = l.gone as f64;
     if !vs.open {
         ps.scroll_to.y = limit;
         put_state(pane.v, ps);
+    } else if dropped > 0 && filter.len == 0 && least == LOG_DEBUG {
+        ps.scroll_to.y = max(ps.scroll_to.y - dropped * line_h, 0.0);
+        ps.scroll.y = max(ps.scroll.y - dropped * line_h, 0.0);
+        put_state(pane.v, ps);
     }
-    let size = class_style(LOG).normal.text_size;
-    let line_h = (if size > 0.0 { size } else { class_style(LABEL).normal.text_size }) * 1.4;
     var pd = d.skin(LOG).hit();
     if pd.dim.w.kind == SIZE_FIT { pd = pd.grow_w(); }
     if pd.dim.h.kind == SIZE_FIT { pd = pd.height(line_h * 10.0); }
