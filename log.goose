@@ -39,11 +39,13 @@ root struct Log {
     count: i64 = 0,
     written: i64 = 0,           // bytes written, ever: where the next goes is this, in the ring
     added: i64 = 0,             // lines logged, ever
+    gone: i64 = 0,              // of those, how many have gone from the ring
+    ring: i64 = 0,              // the slots `lines` is a ring of: lines_kept, at the last line added
 }
 
 fn log_count(l: Log&) -> i64 { l.count }
 // Line k, the oldest 0.
-fn log_line(l: Log&, k: i64) -> LogLine { l.lines[(l.first + k) % max(l.lines_kept, 1)] }
+fn log_line(l: Log&, k: i64) -> LogLine { l.lines[(l.first + k) % max(l.ring, 1)] }
 fn log_text(l: Log&, k: i64) -> const u8[:] {
     let ln = log_line(l, k);
     let cap = l.text.len;
@@ -61,6 +63,21 @@ fn log_clear(l: Log&) {
 fn log_one(l: Log&, s: const u8[:], level: i64) {
     let cap = max(l.bytes_kept, 64);
     let kept = max(l.lines_kept, 1);
+    if l.ring != kept {
+        // lines_kept changed: the ring laid out again at the new size, the
+        // newest lines kept.
+        var old: LogLine[>..] = [];
+        for k in l.count { old.push(log_line(l, k)); }
+        let keep = min(old.len, kept);
+        l.gone += old.len - keep;
+        l.first = 0;
+        l.count = keep;
+        l.ring = kept;
+        for k in keep {
+            let line = old[old.len - keep + k];
+            if k < l.lines.len { l.lines[k] = line; } else { l.lines.push(line); }
+        }
+    }
     while l.text.len < cap { l.text.push(0); }
     let n = min(s.len, cap);
     // Whole in the ring: from its start if it would run past the end.
