@@ -341,6 +341,8 @@ fn number_field(i: Id, v: f64&, o: Drag, whole: bool, d: Desc, tag: i64) -> bool
         format_fixed(t, value, s.decimals);
         start_typing(i, t);
     }
+    // The drag is over: the next accept types.
+    if !it.held { st.open = false; }
     put_state(i.v, st);
     v = value;
     let changed = value != start;
