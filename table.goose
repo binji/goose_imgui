@@ -73,6 +73,12 @@ fn row_list<F>(label: const u8[:], count: i64, row_height: f64, d: Desc = column
 
 // Each list's anchor: the row a Shift+click selects from.
 var select_anchor = dictionary<u64, i64> {};
+// A table's sort and its columns' widths (0: a share), by the table's and
+// the headers' IDs: the player's choices, kept as a tree node's are, however
+// long the table is hidden.
+struct TableSort { column: i32 = -1, descending: bool = false }
+var table_sorts = dictionary<u64, TableSort> {};
+var column_widths = dictionary<u64, f32> {};
 
 // Row k of list `list` clicked (or accepted): with no key held, it alone is
 // selected; with Ctrl, it is selected or not, the rest as they were; with
@@ -138,19 +144,20 @@ fn table<F, A>(label: const u8[:], headers: const u8[:][:], count: i64, selected
 
 fn table_of<F, A>(i: Id, headers: const u8[:][:], count: i64, selected: const A&, t: Table, d: Desc) -> TableInfo {
     var info = TableInfo { .. };
-    var st = state_of(i.v);
+    let st = state_of(i.v);
     let n = min(headers.len, 32);
-    // The sort: kept in the table's state, `index` the column, `open` descending.
-    info.sort = st.index as i64;
-    info.descending = st.open;
-    // Widths: each column's kept in its header's state (`value`; 0: a share).
+    let sort = table_sorts.get(i.v);
+    if sort {
+        info.sort = sort.column as i64;
+        info.descending = sort.descending;
+    }
     let inner = max(st.rect.w - 2.0, 0.0);
     var widths: f32[32] = [0.0; 32];
     var fixed: f32 = 0.0;
     var shares = 0;
     for c in n {
-        let w = state_of(sub_id(i, c).v).value;
-        if w > 0.0 { widths[c] = max(w, t.least); fixed += widths[c]; } else { shares++; }
+        let w = column_widths.get(sub_id(i, c).v);
+        if w && w > 0.0 { widths[c] = max(w, t.least); fixed += widths[c]; } else { shares++; }
     }
     let share = if shares > 0 { max((inner - fixed) / shares, t.least) } else { 0.0 };
     for c in n { if widths[c] <= 0.0 { widths[c] = if inner > 0.0 { share } else { 120.0 }; } }
@@ -164,20 +171,16 @@ fn table_of<F, A>(i: Id, headers: const u8[:][:], count: i64, selected: const A&
         let g = interact(gid, column().skin(RESIZE_GRIP).hit());
         if g.pressed { var hs = state_of(hid.v); hs.num = widths[c]; put_state(hid.v, hs); }
         if g.held {
-            var hs = state_of(hid.v);
-            hs.value = max(hs.num + g.drag.x, t.least) as f32;
-            put_state(hid.v, hs);
-            widths[c] = hs.value;
+            widths[c] = max(state_of(hid.v).num + g.drag.x, t.least) as f32;
+            column_widths.insert(hid.v, widths[c]);
         }
         if g.hovered || g.held { wanted_cursor = CURSOR_EW_RESIZE; }
         if t.sortable && interact(hid, hd.width(widths[c]).look(checked_look(info.sort == c))).activated {
             if info.sort == c { info.descending = !info.descending; } else { info.sort = c; info.descending = false; }
             info.sorted = true;
-            st.index = c as i32;
-            st.open = info.descending;
+            table_sorts.insert(i.v, TableSort { c as i32, info.descending });
         }
     }
-    put_state(i.v, st);
     let row_h = if t.row_height > 0.0 { t.row_height } else { class_style(TABLE_ROW).normal.min_size.y };
 
     // Its columns don't make it wider: those past its edge are cut off.

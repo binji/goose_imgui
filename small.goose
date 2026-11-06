@@ -189,6 +189,10 @@ fn slider_angle(label: const u8[:], radians: f64&, lo_deg: f64 = -180.0, hi_deg:
     changed
 }
 
+// Which thumb a range slider moves by the keys: 0 `from`, 1 `to`. Kept
+// however long the slider is hidden.
+var range_thumbs = dictionary<u64, i32> {};
+
 // A range from lo to hi: two thumbs, `from` and `to`, never crossing. A
 // press takes the nearer thumb; left and right move the one taken last,
 // and accept (Enter, A) changes which. True the frame either changes.
@@ -205,8 +209,11 @@ fn range_slider(label: const u8[:], from: f64&, to: f64&, lo: f64, hi: f64, step
     var a = clamp(a0, min(lo, hi), max(lo, hi));
     var b = clamp(b0, min(lo, hi), max(lo, hi));
     if a > b { b = a; }
-    var st = state_of(track_id.v);
+    let st = state_of(track_id.v);
     let w = max(st.rect.w - thumb.x, 1.0);
+    var which: i32 = 1;
+    let kept = range_thumbs.get(track_id.v);
+    if kept { which = kept; }
     let at_pointer = clamp((it.pointer.x * (st.rect.w / max(it.rect.w, 1.0)) - thumb.x * 0.5) / w, 0.0, 1.0);
     if it.pressed {
         // The nearer thumb; on both (one value), the one the pointer is
@@ -214,11 +221,10 @@ fn range_slider(label: const u8[:], from: f64&, to: f64&, lo: f64, hi: f64, step
         let fa = (a - lo) / span;
         let fb = (b - lo) / span;
         let p: f64 = at_pointer;
-        st.index = if abs(p - fa) < abs(p - fb) || (fa == fb && p < fa) { 0 } else { 1 };
+        which = if abs(p - fa) < abs(p - fb) || (fa == fb && p < fa) { 0 } else { 1 };
     }
-    if accept_id == track_id.v { st.index = 1 - st.index; }
-    put_state(track_id.v, st);
-    let which = st.index;
+    if accept_id == track_id.v { which = 1 - which; }
+    range_thumbs.insert(track_id.v, which);
     let by = if step > 0.0 { step } else { span / 20.0 };
     var moved: f64 = if which == 0 { a } else { b };
     if it.held { moved = lo + at_pointer * span; }

@@ -1,0 +1,4 @@
+to start: sort -1 descending false, first column 99.333336, range 20.0 60.0, command ""
+chosen: sort 1 descending true, first column 129.33334, range 19.0 60.0, command "three"
+hidden and shown: sort 1 descending true, first column 129.33334, range 19.0 60.0, command "three"
+left and up: sort 1 descending true, first column 129.33334, range 18.0 60.0, command "two"

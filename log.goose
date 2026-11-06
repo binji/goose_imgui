@@ -195,6 +195,9 @@ fn log_view(label: const u8[:], l: Log&, d: Desc = column(), filter: const u8[:]
 
 // The commands typed into consoles, oldest first, for Up and Down.
 var console_history = Log { lines_kept: 200, bytes_kept: 16384, .. };
+// How far back each console is in them: 0 and up from the newest; -1 (or
+// not here), the line being typed. Kept however long it is hidden.
+var console_back = dictionary<u64, i32> {};
 
 // A log view and, under it, a command line: Enter echoes the command into
 // the log and returns true, for the program to run it (and clear `cmd`);
@@ -202,7 +205,9 @@ var console_history = Log { lines_kept: 200, bytes_kept: 16384, .. };
 fn console<A>(label: const u8[:], l: Log&, cmd: A&, d: Desc = column(), filter: const u8[:] = "") -> bool {
     let i = id(label);
     let input_id = sub_id(i, "input");
-    var st = state_of(i.v);
+    var back: i64 = -1;
+    let kept = console_back.get(i.v);
+    if kept { back = kept as i64; }
     var ran = false;
     var cd = d.gap(class_style(PROPERTIES).normal.gap);
     if cd.dim.w.kind == SIZE_FIT { cd = cd.grow_w(); }
@@ -212,17 +217,15 @@ fn console<A>(label: const u8[:], l: Log&, cmd: A&, d: Desc = column(), filter: 
         // what was being typed (kept aside as it was).
         if focused == input_id.v && nav_captured.y != 0 && console_history.count > 0 {
             let n = console_history.count;
-            // `index` counts back from the newest; -1: the line being typed.
-            var at = st.index as i64 - nav_captured.y;
-            at = clamp(at, -1, n - 1);
-            if at != st.index as i64 {
+            let at = clamp(back - nav_captured.y, -1, n - 1);
+            if at != back {
                 erase_text(cmd, 0, cmd.len);
                 if at >= 0 { insert_text(cmd, 0, log_text(console_history, n - 1 - at), 4096); }
                 var es = state_of(input_id.v);
                 es.caret = cmd.len as i32;
                 es.anchor = es.caret;
                 put_state(input_id.v, es);
-                st.index = at as i32;
+                back = at;
             }
         }
         let e = text_input(input_id, cmd, row().grow_w().with_bits(CAPTURE_Y), 4096, "command");
@@ -232,7 +235,7 @@ fn console<A>(label: const u8[:], l: Log&, cmd: A&, d: Desc = column(), filter: 
             echo.append(cmd[..]);
             log(l, echo, LOG_INPUT);
             log(console_history, cmd[..]);
-            st.index = -1;
+            back = -1;
             ran = true;
             // Following the log again, to see what the command does.
             let lv = sub_id(i, "log");
@@ -241,6 +244,6 @@ fn console<A>(label: const u8[:], l: Log&, cmd: A&, d: Desc = column(), filter: 
             put_state(lv.v, vs);
         }
     };
-    put_state(i.v, st);
+    console_back.insert(i.v, back as i32);
     ran
 }
