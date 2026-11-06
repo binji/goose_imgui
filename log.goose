@@ -243,7 +243,8 @@ fn console<A>(label: const u8[:], l: Log&, cmd: A&, d: Desc = column(), filter: 
     var cd = d.gap(class_style(PROPERTIES).normal.gap);
     if cd.dim.w.kind == SIZE_FIT { cd = cd.grow_w(); }
     box(i, cd) {
-        log_view("log", l, column().grow(), filter);
+        // A console of no set height: the log's own.
+        log_view("log", l, if cd.dim.h.kind == SIZE_FIT { column() } else { column().grow() }, filter);
         // Up and Down: through the history, newest first, then back to
         // what was being typed (kept aside as it was).
         if focused == input_id.v && nav_captured.y != 0 && console_history.count > 0 {
