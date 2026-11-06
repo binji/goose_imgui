@@ -251,6 +251,8 @@ fn dock_window_with(title: const u8[:], other: const u8[:], side: i64, ratio: f6
     if !windows.contains(w) { window_order.push(w); windows.insert(w, WindowState { .. }); }
     let o = id(other).v;
     if !windows.contains(o) { window_order.push(o); windows.insert(o, WindowState { .. }); }
+    // First, as it can free the leaf `other` is in, moving `other`.
+    if w != o { undock_id(w); }
     let n = window_state(o).dock;
     if n < 0 {
         dock_into_window(w, o, side, ratio);
