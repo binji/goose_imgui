@@ -21,6 +21,8 @@ var spring_v = 0.0;
 var rows: i64[>..<] = [1, 2, 3];
 var lone_shown = true;
 var nest_shown = true;
+var held_shown = false;
+var open_pop = false;
 
 fn ui() {
     tween_v = imgui::animate("tween", target, imgui::tween(0.5, imgui::EASE_LINEAR));
@@ -48,6 +50,16 @@ fn ui() {
         if nest_shown {
             imgui::box("outer", imgui::column().exit(imgui::fade_out(imgui::tween(0.2, imgui::EASE_LINEAR)))) {
                 imgui::text("inside", imgui::column().exit(imgui::pop_out(0.5, imgui::tween(0.2))));
+            };
+        }
+        if held_shown {
+            imgui::box("held", imgui::column().exit(imgui::fade_out(imgui::tween(0.2, imgui::EASE_LINEAR)))) {
+                imgui::text("before");
+                if open_pop { imgui::open_popup("pop"); open_pop = false; }
+                imgui::popup("pop") { imgui::text("in the popup"); };
+                imgui::panel(imgui::id("past"), imgui::column().size(20, 20)
+                             .exit(imgui::fade_out(imgui::tween(0.2, imgui::EASE_LINEAR))));
+                imgui::text("after");
             };
         }
     };
@@ -170,5 +182,19 @@ fn main() {
     rows = [1, 3];
     frame(0.05);
     print("row 1 back:");
+    show_exits();
+
+    // A root recorded inside what has an exit: the node after it finds its
+    // sibling, and the copy goes on past the root, without it.
+    held_shown = true;
+    open_pop = true;
+    frame(0.05);
+    frame(0.05);
+    imgui::id_scope(imgui::id("held")) { print("popup open: ", imgui::is_open("pop")); };
+    held_shown = false;
+    frame(0.05);
+    print("held removed, its popup open in it:");
+    show_exits();
+    frame(0.3);
     show_exits();
 }

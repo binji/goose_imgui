@@ -28,6 +28,8 @@ struct Node {
     first: i32 = -1,
     last: i32 = -1,
     next: i32 = -1,
+    prev: i32 = -1,                     // the sibling before it, as recorded
+    end: i32 = 0,                       // past its subtree in `nodes`, with any roots recorded inside it
     kids: i32 = 0,
     kind: u8 = 0,
     scoped: bool = false,               // pushed an ID scope
@@ -180,7 +182,7 @@ fn open_root(kind: i64, popup: u64, a: Anchor, d: Desc) -> i32 {
     nd.lay.padding = st.padding;
     nd.vis = node_filter(nd.vis);
     let look = resolve_look(st, d.vis, inherited[inherited.len - 1].look);
-    nodes.push(Node { id: rid, kind: NODE_BOX, root: roots.len as i16, d: nd, style: st, look: look, .. });
+    nodes.push(Node { id: rid, end: i + 1, kind: NODE_BOX, root: roots.len as i16, d: nd, style: st, look: look, .. });
     roots.push(Root { node: i, kind: kind as u8, popup: popup, anchor: a, level: popup_level(popup) });
     parents.push(i);
     push_inherited(st, look);
@@ -219,7 +221,7 @@ fn add_node(kind: i64, id: u64, var d: Desc) -> i32 {
     if st.text_size <= 0.0 { st.text_size = up.size; }
     let i = nodes.len as i32;
     d.vis = node_filter(d.vis);
-    nodes.push(Node { id: nid, parent: p, kind: kind as u8, named: named, root: nodes[p].root, d: d,
+    nodes.push(Node { id: nid, parent: p, prev: nodes[p].last, end: i + 1, kind: kind as u8, named: named, root: nodes[p].root, d: d,
                       style: st, scope: current_scope(), look: resolve_look(st, d.vis, up.look), .. });
     let last = nodes[p].last;
     if last >= 0 { nodes[last].next = i; } else { nodes[p].first = i; }
@@ -244,6 +246,7 @@ fn push_parent(i: i32, scoped: bool) {
 fn close_node() {
     if parents.len <= 1 && roots.len <= 1 { misuse("close: nothing open"); return; }
     let i = parents.pop();
+    nodes[i].end = nodes.len as i32;
     inherited.pop();
     if nodes[i].scoped { id_stack.pop(); }
 }

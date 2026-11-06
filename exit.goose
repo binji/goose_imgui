@@ -129,31 +129,27 @@ fn play_exits() {
         if p >= 0 {
             r.parent = nodes[p].id;
             r.parent_m = nodes[p].m;
-            // The sibling before it: the node before it, or the one above
-            // that under the same parent.
-            var j = i - 1;
-            while j != p && nodes[j].parent != p { j = nodes[j].parent; }
-            if j != p { r.after = nodes[j].id; }
+            if n.prev >= 0 { r.after = nodes[n.prev].id; }
             var q = p;
             while q >= 0 && nodes[q].d.mot.exit == 0 { q = nodes[q].parent; }
             if q >= 0 { r.outer = nodes[q].id; }
         }
-        copy_out(r, i, live);
+        copy_out(r, i);
     }
-    for r in kept { copy_out(r, r.node, nodes.len as i32); }
+    for r in kept { copy_out(r, r.node); }
 }
 
-// Nodes from `i` to the end of its subtree (before `limit`), copied into
-// the leaver_ arrays as a copy described by r.
+// Node `i` and its subtree copied into the leaver_ arrays, as a copy
+// described by r.
 //
 // What isn't drawn isn't copied: a subtree outside its clip (rows scrolled
 // out of a pane) is left out, as the draw would skip it, so a copy costs
-// what is on the screen. `copy_map` takes each node of the subtree to its
-// place in the copy, -1 if it is left out.
+// what is on the screen. So is a root recorded inside it (a tooltip, a
+// popup), which is its own and goes its own way. `copy_map` takes each node
+// of the subtree to its place in the copy, -1 if it is left out.
 var copy_map: i32[>..<] = [];
-fn copy_out(var r: Leaver, i: i32, limit: i32) {
-    var end = i + 1;
-    while end < limit && nodes[end].parent >= i { end++; }
+fn copy_out(var r: Leaver, i: i32) {
+    let end = nodes[i].end;
     copy_map.clear();
     var count: i32 = 0;
     r.node = leaver_nodes.len as i32;
@@ -164,7 +160,8 @@ fn copy_out(var r: Leaver, i: i32, limit: i32) {
     r.piece = leaver_pieces.len as i32;
     r.glyph = leaver_glyphs.len as i32;
     for k in i..end {
-        if k > i && (copy_map[(nodes[k].parent - i) as i64] < 0 || !overlaps(nodes[k].bounds, nodes[k].clip)) {
+        if k > i && (nodes[k].parent < i || copy_map[(nodes[k].parent - i) as i64] < 0 ||
+                     !overlaps(nodes[k].bounds, nodes[k].clip)) {
             copy_map.push(-1);
             continue;
         }
@@ -316,6 +313,7 @@ fn place_copy(r: Leaver, p: f32, live: i32) -> i32 {
     // The top, moved toward its exit's look.
     let e = r.exit;
     let t .= nodes[base];
+    t.end = base + r.node_count;
     t.alpha = r.alpha * (1.0 + (e.alpha - 1.0) * p);
     t.shift = r.shift + e.shift * p;
     t.zoom = r.zoom * (1.0 + (e.zoom - 1.0) * p);

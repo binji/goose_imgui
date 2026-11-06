@@ -39,3 +39,8 @@ row 1 removed:
   100.0x10.0 at y 90.0: child 0 alpha 0.75 shift 12.5 zoom 1.0 children 0
 row 1 back:
   playing 0
+popup open: true
+held removed, its popup open in it:
+  playing 1
+  49.0x59.0 at y 120.0: child 4 alpha 1.0 shift 0.0 zoom 1.0 children 3
+  playing 0
