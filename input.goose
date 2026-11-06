@@ -250,10 +250,11 @@ fn interaction_for(nid: u64, d: Desc) -> Interaction {
     let c = d.vis.class;
     var am = Amounts { .. };
     let kept = amounts.get(nid);
-    if kept {
-        am = kept;
-    } else {
-        // New: at its checked state already, not easing into it.
+    if kept { am = kept; }
+    if am.stamp < frame_index - 1 {
+        // New, or back after being away: from nothing, not from where it
+        // was, and at its checked state already, not easing into it.
+        am = Amounts { .. };
         am.checked_p = if d.vis.state.checked > 0.5 { 1.0 } else { 0.0 };
         am.checked = am.checked_p;
     }
