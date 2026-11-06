@@ -216,6 +216,7 @@ var number_text: u8[..64] = [];
 // Field `i` typed in from now on, starting from `s`, all of it selected.
 fn start_typing(i: Id, s: const u8[:]) {
     number_editing = i.v;
+    cancel_held = true;
     number_text.clear();
     for c in s { if number_text.len < number_text.cap { number_text.push(c); } }
     let edit_id = sub_id(i, "edit");
@@ -239,7 +240,10 @@ fn typing(i: Id, d: Desc, w: f32) -> bool {
         focus(i, focus_visible);
         return false;
     }
-    guard e.submitted || focused != edit_id.v else { return false; }
+    guard e.submitted || focused != edit_id.v else {
+        cancel_held = true;
+        return false;
+    }
     number_editing = 0;
     if e.submitted { focus(i, focus_visible); }
     true

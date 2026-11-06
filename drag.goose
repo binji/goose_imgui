@@ -52,7 +52,12 @@ fn begin_drag() {
         return;
     }
     if drag_by_nav {
-        if input.nav.accept { drop_now = true; drop_to = focused; }
+        if input.nav.accept {
+            // A drop, not an activation of what it lands on.
+            drop_now = true;
+            drop_to = focused;
+            accept_id = 0;
+        }
     } else if !input.pointer.down {
         drop_now = true;
         drop_to = hot;

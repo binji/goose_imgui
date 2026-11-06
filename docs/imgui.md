@@ -98,7 +98,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `set_scale(s)`, `ui_scale_of()` | the UI drawn `s` times as big: 2 for a high-density screen; starts at `IMGUI_SCALE`. `ui_scale_of()` is the scale it is drawn at (whole in pixel-art mode) |
 | `edge_clamp(p, inset)`, `edge_clamp(p, rect)` | where to put a marker for p: p, if it is in the viewport inset by `inset` (or in `rect`); else where the line from the center to p leaves it. Also the angle to p, and whether it is in |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over something that takes it or has a background, not in a `passthrough()` box, or holds a press) or the keyboard (a text field has focus) this frame |
-| `cancelled()` | Escape or B pressed with no popup open to close: for the game's own "back" |
+| `cancelled()` | Escape or B pressed with no popup open to close, and nothing being carried or typed into a number field (which take it first): for the game's own "back" |
 | `shortcut("Ctrl+Q")` | a key pressed with modifiers this frame: Ctrl (Cmd on a Mac), Shift, Alt, and a letter or digit. A `menu_item`'s shortcut text is only shown; this acts on it |
 | `time()`, `dt()` | imgui's clock |
 | `rect_of(id)`, `state_of(id)`, `dump()` | where a widget was laid out; its kept state; the tree, for tests |
@@ -743,7 +743,7 @@ for e in imgui::ui_events() {
 | `UI_CHANGE` | a value moved without an activation: a slider's ticks (each step, or each twentieth of its range without one), whether dragged or moved by left and right; tabs switched by the shoulder buttons |
 | `UI_OPEN`, `UI_CLOSE` | a popup, menu, dropdown or modal opened, or closed (by cancel, a press outside, the program, or no longer being recorded); its class `POPUP`, `MENU` or `MODAL` |
 | `UI_DENIED` | the pointer went down on a disabled widget |
-| `UI_BACK` | cancel with no popup open to close: the program's "back" (`cancelled()` is true too) |
+| `UI_BACK` | cancel with no popup open to close, and nothing carried or typed into a number field: the program's "back" (`cancelled()` is true too) |
 | `ui_event(kind, i, class)` | an event of the program's own widget, or of its own kind (from 64, say) |
 | `ui_event_name(kind)` | "hover", "focus" …, for logging |
 
@@ -761,7 +761,9 @@ frames goes in the next frame's list.
     that way, preferring ones in line with the focused one.
   - Tab and Shift+Tab go in recorded order.
   - Enter, Space or A accepts.
-  - Escape or B closes the top popup, or is the program's `cancelled()`.
+  - Escape or B puts down what is carried or stops typing a number, if
+    either is going on; else it closes the top popup, or is the program's
+    `cancelled()`.
 - **Menus.** In a submenu, Left closes it and goes back to its item;
   Right on a submenu's item opens it. Otherwise, in a menu bar's menu,
   Left and Right open the menu next to it (wrapping around), as desktop

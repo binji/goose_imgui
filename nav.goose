@@ -59,6 +59,9 @@ var focused: u64 = 0;
 var focus_visible = false;
 var nav_captured = int2 { 0, 0 };
 var cancel_pressed = false;
+// Something in hand since the last frame wants cancel for itself, as a
+// number being typed does: it isn't for the popups or the program.
+var cancel_held = false;
 var scroll_into: u64 = 0;           // focused by navigation: to be scrolled into view
 var wanted_default: u64 = 0;        // default_focus's, this frame
 var default_id: u64 = 0;            // and last frame's
@@ -125,6 +128,10 @@ fn direction_score(a: gfx2d::Rect, b: gfx2d::Rect, dx: i64, dy: i64) -> f32 {
 fn begin_nav() {
     let nav = input.nav;
     cancel_pressed = false;
+    // Cancel goes first to what is in hand: a thing carried (begin_drag) or
+    // a number being typed (typing), which see it for themselves.
+    let cancel_free = !drag_on && !cancel_held;
+    cancel_held = false;
     accept_id = 0;
     nav_captured = int2 { 0, 0 };
     scroll_into = 0;
@@ -159,7 +166,7 @@ fn begin_nav() {
             if first != 0 { focused = first; }
         }
     }
-    if nav.cancel {
+    if nav.cancel && cancel_free {
         if top > 0 { close_top_popup(); } else { cancel_pressed = true; ui_event(UI_BACK, 0, NONE); }
     }
     if cur < 0 {

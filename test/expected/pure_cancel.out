@@ -1,0 +1,17 @@
+typing, in a modal: modal true, typing true, carrying false, back false
+escape: modal true, typing false, carrying false, back false
+next frame: modal true, typing false, carrying false, back false
+typing again: modal true, typing true, carrying false, back false
+escape: modal true, typing false, carrying false, back false
+escape again: modal false, typing false, carrying false, back false
+carrying, in a modal: modal true, typing false, carrying true, back false
+escape: modal true, typing false, carrying false, back false
+escape again: modal false, typing false, carrying false, back false
+the field gone, escape: modal false, typing false, carrying false, back false
+typing, no modal: modal true, typing false, carrying false, back false
+escape again: modal true, typing false, carrying false, back true
+carrying, no modal: modal true, typing false, carrying false, back false
+escape again: modal true, typing false, carrying false, back true
+picked up by accept: true
+dropped 7, activated 0
+then accepted: activated 1
