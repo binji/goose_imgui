@@ -485,6 +485,9 @@ fn shortcut(s: const u8[:]) -> bool {
         }
         at = end + 1;
     }
+    if key == 0 { misuse(str("shortcut: no letter or digit in \"", s, "\"")); return false; }
+    // A text field's own, while it has the keyboard.
+    if (keyboard_used || text_wanted) && want == MOD_CTRL && (key == 'a' || key == 'c' || key == 'x' || key == 'v') { return false; }
     for ch in input.chords { if ch.key == key && ch.mods == want { return true; } }
     false
 }

@@ -99,7 +99,7 @@ Each takes `-- --frames N --screenshot file.png --theme light|dark|game
 | `edge_clamp(p, inset)`, `edge_clamp(p, rect)` | where to put a marker for p: p, if it is in the viewport inset by `inset` (or in `rect`); else where the line from the center to p leaves it. Also the angle to p, and whether it is in |
 | `wants_pointer()`, `wants_keyboard()` | whether the UI took the pointer (it is over something that takes it or has a background, not in a `passthrough()` box, or holds a press) or the keyboard (a text field has focus) this frame |
 | `cancelled()` | Escape or B pressed with no popup open to close, and nothing being carried or typed into a number field (which take it first): for the game's own "back" |
-| `shortcut("Ctrl+Q")` | a key pressed with modifiers this frame: Ctrl (Cmd on a Mac), Shift, Alt, and a letter or digit. A `menu_item`'s shortcut text is only shown; this acts on it |
+| `shortcut("Ctrl+Q")` | a key pressed with modifiers this frame: Ctrl (Cmd on a Mac), Shift, Alt, and a letter or digit; anything else is misuse. Ctrl+A, C, X and V go to a text field that has the keyboard, not here. A `menu_item`'s shortcut text is only shown; this acts on it |
 | `time()`, `dt()` | imgui's clock |
 | `rect_of(id)`, `state_of(id)`, `dump()` | where a widget was laid out; its kept state; the tree, for tests |
 
