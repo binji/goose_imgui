@@ -333,9 +333,15 @@ fn record_text(s: const u8[:], d: Desc) -> i32 {
     n.text_off = text_arena.len as i32;
     text_arena.append(s);
     n.text_len = s.len as i32;
+    measure_text_node(i, s);
+    i
+}
+// Node i's natural size, and for wrapped text its longest word's width.
+fn measure_text_node(i: i32, s: const u8[:]) {
+    let n .= nodes[i];
     let style = text_style_of(n);
     n.natural = gfx2d::measure_text(s, style);
-    if d.lay.wrap {
+    if n.d.lay.wrap {
         var w: f32 = 0.0;
         var at = 0;
         while at < s.len {
@@ -347,7 +353,6 @@ fn record_text(s: const u8[:], d: Desc) -> i32 {
         }
         n.word = w;
     }
-    i
 }
 fn text(s: const u8[:]) { text(s, column()); }
 fn text(s: const u8[:], c: StyleClass) { text(s, column().skin(c)); }
@@ -363,7 +368,11 @@ fn textf<F>(d: Desc) {
     let n .= nodes[i];
     n.text_off = start as i32;
     n.text_len = len as i32;
-    n.natural = gfx2d::measure_text(text_arena[start..start + len], text_style_of(n));
+    measure_text_node(i, text_arena[start..start + len]);
+    if look_of(nodes[i]).text_fx != 0 {
+        text_glyphs_of(i, text_arena[start..start + len]);
+        run_glyphs(i) { g => standard_fx(g); };
+    }
 }
 
 // The characters in s: its UTF-8 sequences, as reveal() counts them.
