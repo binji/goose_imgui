@@ -123,7 +123,7 @@ fn bar_height(n: i32) -> f32 { if dock_nodes[n].hide_tabs { 0.0 } else { tab_hei
 // --- changing the tree --------------------------------------------------------------------
 
 // Window w added to leaf n's tabs, before the one at `at` (-1: after
-// them all), and shown. A leaf already full: it stays floating.
+// them all), and shown. A leaf already full is misuse.
 fn dock_into_leaf(w: u64, n: i32, at: i64 = -1) {
     guard dock_nodes[n].tabs.len < DOCK_TABS else { misuse("dock: a leaf has at most 8 windows"); return; }
     dock_nodes[n].tabs.push(w);
@@ -501,7 +501,8 @@ fn dock_space_of(i: Id, d: Desc) {
                 if it.pressed { hs.num = n.ratio * len; put_state(hid.v, hs); }
                 if it.held && len > 0.0 {
                     let moved = if n.axis == 0 { it.drag.x } else { it.drag.y };
-                    dock_nodes[k].ratio = clamp((hs.num + moved) / len, PANE_LEAST / len, 1.0 - PANE_LEAST / len) as f32;
+                    let lo = min(PANE_LEAST / len, 0.5);
+                    dock_nodes[k].ratio = clamp((hs.num + moved) / len, lo, 1.0 - lo) as f32;
                 }
                 if it.hovered || it.held { wanted_cursor = if n.axis == 0 { CURSOR_EW_RESIZE } else { CURSOR_NS_RESIZE }; }
                 let ra = dock_rect(n.a);
