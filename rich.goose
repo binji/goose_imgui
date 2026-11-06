@@ -319,7 +319,6 @@ fn span_hit(i: i32) -> SpanHit {
         }
     }
     h.last = st.span;
-    st.seen = frame_index;
     put_state(n.id, st);
     h
 }
