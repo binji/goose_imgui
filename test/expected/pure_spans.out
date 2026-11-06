@@ -1,0 +1,12 @@
+--- under a modal
+hovered true
+under a modal false
+--- coming back
+counted as appearing true
+--- scrolled out
+below its pane: at true, hovered false
+--- carried by navigation
+carrying true
+pressed on a target: carrying false, dropped 7, clicked 0
+carrying true
+cancel_drag: carrying false
