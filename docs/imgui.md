@@ -665,7 +665,8 @@ How a canvas works:
   time, over the box's background and under its children, with its clip,
   motion and opacity.
 - **Interaction.** `canvas` returns the box's `Interaction`. For a `hit()`
-  canvas, `it.pointer` says where the pointer is on it.
+  canvas, `it.pointer` says where the pointer is on its outer box, padding
+  and all, where the block's drawing starts at the inner one.
 - **Culling.** Drawing may reach past the box unless the box `clip()`s, and
   the culling counts what it reaches.
 
@@ -744,7 +745,7 @@ for e in imgui::ui_events() {
 | `UI_HOVER` | the pointer moved onto an enabled widget; not when a widget comes under a pointer that is still |
 | `UI_FOCUS` | navigation showed the focus on a widget; a click focuses quietly |
 | `UI_PRESS`, `UI_ACTIVATE` | the pointer went down on it; it was clicked, or accepted while focused |
-| `UI_CHANGE` | a value moved without an activation: a slider's ticks (each step, or each twentieth of its range without one), whether dragged or moved by left and right; tabs switched by the shoulder buttons |
+| `UI_CHANGE` | a value moved without an activation: a slider's ticks (each step, or each twentieth of its range without one), whether dragged or moved by left and right; a knob's and a number field's, and a color picker's changes; tabs switched by the shoulder buttons |
 | `UI_OPEN`, `UI_CLOSE` | a popup, menu, dropdown or modal opened, or closed (by cancel, a press outside, the program, or no longer being recorded); its class `POPUP`, `MENU` or `MODAL` |
 | `UI_DENIED` | the pointer went down on a disabled widget |
 | `UI_BACK` | cancel with no popup open to close, and nothing carried or typed into a number field: the program's "back" (`cancelled()` is true too) |

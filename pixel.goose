@@ -139,7 +139,7 @@ fn pixel_palette() -> Palette {
 }
 
 // A style's lengths times k, on whole units: a length that was there is at
-// least one; corners square; a shadow hard; text at `size`, or kept if bigger.
+// least one; corners square; a shadow hard; any text at `size`.
 fn pixel_style(var s: Style, k: f64, size: f64) -> Style {
     fn len(v: f32, k: f64) -> f32 {
         let l = max(round(abs(v) * k), 1.0) as f32;
